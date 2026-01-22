@@ -31,6 +31,11 @@ let currentMenu = [
     { id: 16, name: 'dew', price: 35, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=500&q=80', description: 'Mountain Dew citrus soda.' },
     { id: 17, name: 'sprite', price: 35, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=500&q=80', description: 'Clear lemon-lime soda.' },
     { id: 18, name: 'fanta', price: 35, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1624517452488-04869289c4ca?w=500&q=80', description: 'Bubbly orange fanta.' },
+    { id: 19, name: 'Egg maggie', price: 100, category: 'CAFE', subCategory: 'Maggie', isAvailable: true, image: 'https://images.unsplash.com/photo-1626808642820-20059969562a?w=500&q=80', description: 'Classic maggie noodles with scrambled eggs.' },
+    { id: 20, name: 'peri peri maggie', price: 120, category: 'CAFE', subCategory: 'Maggie', isAvailable: true, image: 'https://images.unsplash.com/photo-1623245455621-933618de488f?w=500&q=80', description: 'Spicy maggie with a peri-peri kick.' },
+    { id: 21, name: 'Masala maggie', price: 120, category: 'CAFE', subCategory: 'Maggie', isAvailable: true, image: 'https://images.unsplash.com/photo-1612927601601-663840275991?w=500&q=80', description: 'Extra spicy masala maggie.' },
+    { id: 22, name: 'vegitable maggie', price: 110, category: 'CAFE', subCategory: 'Maggie', isAvailable: true, image: 'https://images.unsplash.com/photo-1526318896980-cf78c088247c?w=500&q=80', description: 'Healthy maggie loaded with fresh vegetables.' },
+    { id: 23, name: 'maggie with cheese', price: 140, category: 'CAFE', subCategory: 'Maggie', isAvailable: true, image: 'https://images.unsplash.com/photo-1619531043563-780ba306354a?w=500&q=80', description: 'Creamy maggie topped with melted cheese.' },
 ];
 
 console.log('--- Server Startup ---');
