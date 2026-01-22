@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Save, X, ToggleLeft, ToggleRight } from 'lucide-react';
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
+import { menuData } from '../data/menuData';
 import './MenuManager.css';
 
 const MenuManager = () => {
@@ -140,6 +141,42 @@ const MenuManager = () => {
     setEditingId(null);
   };
 
+  const handleSeedData = async () => {
+    if (!window.confirm('This will upload all items from menuData.js to your Firebase. Proceed?')) return;
+
+    try {
+      const batch = writeBatch(db);
+      const itemsCollection = collection(db, 'menuItems');
+
+      // Loop through all categories in menuData
+      const categoriesToSeed = ['cafe', 'restaurant', 'hut'];
+
+      for (const cat of categoriesToSeed) {
+        const items = menuData[cat];
+        if (items) {
+          items.forEach(item => {
+            const newDocRef = doc(itemsCollection);
+            batch.set(newDocRef, {
+              name: item.name,
+              price: item.price,
+              description: item.description || '',
+              inStock: item.inStock ?? true,
+              category: cat,
+              image: item.image || null,
+              createdAt: new Date()
+            });
+          });
+        }
+      }
+
+      await batch.commit();
+      alert('Data seeded successfully!');
+    } catch (error) {
+      console.error("Error seeding data: ", error);
+      alert("Error seeding data. Check your Firebase credentials.");
+    }
+  };
+
   return (
     <div className="menu-manager">
       <div className="category-tabs">
@@ -176,6 +213,9 @@ const MenuManager = () => {
                   Closed
                 </>
               )}
+            </button>
+            <button className="seed-data-btn" onClick={handleSeedData} title="Upload menuData.js to Firebase">
+              Seed Firebase Data
             </button>
             {!isAdding && !editingId && (
               <button className="add-item-btn" onClick={() => setIsAdding(true)}>

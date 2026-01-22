@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ShoppingCart, X, Plus, Minus, Send } from 'lucide-react';
 import { collection, addDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
+import { menuData } from '../data/menuData';
 import './MenuPage.css';
 
 const MenuPage = ({ category, title }) => {
@@ -35,13 +36,24 @@ const MenuPage = ({ category, title }) => {
 
     // Fetch items from Firestore filtered by category
     useEffect(() => {
+        // q is the query to fetch items from Firestore
         const q = query(collection(db, 'menuItems'), where('category', '==', category));
+
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const items = [];
-            snapshot.forEach((doc) => {
-                items.push({ id: doc.id, ...doc.data() });
-            });
-            setMenuItems(items);
+            if (!snapshot.empty) {
+                const items = [];
+                snapshot.forEach((doc) => {
+                    items.push({ id: doc.id, ...doc.data() });
+                });
+                setMenuItems(items);
+            } else {
+                // Fallback to local data if Firestore is empty
+                console.log('Firestore empty, using local fallback for:', category);
+                setMenuItems(menuData[category] || []);
+            }
+        }, (error) => {
+            console.error("Firebase error, using local fallback:", error);
+            setMenuItems(menuData[category] || []);
         });
 
         return () => unsubscribe();
