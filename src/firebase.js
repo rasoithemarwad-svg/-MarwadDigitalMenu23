@@ -4,12 +4,13 @@ import { getFirestore } from "firebase/firestore";
 // Your web app's Firebase configuration
 // REPLACE THESE WITH YOUR ACTUAL FIREBASE KEYS
 const firebaseConfig = {
-  apiKey: "AIzaSyD7MkB7qqVXZvkTsJTvh7tzs_8FjO10WEc",
-  authDomain: "qrordering-bfeff.firebaseapp.com",
-  projectId: "qrordering-bfeff",
-  storageBucket: "qrordering-bfeff.firebasestorage.app",
-  messagingSenderId: "1071028156145",
-  appId: "1:1071028156145:web:2cd83625c142334c69db50"
+  apiKey: "AIzaSyA6O513_ATkWch2AKHwqZnSrYQOep4bjK4",
+  authDomain: "marwad-dining.firebaseapp.com",
+  projectId: "marwad-dining",
+  storageBucket: "marwad-dining.firebasestorage.app",
+  messagingSenderId: "1002811966076",
+  appId: "1:1002811966076:web:f7f98d3514a8e2ac593ff9",
+  measurementId: "G-YJ4NEVKLSD"
 };
 
 // Initialize Firebase
