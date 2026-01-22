@@ -43,6 +43,12 @@ let currentMenu = [
     { id: 28, name: 'paneer pakode', price: 200, category: 'CAFE', subCategory: 'pakode', isAvailable: true, image: 'https://plus.unsplash.com/premium_photo-1694141253457-4187317730e2?w=500&q=80', description: 'Crispy paneer fritters.' },
     { id: 29, name: 'veg pakode', price: 180, category: 'CAFE', subCategory: 'pakode', isAvailable: true, image: 'https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80', description: 'Assorted vegetable fritters.' },
     { id: 30, name: 'egg pakode', price: 180, category: 'CAFE', subCategory: 'pakode', isAvailable: true, image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=500&q=80', description: 'Spicy egg fritters.' },
+    { id: 31, name: 'chicken roll', price: 100, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?w=500&q=80', description: 'Spicy chicken filled roll.' },
+    { id: 32, name: 'egg roll', price: 80, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&q=80', description: 'Classic egg paratha roll.' },
+    { id: 33, name: 'veg roll', price: 60, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1626776876729-bab4369a5a5a?w=500&q=80', description: 'Fresh vegetable roll.' },
+    { id: 34, name: 'spring roll', price: 50, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1517433367423-c7e5b0f35086?w=500&q=80', description: 'Crispy vegetable spring rolls.' },
+    { id: 35, name: 'veg paneer roll', price: 120, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=500&q=80', description: 'Soft roll with paneer stuffing.' },
+    { id: 36, name: 'cheese corn roll', price: 140, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&q=80', description: 'Cheesy corn filled roll.' },
 ];
 
 console.log('--- Server Startup ---');
