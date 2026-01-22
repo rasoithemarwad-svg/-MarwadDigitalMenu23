@@ -28,51 +28,68 @@ const CustomerView = () => {
             setMenuItems(newMenu);
         });
 
+        socket.on('kitchen-status-updated', (status) => {
+            setIsKitchenOpen(status);
+        });
+
         return () => {
             socket.off('menu-updated');
+            socket.off('kitchen-status-updated');
         };
     }, []);
     const [view, setView] = useState('landing'); // 'landing' or 'menu'
     const [menuItems, setMenuItems] = useState([]);
     const [activeCategory, setActiveCategory] = useState('All');
-    const [activeSubCategory, setActiveSubCategory] = useState('All');
+    const [activeSubCategory, setActiveSubCategory] = useState('');
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [orderPlaced, setOrderPlaced] = useState(false);
+    const [isKitchenOpen, setIsKitchenOpen] = useState(true);
 
     // Filter available items by main category and sub-category
     const filteredMenu = menuItems.filter(item => {
         const available = item.isAvailable !== false;
         const mainMatch = activeCategory === 'All' || item.category === activeCategory;
-        const subMatch = activeSubCategory === 'All' || item.subCategory === activeSubCategory;
+        const subMatch = !activeSubCategory || item.subCategory === activeSubCategory;
         return available && mainMatch && subMatch;
     });
 
     // Get unique sub-categories for the current main category
-    const subCategories = ['All', ...new Set(
+    const subCategories = [...new Set(
         menuItems
             .filter(item => item.category === activeCategory)
             .map(item => item.subCategory)
             .filter(Boolean)
     )];
 
-    const addToCart = (item) => {
+    // Effect to set first sub-category as default when category changes
+    useEffect(() => {
+        if (subCategories.length > 0 && !subCategories.includes(activeSubCategory)) {
+            setActiveSubCategory(subCategories[0]);
+        }
+    }, [activeCategory, menuItems.length]);
+
+    const addToCart = (item, portion = null) => {
         setCart(prev => {
-            const existing = prev.find(i => i.id === item.id);
+            const cartItemId = portion ? `${item.id}-${portion.label}` : item.id;
+            const cartItemName = portion ? `${item.name} (${portion.label})` : item.name;
+            const cartItemPrice = portion ? portion.price : item.price;
+
+            const existing = prev.find(i => i.cartId === cartItemId);
             if (existing) {
-                return prev.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i);
+                return prev.map(i => i.cartId === cartItemId ? { ...i, qty: i.qty + 1 } : i);
             }
-            return [...prev, { ...item, qty: 1 }];
+            return [...prev, { ...item, cartId: cartItemId, name: cartItemName, price: cartItemPrice, qty: 1 }];
         });
     };
 
-    const removeFromCart = (itemId) => {
+    const removeFromCart = (cartId) => {
         setCart(prev => {
-            const existing = prev.find(i => i.id === itemId);
+            const existing = prev.find(i => i.cartId === cartId);
             if (existing && existing.qty > 1) {
-                return prev.map(i => i.id === itemId ? { ...i, qty: i.qty - 1 } : i);
+                return prev.map(i => i.cartId === cartId ? { ...i, qty: i.qty - 1 } : i);
             }
-            return prev.filter(i => i.id !== itemId);
+            return prev.filter(i => i.cartId !== cartId);
         });
     };
 
@@ -114,7 +131,8 @@ const CustomerView = () => {
             return;
         }
         setActiveCategory(id);
-        setActiveSubCategory('All');
+        const firstSub = menuItems.find(item => item.category === id)?.subCategory || '';
+        setActiveSubCategory(firstSub);
         setView('menu');
     };
 
@@ -171,7 +189,14 @@ const CustomerView = () => {
                                 </div>
 
                                 <div className="glass-card" style={{ marginTop: '40px', padding: '20px', textAlign: 'center' }}>
-                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Welcome to the Royal Taste of Marwad. Select an option to proceed.</p>
+                                    {!isKitchenOpen ? (
+                                        <div style={{ color: '#ff3b30', fontWeight: 800, fontSize: '1rem', letterSpacing: '1px' }}>
+                                            ⚠️ KITCHEN IS CURRENTLY CLOSED
+                                            <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '5px', fontWeight: 400 }}>Orders cannot be placed right now.</p>
+                                        </div>
+                                    ) : (
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Welcome to the Royal Taste of Marwad. Select an option to proceed.</p>
+                                    )}
                                 </div>
                             </motion.div>
                         ) : (
@@ -236,16 +261,34 @@ const CustomerView = () => {
                                             </div>
                                             <div style={{ padding: '12px' }}>
                                                 <h3 style={{ fontSize: '0.8rem', marginBottom: '8px', height: '32px', overflow: 'hidden' }}>{item.name}</h3>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '0.9rem' }}>₹{item.price}</span>
-                                                    <motion.button
-                                                        whileTap={{ scale: 0.8 }}
-                                                        onClick={() => addToCart(item)}
-                                                        style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                                    >
-                                                        <Plus size={16} color="black" />
-                                                    </motion.button>
-                                                </div>
+
+                                                {item.portions ? (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                        {item.portions.map(p => (
+                                                            <div key={p.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass)', padding: '5px 8px', borderRadius: '8px' }}>
+                                                                <span style={{ fontSize: '0.7rem', fontWeight: 600 }}>{p.label} <span style={{ color: 'var(--primary)' }}>₹{p.price}</span></span>
+                                                                <motion.button
+                                                                    whileTap={{ scale: 0.8 }}
+                                                                    onClick={() => isKitchenOpen ? addToCart(item, p) : alert('Kitchen is closed!')}
+                                                                    style={{ width: '24px', height: '24px', borderRadius: '50%', border: 'none', background: isKitchenOpen ? 'var(--primary)' : '#555', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isKitchenOpen ? 'pointer' : 'not-allowed' }}
+                                                                >
+                                                                    <Plus size={14} color={isKitchenOpen ? "black" : "#aaa"} />
+                                                                </motion.button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '0.9rem' }}>₹{item.price}</span>
+                                                        <motion.button
+                                                            whileTap={{ scale: 0.8 }}
+                                                            onClick={() => isKitchenOpen ? addToCart(item) : alert('Kitchen is closed!')}
+                                                            style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', background: isKitchenOpen ? 'var(--primary)' : '#555', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isKitchenOpen ? 'pointer' : 'not-allowed' }}
+                                                        >
+                                                            <Plus size={16} color={isKitchenOpen ? "black" : "#aaa"} />
+                                                        </motion.button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </motion.div>
                                     ))}
@@ -309,9 +352,9 @@ const CustomerView = () => {
                                                     <p style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '0.8rem' }}>₹{item.price}</p>
                                                 </div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--glass)', padding: '5px 10px', borderRadius: '12px' }}>
-                                                    <Minus size={14} onClick={() => removeFromCart(item.id)} style={{ cursor: 'pointer' }} />
+                                                    <Minus size={14} onClick={() => removeFromCart(item.cartId)} style={{ cursor: 'pointer' }} />
                                                     <span style={{ fontWeight: 800, minWidth: '20px', textAlign: 'center', fontSize: '0.9rem' }}>{item.qty}</span>
-                                                    <Plus size={14} onClick={() => addToCart(item)} style={{ cursor: 'pointer' }} />
+                                                    <Plus size={14} onClick={() => addToCart(item, item.portions?.find(p => item.name.includes(p.label)))} style={{ cursor: 'pointer' }} />
                                                 </div>
                                             </div>
                                         ))}

@@ -8,15 +8,37 @@ import QRScanner from '../components/QRScanner';
 const socket = io(); // Connects to the same host that served this page
 
 const AdminDashboard = () => {
-    const [activeTab, setActiveTab] = useState('orders'); // 'orders', 'billing', 'sales', 'menu', 'qr'
+    const [activeTab, setActiveTab] = useState('orders'); // 'orders', 'billing', 'sales', 'menu', 'expenses', 'qr'
     const [orders, setOrders] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
     const [salesHistory, setSalesHistory] = useState([]);
     const [serviceAlerts, setServiceAlerts] = useState([]);
     const [orderAlerts, setOrderAlerts] = useState([]); // New order popups
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isKitchenOpen, setIsKitchenOpen] = useState(true);
+    const [expenses, setExpenses] = useState(() => {
+        return JSON.parse(localStorage.getItem('marwad_expenses') || '[]');
+    });
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null); // Track which item is being edited
-    const [newItemForm, setNewItemForm] = useState({ name: '', price: '', category: 'RESTAURANT', subCategory: '', image: '', description: '', isAvailable: true });
+    const [newItemForm, setNewItemForm] = useState({
+        name: '',
+        price: '',
+        category: 'RESTAURANT',
+        subCategory: '',
+        image: '',
+        description: '',
+        isAvailable: true,
+        usePortions: false,
+        portions: [{ label: 'Half', price: '' }, { label: 'Full', price: '' }]
+    });
+
+    const [expenseForm, setExpenseForm] = useState({
+        item: 'vegitable',
+        amount: '',
+        paidBy: '',
+        date: new Date().toISOString().split('T')[0]
+    });
     const audioRef = useRef(null);
     const prevAlertsCount = useRef(0);
 
@@ -94,11 +116,16 @@ const AdminDashboard = () => {
             localStorage.setItem('marwad_menu_items', JSON.stringify(newMenu));
         });
 
+        socket.on('kitchen-status-updated', (status) => {
+            setIsKitchenOpen(status);
+        });
+
         return () => {
             clearInterval(interval);
             socket.off('new-service-alert');
             socket.off('new-order-alert');
             socket.off('menu-updated');
+            socket.off('kitchen-status-updated');
         };
     }, [serviceAlerts.length]);
 
@@ -127,6 +154,26 @@ const AdminDashboard = () => {
 
     const clearOrderAlert = (alertId) => {
         setOrderAlerts(prev => prev.filter(a => a.id !== alertId));
+    };
+
+    const toggleKitchenStatus = () => {
+        const newStatus = !isKitchenOpen;
+        socket.emit('update-kitchen-status', newStatus);
+    };
+
+    const saveExpenses = (newExpenses) => {
+        setExpenses(newExpenses);
+        localStorage.setItem('marwad_expenses', JSON.stringify(newExpenses));
+    };
+
+    const addExpense = (expense) => {
+        const newExpenses = [expense, ...expenses];
+        saveExpenses(newExpenses);
+    };
+
+    const deleteExpense = (id) => {
+        const newExpenses = expenses.filter(e => e.id !== id);
+        saveExpenses(newExpenses);
     };
 
     const saveMenu = (newMenu) => {
@@ -207,9 +254,22 @@ const AdminDashboard = () => {
                         <h1 className="gold-text" style={{ fontSize: '1.4rem' }}>Marwad Admin</h1>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Automated Kitchen System</p>
                     </div>
-                    <motion.button whileTap={{ scale: 0.9 }} onClick={fetchData} className="glass-card" style={{ padding: '10px', borderRadius: '12px', border: 'none' }}>
-                        <RefreshCcw size={18} className={isRefreshing ? 'spin' : ''} style={{ color: 'var(--primary)' }} />
-                    </motion.button>
+                    <div className="flex gap-4 items-center">
+                        <button
+                            onClick={toggleKitchenStatus}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${isKitchenOpen
+                                ? 'bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20'
+                                : 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20'
+                                }`}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', border: isKitchenOpen ? '1px solid rgba(76, 175, 80, 0.3)' : '1px solid rgba(244, 67, 54, 0.3)', background: isKitchenOpen ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)', color: isKitchenOpen ? '#4caf50' : '#f44336', borderRadius: '12px' }}
+                        >
+                            <Utensils size={18} />
+                            <span className="font-medium" style={{ fontSize: '0.85rem' }}>{isKitchenOpen ? 'Kitchen Open' : 'Kitchen Closed'}</span>
+                        </button>
+                        <motion.button whileTap={{ scale: 0.9 }} onClick={fetchData} className="glass-card" style={{ padding: '10px', borderRadius: '12px', border: 'none' }}>
+                            <RefreshCcw size={18} className={isRefreshing ? 'spin' : ''} style={{ color: 'var(--primary)' }} />
+                        </motion.button>
+                    </div>
                 </div>
 
                 <style>{`
@@ -439,6 +499,86 @@ const AdminDashboard = () => {
                             </div>
                         </motion.div>
                     )}
+
+                    {activeTab === 'expenses' && (
+                        <motion.div key="expenses" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                            <div className="glass-card" style={{ padding: '20px', marginBottom: '25px' }}>
+                                <h3 className="gold-text" style={{ marginBottom: '15px' }}>Daily Expenses</h3>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                    <div>
+                                        <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '5px', display: 'block' }}>Item</label>
+                                        <select
+                                            value={expenseForm.item}
+                                            onChange={(e) => setExpenseForm({ ...expenseForm, item: e.target.value })}
+                                            style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white' }}
+                                        >
+                                            <option value="vegitable">Vegetable</option>
+                                            <option value="grocery">Grocery</option>
+                                            <option value="chicken">Chicken</option>
+                                            <option value="mutton">Mutton</option>
+                                            <option value="worker">Worker</option>
+                                            <option value="gas">Gas</option>
+                                            <option value="coal">Coal</option>
+                                            <option value="others">Others</option>
+                                        </select>
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                        <div>
+                                            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '5px', display: 'block' }}>Amount (₹)</label>
+                                            <input
+                                                type="number"
+                                                value={expenseForm.amount}
+                                                onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
+                                                placeholder="0.00"
+                                                style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '5px', display: 'block' }}>Bear By</label>
+                                            <input
+                                                type="text"
+                                                value={expenseForm.paidBy}
+                                                onChange={(e) => setExpenseForm({ ...expenseForm, paidBy: e.target.value })}
+                                                placeholder="Name"
+                                                style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white' }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            if (!expenseForm.amount) return alert('Enter amount');
+                                            addExpense({
+                                                id: Date.now(),
+                                                ...expenseForm,
+                                                amount: parseFloat(expenseForm.amount)
+                                            });
+                                            setExpenseForm({ item: 'vegitable', amount: '', paidBy: '', date: new Date().toISOString().split('T')[0] });
+                                        }}
+                                        className="btn-primary"
+                                        style={{ padding: '15px', marginTop: '10px' }}
+                                    >
+                                        Add Expense
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                {expenses.map(exp => (
+                                    <div key={exp.id} className="glass-card" style={{ padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <h5 style={{ textTransform: 'capitalize', fontSize: '1rem', fontWeight: 600 }}>{exp.item}</h5>
+                                            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Paid by: {exp.paidBy || 'N/A'} • {new Date(exp.date).toLocaleDateString()}</p>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <span style={{ display: 'block', fontWeight: 800, color: '#f44336' }}>-₹{exp.amount}</span>
+                                            <button onClick={() => deleteExpense(exp.id)} style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', marginTop: '5px' }}>Remove</button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {expenses.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '20px' }}>No expenses recorded yet.</p>}
+                            </div>
+                        </motion.div>
+                    )}
                 </AnimatePresence>
 
                 {/* Settle Modal */}
@@ -464,7 +604,7 @@ const AdminDashboard = () => {
                     <button onClick={() => setActiveTab('orders')} style={{ background: 'none', border: 'none', color: activeTab === 'orders' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><ClipboardList size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Orders</span></button>
                     <button onClick={() => setActiveTab('billing')} style={{ background: 'none', border: 'none', color: activeTab === 'billing' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Receipt size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Billing</span></button>
                     <button onClick={() => setActiveTab('menu')} style={{ background: 'none', border: 'none', color: activeTab === 'menu' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Utensils size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Menu</span></button>
-                    <button onClick={() => setActiveTab('sales')} style={{ background: 'none', border: 'none', color: activeTab === 'sales' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><BarChart3 size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Sales</span></button>
+                    <button onClick={() => setActiveTab('expenses')} style={{ background: 'none', border: 'none', color: activeTab === 'expenses' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Receipt size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Exp.</span></button>
                     <button onClick={() => setActiveTab('qr')} style={{ background: 'none', border: 'none', color: activeTab === 'qr' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><QrCode size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>QR</span></button>
                 </div>
 

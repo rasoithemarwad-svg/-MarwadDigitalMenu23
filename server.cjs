@@ -5,6 +5,8 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 
+let isKitchenOpen = true; // Initial state
+
 const app = express();
 app.use(cors());
 
@@ -110,6 +112,58 @@ let currentMenu = [
     { id: 89, name: 'Baati', price: 25, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=500&q=80', description: 'Traditional Rajasthani baked baati.' },
     { id: 90, name: 'Makke ki roti', price: 60, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80', description: 'Corn meal flatbread.' },
     { id: 91, name: 'Bajre ki roti', price: 80, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80', description: 'Millet flatbread.' },
+    // RESTAURANT - Rice
+    { id: 92, name: 'plain rice', price: 50, category: 'RESTAURANT', subCategory: 'Rice', isAvailable: true, image: 'https://images.unsplash.com/photo-1516684732162-798a0062be99?w=500&q=80', description: 'Steamed plain basmati rice.' },
+    { id: 93, name: 'shejwan rice', price: 80, category: 'RESTAURANT', subCategory: 'Rice', isAvailable: true, image: 'https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80', description: 'Spicy Schezwan fried rice.' },
+    { id: 94, name: 'jeera rice', price: 70, category: 'RESTAURANT', subCategory: 'Rice', isAvailable: true, image: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=500&q=80', description: 'Basmati rice tempered with cumin seeds.' },
+    { id: 95, name: 'panner fried rice', price: 120, category: 'RESTAURANT', subCategory: 'Rice', isAvailable: true, image: 'https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80', description: 'Fried rice with cottage cheese cubes.' },
+    { id: 96, name: 'fried rice', price: 100, category: 'RESTAURANT', subCategory: 'Rice', isAvailable: true, image: 'https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80', description: 'Classic vegetable fried rice.' },
+    { id: 97, name: 'chicken fried rice', price: 180, category: 'RESTAURANT', subCategory: 'Rice', isAvailable: true, image: 'https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80', description: 'Fried rice with succulent chicken pieces.' },
+    { id: 98, name: 'egg fried rice', price: 160, category: 'RESTAURANT', subCategory: 'Rice', isAvailable: true, image: 'https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80', description: 'Fried rice with scrambled eggs.' },
+
+    // RESTAURANT - NON-VEG MAIN COURSE
+    { id: 99, name: 'Grilled chicken', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 350 }, { label: 'Full', price: 650 }], image: 'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=500&q=80', description: 'Juicy charcoal grilled chicken.' },
+    { id: 100, name: 'Grilled Fish', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 300 }, { label: 'Full', price: 550 }], image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&q=80', description: 'Grilled seasonal fish filaments.' },
+    { id: 101, name: 'Fish Fry', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 300 }, { label: 'Full', price: 550 }], image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&q=80', description: 'Crispy deep fried fish.' },
+    { id: 102, name: 'Chicken Fry', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 350 }, { label: 'Full', price: 650 }], image: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=500&q=80', description: 'Spicy deep fried chicken.' },
+    { id: 103, name: 'Chicken fry boneless', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 400 }, { label: 'Full', price: 750 }], image: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=500&q=80', description: 'Boneless deep fried spicy chicken.' },
+    { id: 104, name: 'Chicken Curry', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 380 }, { label: 'Full', price: 700 }], image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=500&q=80', description: 'Home style spicy chicken curry.' },
+    { id: 105, name: 'chicken masala', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 400 }, { label: 'Full', price: 750 }], image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=500&q=80', description: 'Chicken cooked in rich masala gravy.' },
+    { id: 106, name: 'kadhai chicken', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 400 }, { label: 'Full', price: 750 }], image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=500&q=80', description: 'Spicy wok tossed chicken.' },
+    { id: 107, name: 'butter chicken', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 400 }, { label: 'Full', price: 750 }], image: 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=500&q=80', description: 'Mild and creamy tandoori chicken gravy.' },
+    { id: 108, name: 'Handi chicken Special', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 700 }, { label: 'Full', price: 1400 }], image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=500&q=80', description: 'Slow cooked marinated chicken special.' },
+    { id: 109, name: 'Mutton Curry', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 600 }, { label: 'Full', price: 1150 }], image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=80', description: 'Traditional mutton gravy curry.' },
+    { id: 110, name: 'Masala mutton', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 700 }, { label: 'Full', price: 1350 }], image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=80', description: 'Tender mutton in chunky masala.' },
+    { id: 111, name: 'Handi mutton Special', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 900 }, { label: 'Full', price: 1750 }], image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=80', description: 'Marwad special slow cooked handi mutton.' },
+    { id: 112, name: 'Fish Curry', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 300 }, { label: 'Full', price: 600 }], image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&q=80', description: 'Fish in traditional spicy gravy.' },
+    { id: 113, name: 'Egg Curry', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 120 }, { label: 'Full', price: 200 }], image: 'https://images.unsplash.com/photo-1542826438-bd32f43d626f?w=500&q=80', description: 'Boiled eggs in tomato onion gravy.' },
+    { id: 114, name: 'Boiled Egg', price: 30, category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&q=80', description: 'Nutritious plain boiled eggs.' },
+    { id: 115, name: 'Egg bhurji', price: 90, category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80', description: 'Spicy scrambled eggs with onions.' },
+    { id: 116, name: 'boiled Egg bhurji', price: 90, category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80', description: 'Scrambled boiled eggs with masala.' },
+
+    // HUT - Drinks & Essentials
+    { id: 117, name: 'Water', price: 20, category: 'HUT', subCategory: 'Drinks', isAvailable: true, image: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=500&q=80', description: 'Mineral water bottle.' },
+    { id: 118, name: 'GLASS', price: 5, category: 'HUT', subCategory: 'Drinks', isAvailable: true, image: 'https://images.unsplash.com/photo-1570700005389-221627791f1f?w=500&q=80', description: 'Disposable glass.' },
+
+    // HUT - Snacks & Masala
+    { id: 119, name: 'PAPAD', price: 20, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500&q=80', description: 'Roasted papad.' },
+    { id: 120, name: 'MASALA PAPAD', price: 40, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500&q=80', description: 'Papad topped with spicy salad.' },
+    { id: 121, name: 'PEANUT MASALA', price: 70, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1621539203741-2854316dc757?w=500&q=80', description: 'Spicy roasted peanuts with veggies.' },
+    { id: 122, name: 'CHANA MASALA', price: 70, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&q=80', description: 'Spicy roasted chickpeas snack.' },
+    { id: 123, name: 'MATAR MASALA', price: 70, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&q=80', description: 'Spicy dry pea snack.' },
+    { id: 124, name: 'DAAL MASALA', price: 70, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&q=80', description: 'Fried lentil snack with spices.' },
+    { id: 125, name: 'NAMKEEN MASALA', price: 70, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500&q=80', description: 'Spicy mixed savoury snack.' },
+    { id: 126, name: 'GREEN SALAD', price: 60, category: 'HUT', subCategory: 'Salad', isAvailable: true, image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&q=80', description: 'Fresh sliced vegetable salad.' },
+
+    // HUT - Egg Specials
+    { id: 127, name: 'BOILED EGG (2 piece)', price: 30, category: 'HUT', subCategory: 'Egg Specials', isAvailable: true, image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&q=80', description: 'Two boiled eggs.' },
+    { id: 128, name: 'EGG FRY (2 piece)', price: 40, category: 'HUT', subCategory: 'Egg Specials', isAvailable: true, image: 'https://images.unsplash.com/photo-1588833959959-197e4125b271?w=500&q=80', description: 'Two fried eggs.' },
+    { id: 129, name: 'EGG BHURJI (2 piece)', price: 80, category: 'HUT', subCategory: 'Egg Specials', isAvailable: true, image: 'https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80', description: 'Spicy scrambled eggs.' },
+    { id: 130, name: 'BOILED EGG BHURJI (2 piece)', price: 80, category: 'HUT', subCategory: 'Egg Specials', isAvailable: true, image: 'https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80', description: 'Bhurji made with boiled eggs.' },
+    { id: 131, name: 'OMELLETE (2 piece)', price: 90, category: 'HUT', subCategory: 'Egg Specials', isAvailable: true, image: 'https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80', description: 'Two egg omelette.' },
+
+    // HUT - Cover Charges
+    { id: 132, name: 'SEATING COVER CHARGES', price: 500, category: 'HUT', subCategory: 'Cover Charge', isAvailable: true, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500&q=80', description: 'ROASTED CHICKEN+MASALA PAPAD+1ltr WATER BOTTEL OR CHILLY PANEER+MASALA PAPAD+1ltr WATER BOTTEL. OUTSIDE FOOD NOT ALLOWED' },
 ];
 
 console.log('--- Server Startup ---');
@@ -167,8 +221,9 @@ io.on('connection', (socket) => {
         io.emit('new-order-alert', orderData);
     });
 
-    // Provide current menu to new connections
+    // Provide current status to new connections
     socket.emit('menu-updated', currentMenu);
+    socket.emit('kitchen-status-updated', isKitchenOpen);
 
     socket.on('get-menu', () => {
         socket.emit('menu-updated', currentMenu);
@@ -178,6 +233,12 @@ io.on('connection', (socket) => {
         console.log('Global Menu Updated');
         currentMenu = newMenu;
         io.emit('menu-updated', currentMenu);
+    });
+
+    socket.on('update-kitchen-status', (status) => {
+        console.log('Kitchen Status Updated:', status);
+        isKitchenOpen = status;
+        io.emit('kitchen-status-updated', isKitchenOpen);
     });
 
     socket.on('disconnect', () => {
