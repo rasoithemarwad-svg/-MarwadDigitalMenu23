@@ -40,6 +40,9 @@ let currentMenu = [
     { id: 25, name: 'veg chowmine', price: 140, category: 'CAFE', subCategory: 'NOODELS', isAvailable: true, image: 'https://images.unsplash.com/photo-1617093727343-374698b1b08d?w=500&q=80', description: 'Delicious vegetable chowmein.' },
     { id: 26, name: 'shejwan noodel', price: 150, category: 'CAFE', subCategory: 'NOODELS', isAvailable: true, image: 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=500&q=80', description: 'Spicy Schezwan style noodles.' },
     { id: 27, name: 'veg paneer noodels', price: 170, category: 'CAFE', subCategory: 'NOODELS', isAvailable: true, image: 'https://images.unsplash.com/photo-1645177623570-5283899933c7?w=500&q=80', description: 'Stir-fried noodles with fresh paneer cubes.' },
+    { id: 28, name: 'paneer pakode', price: 200, category: 'CAFE', subCategory: 'pakode', isAvailable: true, image: 'https://plus.unsplash.com/premium_photo-1694141253457-4187317730e2?w=500&q=80', description: 'Crispy paneer fritters.' },
+    { id: 29, name: 'veg pakode', price: 180, category: 'CAFE', subCategory: 'pakode', isAvailable: true, image: 'https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80', description: 'Assorted vegetable fritters.' },
+    { id: 30, name: 'egg pakode', price: 180, category: 'CAFE', subCategory: 'pakode', isAvailable: true, image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=500&q=80', description: 'Spicy egg fritters.' },
 ];
 
 console.log('--- Server Startup ---');
