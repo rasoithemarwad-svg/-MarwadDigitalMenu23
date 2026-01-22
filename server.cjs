@@ -21,6 +21,16 @@ let currentMenu = [
     { id: 6, name: 'Cold Coffee with Ice Cream', price: 150, category: 'CAFE', subCategory: 'Drinks', isAvailable: true, image: 'https://images.unsplash.com/photo-1517701550927-30cf4bb1dba5?w=500&q=80', description: 'Rich creamy cold coffee.' },
     { id: 7, name: 'Hut Special Thali', price: 450, category: 'HUT', subCategory: 'Platter', isAvailable: true, image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&q=80', description: 'Exclusive premium Rajasthani meal.' },
     { id: 8, name: 'Smoked Junglee Maas', price: 550, category: 'HUT', subCategory: 'Platter', isAvailable: true, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=80', description: 'Smoked spicy meat speciality.' },
+    { id: 9, name: 'Tea+Toast', price: 40, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1544787210-2211d7c928c0?w=500&q=80', description: 'Refreshing tea served with crispy toast.' },
+    { id: 10, name: 'Coffee hot', price: 50, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&q=80', description: 'Hot brewed classic coffee.' },
+    { id: 11, name: 'cold coffee', price: 80, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1517701550927-30cf4bb1dba5?w=500&q=80', description: 'Chilled coffee with a creamy texture.' },
+    { id: 12, name: 'lemon tea', price: 30, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=500&q=80', description: 'Light tea with a zing of lemon.' },
+    { id: 13, name: 'ginger honey tea', price: 50, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1556881286-fc6915169721?w=500&q=80', description: 'Warm tea with ginger and honey notes.' },
+    { id: 14, name: 'coke', price: 35, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&q=80', description: 'Classic Coca-Cola.' },
+    { id: 15, name: 'thumps up', price: 35, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1581006852262-e4307cf6283a?w=500&q=80', description: 'Strong thumps up cola.' },
+    { id: 16, name: 'dew', price: 35, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=500&q=80', description: 'Mountain Dew citrus soda.' },
+    { id: 17, name: 'sprite', price: 35, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=500&q=80', description: 'Clear lemon-lime soda.' },
+    { id: 18, name: 'fanta', price: 35, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1624517452488-04869289c4ca?w=500&q=80', description: 'Bubbly orange fanta.' },
 ];
 
 console.log('--- Server Startup ---');
