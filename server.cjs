@@ -54,6 +54,9 @@ let currentMenu = [
     { id: 39, name: 'egg burger', price: 140, category: 'CAFE', subCategory: 'BURGER', isAvailable: true, image: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=500&q=80', description: 'Burger with a fluffy fried egg.' },
     { id: 40, name: 'double tiki burger', price: 120, category: 'CAFE', subCategory: 'BURGER', isAvailable: true, image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500&q=80', description: 'Double patty burger for double taste.' },
     { id: 41, name: 'chicken BURGER', price: 180, category: 'CAFE', subCategory: 'BURGER', isAvailable: true, image: 'https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=500&q=80', description: 'Juicy chicken patty burger.' },
+    { id: 42, name: 'peri peri fries', price: 130, category: 'CAFE', subCategory: 'fries', isAvailable: true, image: 'https://images.unsplash.com/photo-1628191010210-a59de33e5941?w=500&q=80', description: 'Crispy fries with spicy peri-peri seasoning.' },
+    { id: 43, name: 'french fries', price: 100, category: 'CAFE', subCategory: 'fries', isAvailable: true, image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500&q=80', description: 'Classic salted french fries.' },
+    { id: 44, name: 'cheese fries', price: 160, category: 'CAFE', subCategory: 'fries', isAvailable: true, image: 'https://images.unsplash.com/photo-1576101226942-dfc76b53cbfc?w=500&q=80', description: 'Fries topped with rich melted cheese.' },
 ];
 
 console.log('--- Server Startup ---');
