@@ -16,6 +16,7 @@ const AdminDashboard = () => {
     const [orderAlerts, setOrderAlerts] = useState([]); // New order popups
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isKitchenOpen, setIsKitchenOpen] = useState(true);
+    const [selectedTableBill, setSelectedTableBill] = useState(null);
     const [expenses, setExpenses] = useState(() => {
         return JSON.parse(localStorage.getItem('marwad_expenses') || '[]');
     });
@@ -127,7 +128,7 @@ const AdminDashboard = () => {
             socket.off('menu-updated');
             socket.off('kitchen-status-updated');
         };
-    }, [serviceAlerts.length]);
+    }, [serviceAlerts.length, orders.length]); // Fixed dependency array
 
     // Handle persistent ringing
     useEffect(() => {
