@@ -102,6 +102,14 @@ let currentMenu = [
     { id: 82, name: 'veg raita', price: 60, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1481931098730-119839ec81e7?w=500&q=80', description: 'Curd with mixed vegetables.' },
     { id: 83, name: 'bondi raita', price: 40, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1481931098730-119839ec81e7?w=500&q=80', description: 'Curd with crispy boondi.' },
     { id: 84, name: 'chaach', price: 20, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1481931098730-119839ec81e7?w=500&q=80', description: 'Refreshing buttermilk.' },
+    // RESTAURANT - roti
+    { id: 85, name: 'Tawa roti plain', price: 10, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1589113103131-70043c748c90?w=500&q=80', description: 'Freshly made plain tawa roti.' },
+    { id: 86, name: 'Tawa roti butter', price: 12, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1589113103131-70043c748c90?w=500&q=80', description: 'Butter topped tawa roti.' },
+    { id: 87, name: 'Tandoori roti plain', price: 15, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=500&q=80', description: 'Clay oven baked plain roti.' },
+    { id: 88, name: 'Tandoori roti butter', price: 18, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=500&q=80', description: 'Clay oven baked butter roti.' },
+    { id: 89, name: 'Baati', price: 25, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=500&q=80', description: 'Traditional Rajasthani baked baati.' },
+    { id: 90, name: 'Makke ki roti', price: 60, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80', description: 'Corn meal flatbread.' },
+    { id: 91, name: 'Bajre ki roti', price: 80, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80', description: 'Millet flatbread.' },
 ];
 
 console.log('--- Server Startup ---');
