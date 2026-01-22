@@ -49,6 +49,11 @@ let currentMenu = [
     { id: 34, name: 'spring roll', price: 50, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1517433367423-c7e5b0f35086?w=500&q=80', description: 'Crispy vegetable spring rolls.' },
     { id: 35, name: 'veg paneer roll', price: 120, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=500&q=80', description: 'Soft roll with paneer stuffing.' },
     { id: 36, name: 'cheese corn roll', price: 140, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&q=80', description: 'Cheesy corn filled roll.' },
+    { id: 37, name: 'Plain aloo tikki burger', price: 90, category: 'CAFE', subCategory: 'BURGER', isAvailable: true, image: 'https://images.unsplash.com/photo-1571091718767-18b5c1457add?w=500&q=80', description: 'Classic potato patty burger.' },
+    { id: 38, name: 'cheese burger', price: 130, category: 'CAFE', subCategory: 'BURGER', isAvailable: true, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&q=80', description: 'Burger with extra melted cheese.' },
+    { id: 39, name: 'egg burger', price: 140, category: 'CAFE', subCategory: 'BURGER', isAvailable: true, image: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=500&q=80', description: 'Burger with a fluffy fried egg.' },
+    { id: 40, name: 'double tiki burger', price: 120, category: 'CAFE', subCategory: 'BURGER', isAvailable: true, image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500&q=80', description: 'Double patty burger for double taste.' },
+    { id: 41, name: 'chicken BURGER', price: 180, category: 'CAFE', subCategory: 'BURGER', isAvailable: true, image: 'https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=500&q=80', description: 'Juicy chicken patty burger.' },
 ];
 
 console.log('--- Server Startup ---');
