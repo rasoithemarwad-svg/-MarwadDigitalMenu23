@@ -1,27 +1,113 @@
 :root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* Marwad Luxury Palette */
+  --primary: #d4af37;
+  /* Metallic Gold */
+  --primary-glow: rgba(212, 175, 55, 0.4);
+  --secondary: #8b0000;
+  /* Deep Royal Red */
+  --accent: #c5a028;
+  --bg-dark: #121212;
+  --bg-card: #1e1e1e;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --glass: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Outfit', 'Inter', sans-serif;
 }
 
 body {
-  margin: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
+}
+
+/* Reusable UI Components */
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: black;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
   display: flex;
-  place-items: center;
-  min-width: 320px;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-primary:active {
+  transform: scale(0.95);
+}
+
+.gold-text {
+  background: linear-gradient(to right, #d4af37, #f7ef8a, #d4af37);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+}
+
+/* Mobile Screen View Wrapper */
+.app-container {
+  display: flex;
+  justify-content: center;
+  background-color: #000;
   min-height: 100vh;
 }
 
-#root {
+.mobile-frame {
   width: 100%;
-  margin: 0 auto;
+  max-width: 450px;
+  background-color: var(--bg-dark);
+  min-height: 100vh;
+  position: relative;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+@media (min-width: 451px) {
+  .mobile-frame {
+    margin: 20px 0;
+    height: calc(100vh - 40px);
+    border-radius: 40px;
+    border: 8px solid #333;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .app-container {
+    background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+  }
 }
