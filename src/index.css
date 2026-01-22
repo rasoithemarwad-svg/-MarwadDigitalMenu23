@@ -90,11 +90,19 @@ body {
 
 .mobile-frame {
   width: 100%;
-  max-width: 450px;
+  max-width: 480px;
   background-color: var(--bg-dark);
   min-height: 100vh;
   position: relative;
   box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+/* Admin Dashboard Wide Layout */
+.admin-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  width: 100%;
 }
 
 @media (min-width: 451px) {

@@ -6,16 +6,7 @@ import { io } from 'socket.io-client';
 
 const socket = io(); // Connects to the same host that served this page
 
-const MENU_DATA = [
-    { id: 1, name: 'Marwad Special Dal Bati', price: 350, category: 'RESTAURANT', image: 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=500&q=80', description: 'Traditional Rajasthani dal with baked bati and ghee.' },
-    { id: 2, name: 'Paneer Tikka Masala', price: 280, category: 'RESTAURANT', image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&q=80', description: 'Grilled paneer cubes in rich tomato gravy.' },
-    { id: 3, name: 'Club Sandwich', price: 180, category: 'CAFE', image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&q=80', description: 'Triple decker sandwich with fresh veggies.' },
-    { id: 4, name: 'Masala Fries', price: 120, category: 'CAFE', image: 'https://images.unsplash.com/photo-1630384066252-1911ca992f16?w=500&q=80', description: 'Crispy fries with marwad spices.' },
-    { id: 5, name: 'Special Garlic Naan', price: 60, category: 'RESTAURANT', image: 'https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80', description: 'Soft leavened bread with garlic.' },
-    { id: 6, name: 'Cold Coffee with Ice Cream', price: 150, category: 'CAFE', image: 'https://images.unsplash.com/photo-1517701550927-30cf4bb1dba5?w=500&q=80', description: 'Rich creamy cold coffee.' },
-    { id: 7, name: 'Hut Special Thali', price: 450, category: 'HUT', image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&q=80', description: 'Exclusive premium Rajasthani meal.' },
-    { id: 8, name: 'Smoked Junglee Maas', price: 550, category: 'HUT', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=80', description: 'Smoked spicy meat speciality.' },
-];
+// Menu data will be fetched from the backend via Socket.io
 
 const ACTIONS = [
     { id: 'HUT', label: 'THE HUT', icon: <Utensils size={32} />, color: '#d4af37', desc: 'Private Dining' },
@@ -27,15 +18,30 @@ const ACTIONS = [
 
 const CustomerView = () => {
     const { tableId } = useParams();
+
+    useEffect(() => {
+        // Request initial menu
+        socket.emit('get-menu');
+
+        // Listen for global menu updates
+        socket.on('menu-updated', (newMenu) => {
+            setMenuItems(newMenu);
+        });
+
+        return () => {
+            socket.off('menu-updated');
+        };
+    }, []);
     const [view, setView] = useState('landing'); // 'landing' or 'menu'
+    const [menuItems, setMenuItems] = useState([]);
     const [activeCategory, setActiveCategory] = useState('All');
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [orderPlaced, setOrderPlaced] = useState(false);
 
     const filteredMenu = activeCategory === 'All'
-        ? MENU_DATA
-        : MENU_DATA.filter(item => item.category === activeCategory);
+        ? menuItems
+        : menuItems.filter(item => item.category === activeCategory);
 
     const addToCart = (item) => {
         setCart(prev => {
@@ -70,6 +76,9 @@ const CustomerView = () => {
 
         const orders = JSON.parse(localStorage.getItem('marwad_orders') || '[]');
         localStorage.setItem('marwad_orders', JSON.stringify([...orders, order]));
+
+        // Emit real-time order to backend
+        socket.emit('place-order', order);
 
         setOrderPlaced(true);
         setCart([]);
