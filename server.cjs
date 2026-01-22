@@ -20,7 +20,7 @@ let currentMenu = [
     { id: 3, name: 'Club Sandwich', price: 180, category: 'CAFE', subCategory: 'Snacks', isAvailable: true, image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&q=80', description: 'Triple decker sandwich with fresh veggies.' },
     { id: 4, name: 'Masala Fries', price: 120, category: 'CAFE', subCategory: 'Snacks', isAvailable: true, image: 'https://images.unsplash.com/photo-1630384066252-1911ca992f16?w=500&q=80', description: 'Crispy fries with marwad spices.' },
     { id: 5, name: 'Special Garlic Naan', price: 60, category: 'RESTAURANT', subCategory: 'Breads', isAvailable: true, image: 'https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80', description: 'Soft leavened bread with garlic.' },
-    { id: 6, name: 'Cold Coffee with Ice Cream', price: 150, category: 'CAFE', subCategory: 'Drinks', isAvailable: true, image: 'https://images.unsplash.com/photo-1517701550927-30cf4bb1dba5?w=500&q=80', description: 'Rich creamy cold coffee.' },
+    { id: 6, name: 'Cold Coffee with Ice Cream', price: 150, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1517701550927-30cf4bb1dba5?w=500&q=80', description: 'Rich creamy cold coffee.' },
     { id: 7, name: 'Hut Special Thali', price: 450, category: 'HUT', subCategory: 'Platter', isAvailable: true, image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&q=80', description: 'Exclusive premium Rajasthani meal.' },
     { id: 8, name: 'Smoked Junglee Maas', price: 550, category: 'HUT', subCategory: 'Platter', isAvailable: true, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=80', description: 'Smoked spicy meat speciality.' },
     { id: 9, name: 'Tea+Toast', price: 40, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1544787210-2211d7c928c0?w=500&q=80', description: 'Refreshing tea served with crispy toast.' },
@@ -142,8 +142,8 @@ let currentMenu = [
     { id: 116, name: 'boiled Egg bhurji', price: 90, category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80', description: 'Scrambled boiled eggs with masala.' },
 
     // HUT - Drinks & Essentials
-    { id: 117, name: 'Water', price: 20, category: 'HUT', subCategory: 'Drinks', isAvailable: true, image: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=500&q=80', description: 'Mineral water bottle.' },
-    { id: 118, name: 'GLASS', price: 5, category: 'HUT', subCategory: 'Drinks', isAvailable: true, image: 'https://images.unsplash.com/photo-1570700005389-221627791f1f?w=500&q=80', description: 'Disposable glass.' },
+    { id: 117, name: 'Water', price: 20, category: 'HUT', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=500&q=80', description: 'Mineral water bottle.' },
+    { id: 118, name: 'GLASS', price: 5, category: 'HUT', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1570700005389-221627791f1f?w=500&q=80', description: 'Disposable glass.' },
 
     // HUT - Snacks & Masala
     { id: 119, name: 'PAPAD', price: 20, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500&q=80', description: 'Roasted papad.' },
