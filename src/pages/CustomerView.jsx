@@ -35,13 +35,26 @@ const CustomerView = () => {
     const [view, setView] = useState('landing'); // 'landing' or 'menu'
     const [menuItems, setMenuItems] = useState([]);
     const [activeCategory, setActiveCategory] = useState('All');
+    const [activeSubCategory, setActiveSubCategory] = useState('All');
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [orderPlaced, setOrderPlaced] = useState(false);
 
-    const filteredMenu = activeCategory === 'All'
-        ? menuItems
-        : menuItems.filter(item => item.category === activeCategory);
+    // Filter available items by main category and sub-category
+    const filteredMenu = menuItems.filter(item => {
+        const available = item.isAvailable !== false;
+        const mainMatch = activeCategory === 'All' || item.category === activeCategory;
+        const subMatch = activeSubCategory === 'All' || item.subCategory === activeSubCategory;
+        return available && mainMatch && subMatch;
+    });
+
+    // Get unique sub-categories for the current main category
+    const subCategories = ['All', ...new Set(
+        menuItems
+            .filter(item => item.category === activeCategory)
+            .map(item => item.subCategory)
+            .filter(Boolean)
+    )];
 
     const addToCart = (item) => {
         setCart(prev => {
@@ -101,6 +114,7 @@ const CustomerView = () => {
             return;
         }
         setActiveCategory(id);
+        setActiveSubCategory('All');
         setView('menu');
     };
 
@@ -182,6 +196,31 @@ const CustomerView = () => {
                                             <p style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>Table #{tableId}</p>
                                         </div>
                                     </div>
+
+                                    {/* Sub-Category Filter Bar */}
+                                    {subCategories.length > 1 && (
+                                        <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '15px 0 5px', color: 'white', scrollbarWidth: 'none' }}>
+                                            {subCategories.map(sub => (
+                                                <button
+                                                    key={sub}
+                                                    onClick={() => setActiveSubCategory(sub)}
+                                                    style={{
+                                                        padding: '8px 16px',
+                                                        borderRadius: '20px',
+                                                        border: 'none',
+                                                        background: activeSubCategory === sub ? 'var(--primary)' : 'var(--glass)',
+                                                        color: activeSubCategory === sub ? 'black' : 'white',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: 800,
+                                                        whiteSpace: 'nowrap',
+                                                        transition: 'var(--transition)'
+                                                    }}
+                                                >
+                                                    {sub.toUpperCase()}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </header>
 
                                 <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>

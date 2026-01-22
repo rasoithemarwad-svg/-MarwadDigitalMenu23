@@ -15,7 +15,8 @@ const AdminDashboard = () => {
     const [serviceAlerts, setServiceAlerts] = useState([]);
     const [orderAlerts, setOrderAlerts] = useState([]); // New order popups
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [newItemForm, setNewItemForm] = useState({ name: '', price: '', category: 'RESTAURANT', image: '', description: '' });
+    const [editingItem, setEditingItem] = useState(null); // Track which item is being edited
+    const [newItemForm, setNewItemForm] = useState({ name: '', price: '', category: 'RESTAURANT', subCategory: '', image: '', description: '', isAvailable: true });
     const audioRef = useRef(null);
     const prevAlertsCount = useRef(0);
 
@@ -137,6 +138,19 @@ const AdminDashboard = () => {
     const deleteMenuItem = (id) => {
         const updated = menuItems.filter(item => item.id !== id);
         saveMenu(updated);
+    };
+
+    const toggleAvailability = (id) => {
+        const updated = menuItems.map(item =>
+            item.id === id ? { ...item, isAvailable: !item.isAvailable } : item
+        );
+        saveMenu(updated);
+    };
+
+    const startEditing = (item) => {
+        setEditingItem(item);
+        setNewItemForm({ ...item });
+        setIsAddModalOpen(true);
     };
 
     const settleBill = (tableId) => {
@@ -401,11 +415,20 @@ const AdminDashboard = () => {
                                                 <div key={item.id} className="glass-card" style={{ display: 'flex', padding: '15px', gap: '15px', alignItems: 'center' }}>
                                                     <img src={item.image} style={{ width: '60px', height: '60px', borderRadius: '10px', objectFit: 'cover' }} alt="" />
                                                     <div style={{ flex: 1 }}>
-                                                        <h5 style={{ fontSize: '0.9rem' }}>{item.name}</h5>
+                                                        <h5 style={{ fontSize: '0.9rem', opacity: item.isAvailable ? 1 : 0.5 }}>{item.name} {!item.isAvailable && '(Out of Stock)'}</h5>
+                                                        <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{item.subCategory || 'General'}</p>
                                                         <p className="gold-text" style={{ fontSize: '0.8rem' }}>₹{item.price}</p>
                                                     </div>
-                                                    <div style={{ display: 'flex', gap: '10px' }}>
-                                                        <button onClick={() => deleteMenuItem(item.id)} style={{ background: 'none', border: 'none', color: '#ff4d4d', cursor: 'pointer' }}><X size={18} /></button>
+                                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                                        <button onClick={() => toggleAvailability(item.id)} style={{ background: item.isAvailable ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 77, 77, 0.1)', border: 'none', color: item.isAvailable ? '#4caf50' : '#ff4d4d', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}>
+                                                            {item.isAvailable ? <CheckCircle size={16} /> : <X size={16} />}
+                                                        </button>
+                                                        <button onClick={() => startEditing(item)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--primary)', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}>
+                                                            <ClipboardList size={16} />
+                                                        </button>
+                                                        <button onClick={() => deleteMenuItem(item.id)} style={{ background: 'rgba(255, 77, 77, 0.05)', border: 'none', color: '#ff4d4d', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}>
+                                                            <Trash2 size={16} />
+                                                        </button>
                                                     </div>
                                                 </div>
                                             ))}
@@ -445,15 +468,15 @@ const AdminDashboard = () => {
                     <button onClick={() => setActiveTab('qr')} style={{ background: 'none', border: 'none', color: activeTab === 'qr' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><QrCode size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>QR</span></button>
                 </div>
 
-                {/* Add Item Modal */}
+                {/* Add/Edit Item Modal */}
                 <AnimatePresence>
                     {isAddModalOpen && (
                         <>
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsAddModalOpen(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1100, backdropFilter: 'blur(5px)' }} />
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setIsAddModalOpen(false); setEditingItem(null); setNewItemForm({ name: '', price: '', category: 'RESTAURANT', subCategory: '', image: '', description: '', isAvailable: true }); }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1100, backdropFilter: 'blur(5px)' }} />
                             <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'var(--bg-card)', borderTopLeftRadius: '30px', borderTopRightRadius: '30px', zIndex: 1101, padding: '30px 20px', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--glass-border)' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-                                    <h2 className="gold-text">Add New Dish</h2>
-                                    <button onClick={() => setIsAddModalOpen(false)} style={{ background: 'none', border: 'none', color: 'white' }}><X size={24} /></button>
+                                    <h2 className="gold-text">{editingItem ? 'Edit Dish' : 'Add New Dish'}</h2>
+                                    <button onClick={() => { setIsAddModalOpen(false); setEditingItem(null); setNewItemForm({ name: '', price: '', category: 'RESTAURANT', subCategory: '', image: '', description: '', isAvailable: true }); }} style={{ background: 'none', border: 'none', color: 'white' }}><X size={24} /></button>
                                 </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -478,6 +501,11 @@ const AdminDashboard = () => {
                                     </div>
 
                                     <div>
+                                        <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Sub-Category (e.g. Burger, Pizza)</label>
+                                        <input type="text" value={newItemForm.subCategory} onChange={(e) => setNewItemForm({ ...newItemForm, subCategory: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white' }} placeholder="Dal, Starters, Breads" />
+                                    </div>
+
+                                    <div>
                                         <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Image URL</label>
                                         <input type="text" value={newItemForm.image} onChange={(e) => setNewItemForm({ ...newItemForm, image: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white' }} placeholder="https://images.unsplash.com/..." />
                                     </div>
@@ -487,20 +515,33 @@ const AdminDashboard = () => {
                                         <textarea value={newItemForm.description} onChange={(e) => setNewItemForm({ ...newItemForm, description: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white', minHeight: '80px' }} placeholder="Brief description of the dish..." />
                                     </div>
 
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <input type="checkbox" checked={newItemForm.isAvailable} onChange={(e) => setNewItemForm({ ...newItemForm, isAvailable: e.target.checked })} style={{ width: '20px', height: '20px' }} />
+                                        <label style={{ fontSize: '0.9rem' }}>Item Available / In Stock</label>
+                                    </div>
+
                                     <button onClick={() => {
                                         if (newItemForm.name && newItemForm.price && newItemForm.category) {
-                                            const newItem = {
-                                                id: Date.now(),
-                                                ...newItemForm,
-                                                price: parseInt(newItemForm.price)
-                                            };
-                                            saveMenu([...menuItems, newItem]);
+                                            if (editingItem) {
+                                                const updatedMenu = menuItems.map(item =>
+                                                    item.id === editingItem.id ? { ...newItemForm, price: parseInt(newItemForm.price) } : item
+                                                );
+                                                saveMenu(updatedMenu);
+                                            } else {
+                                                const newItem = {
+                                                    id: Date.now(),
+                                                    ...newItemForm,
+                                                    price: parseInt(newItemForm.price)
+                                                };
+                                                saveMenu([...menuItems, newItem]);
+                                            }
                                             setIsAddModalOpen(false);
-                                            setNewItemForm({ name: '', price: '', category: 'RESTAURANT', image: '', description: '' });
+                                            setEditingItem(null);
+                                            setNewItemForm({ name: '', price: '', category: 'RESTAURANT', subCategory: '', image: '', description: '', isAvailable: true });
                                         } else {
                                             alert("Please fill in Name, Price and Category");
                                         }
-                                    }} className="btn-primary" style={{ marginTop: '10px', padding: '18px' }}>Save Item to Menu</button>
+                                    }} className="btn-primary" style={{ marginTop: '10px', padding: '18px' }}>{editingItem ? 'Update Item' : 'Save Item to Menu'}</button>
                                 </div>
                             </motion.div>
                         </>
