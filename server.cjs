@@ -36,6 +36,10 @@ let currentMenu = [
     { id: 21, name: 'Masala maggie', price: 120, category: 'CAFE', subCategory: 'Maggie', isAvailable: true, image: 'https://images.unsplash.com/photo-1612927601601-663840275991?w=500&q=80', description: 'Extra spicy masala maggie.' },
     { id: 22, name: 'vegitable maggie', price: 110, category: 'CAFE', subCategory: 'Maggie', isAvailable: true, image: 'https://images.unsplash.com/photo-1526318896980-cf78c088247c?w=500&q=80', description: 'Healthy maggie loaded with fresh vegetables.' },
     { id: 23, name: 'maggie with cheese', price: 140, category: 'CAFE', subCategory: 'Maggie', isAvailable: true, image: 'https://images.unsplash.com/photo-1619531043563-780ba306354a?w=500&q=80', description: 'Creamy maggie topped with melted cheese.' },
+    { id: 24, name: 'hakka noodels', price: 130, category: 'CAFE', subCategory: 'NOODELS', isAvailable: true, image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=500&q=80', description: 'Classic stir-fried hakka noodles.' },
+    { id: 25, name: 'veg chowmine', price: 140, category: 'CAFE', subCategory: 'NOODELS', isAvailable: true, image: 'https://images.unsplash.com/photo-1617093727343-374698b1b08d?w=500&q=80', description: 'Delicious vegetable chowmein.' },
+    { id: 26, name: 'shejwan noodel', price: 150, category: 'CAFE', subCategory: 'NOODELS', isAvailable: true, image: 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=500&q=80', description: 'Spicy Schezwan style noodles.' },
+    { id: 27, name: 'veg paneer noodels', price: 170, category: 'CAFE', subCategory: 'NOODELS', isAvailable: true, image: 'https://images.unsplash.com/photo-1645177623570-5283899933c7?w=500&q=80', description: 'Stir-fried noodles with fresh paneer cubes.' },
 ];
 
 console.log('--- Server Startup ---');
