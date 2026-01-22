@@ -38,8 +38,10 @@ const AdminDashboard = () => {
         item: 'vegitable',
         amount: '',
         paidBy: '',
+        description: '', // New field
         date: new Date().toISOString().split('T')[0]
     });
+    const [isAudioEnabled, setIsAudioEnabled] = useState(false);
     const audioRef = useRef(null);
     const prevAlertsCount = useRef(0);
 
@@ -66,11 +68,24 @@ const AdminDashboard = () => {
     };
 
     const playNotificationSound = (loop = false) => {
+        if (!isAudioEnabled) return; // Don't play if context not unlocked
         if (!audioRef.current) {
             audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         }
         audioRef.current.loop = loop;
-        audioRef.current.play().catch(e => console.log("Sound play blocked by browser"));
+        audioRef.current.play().catch(e => {
+            console.log("Sound play blocked by browser. Click 'Enable Audio' button.");
+        });
+    };
+
+    const enableAudio = () => {
+        setIsAudioEnabled(true);
+        // Play a silent or very brief sound to unlock
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        audio.volume = 0.01;
+        audio.play().then(() => {
+            console.log("Audio Context Unlocked");
+        }).catch(err => console.log("Unlock failed", err));
     };
 
     const stopNotificationSound = () => {
@@ -246,6 +261,23 @@ const AdminDashboard = () => {
     const todaysSales = salesHistory.filter(s => new Date(s.settledAt).toDateString() === new Date().toDateString());
     const todaysRevenue = todaysSales.reduce((acc, s) => acc + s.total, 0);
 
+    const thisMonthSales = salesHistory.filter(s => {
+        const d = new Date(s.settledAt);
+        const now = new Date();
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    const thisMonthRevenue = thisMonthSales.reduce((acc, s) => acc + s.total, 0);
+
+    const todaysExpenses = expenses.filter(e => new Date(e.date).toDateString() === new Date().toDateString());
+    const todaysExpensesTotal = todaysExpenses.reduce((acc, e) => acc + e.amount, 0);
+
+    const thisMonthExpenses = expenses.filter(e => {
+        const d = new Date(e.date);
+        const now = new Date();
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    const thisMonthExpensesTotal = thisMonthExpenses.reduce((acc, e) => acc + e.amount, 0);
+
     return (
         <div style={{ minHeight: '100vh', background: '#0a0a0a', paddingBottom: '90px' }}>
             <div className="admin-container">
@@ -256,6 +288,23 @@ const AdminDashboard = () => {
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Automated Kitchen System</p>
                     </div>
                     <div className="flex gap-4 items-center">
+                        <button
+                            onClick={enableAudio}
+                            style={{
+                                padding: '8px 12px',
+                                borderRadius: '12px',
+                                border: isAudioEnabled ? '1px solid #4caf50' : '1px solid var(--primary)',
+                                background: isAudioEnabled ? 'rgba(76, 175, 80, 0.1)' : 'rgba(212, 175, 55, 0.1)',
+                                color: isAudioEnabled ? '#4caf50' : 'var(--primary)',
+                                fontSize: '0.75rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                            }}
+                        >
+                            <BellRing size={16} className={isAudioEnabled ? '' : 'ring-animation'} />
+                            {isAudioEnabled ? 'Audio Ready' : 'Enable Bell'}
+                        </button>
                         <button
                             onClick={toggleKitchenStatus}
                             className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${isKitchenOpen
@@ -368,11 +417,13 @@ const AdminDashboard = () => {
                     {activeTab === 'orders' && (
                         <motion.div key="orders" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px' }}>
-                                <div className="glass-card" style={{ padding: '15px' }}>
+                                <div className="glass-card" style={{ padding: '15px', position: 'relative', overflow: 'hidden' }}>
+                                    <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--primary)' }}></div>
                                     <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Pending KOT</p>
                                     <h2 style={{ fontSize: '1.2rem', marginTop: '5px' }}>{orders.filter(o => o.status === 'pending').length}</h2>
                                 </div>
-                                <div className="glass-card" style={{ padding: '15px' }}>
+                                <div className="glass-card" style={{ padding: '15px', position: 'relative', overflow: 'hidden' }}>
+                                    <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#4caf50' }}></div>
                                     <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Today's Sale</p>
                                     <h2 className="gold-text" style={{ fontSize: '1.2rem', marginTop: '5px' }}>₹{todaysRevenue}</h2>
                                 </div>
@@ -431,9 +482,20 @@ const AdminDashboard = () => {
 
                     {activeTab === 'sales' && (
                         <motion.div key="sales" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px' }}>
+                                <div className="glass-card" style={{ padding: '20px', textAlign: 'center' }}>
+                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '5px' }}>DAILY SALE</p>
+                                    <h2 className="gold-text" style={{ fontSize: '1.4rem' }}>₹{todaysRevenue}</h2>
+                                </div>
+                                <div className="glass-card" style={{ padding: '20px', textAlign: 'center' }}>
+                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '5px' }}>MONTHLY SALE</p>
+                                    <h2 className="gold-text" style={{ fontSize: '1.4rem' }}>₹{thisMonthRevenue}</h2>
+                                </div>
+                            </div>
+
                             <div className="glass-card" style={{ padding: '20px', marginBottom: '25px', textAlign: 'center' }}>
-                                <BarChart3 size={32} color="var(--primary)" style={{ margin: '0 auto 10px' }} />
-                                <h2 className="gold-text" style={{ fontSize: '1.8rem' }}>₹{salesHistory.reduce((acc, s) => acc + s.total, 0)}</h2>
+                                <BarChart3 size={24} color="var(--primary)" style={{ margin: '0 auto 10px' }} />
+                                <h2 className="gold-text" style={{ fontSize: '1.6rem' }}>₹{salesHistory.reduce((acc, s) => acc + s.total, 0)}</h2>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Lifetime Sales History</p>
                             </div>
                             <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem' }}><Calendar size={18} /> Past Transactions</h3>
@@ -535,7 +597,7 @@ const AdminDashboard = () => {
                                             />
                                         </div>
                                         <div>
-                                            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '5px', display: 'block' }}>Bear By</label>
+                                            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '5px', display: 'block' }}>By Person</label>
                                             <input
                                                 type="text"
                                                 value={expenseForm.paidBy}
@@ -544,6 +606,16 @@ const AdminDashboard = () => {
                                                 style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white' }}
                                             />
                                         </div>
+                                    </div>
+                                    <div>
+                                        <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '5px', display: 'block' }}>Description (Optional)</label>
+                                        <input
+                                            type="text"
+                                            value={expenseForm.description}
+                                            onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
+                                            placeholder="Details..."
+                                            style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white' }}
+                                        />
                                     </div>
                                     <button
                                         onClick={() => {
@@ -563,14 +635,29 @@ const AdminDashboard = () => {
                                 </div>
                             </div>
 
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '25px' }}>
+                                <div className="glass-card" style={{ padding: '20px', textAlign: 'center', borderLeft: '4px solid #f44336' }}>
+                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '5px' }}>DAILY EXPENSE</p>
+                                    <h2 style={{ fontSize: '1.4rem', color: '#f44336' }}>₹{todaysExpensesTotal}</h2>
+                                </div>
+                                <div className="glass-card" style={{ padding: '20px', textAlign: 'center', borderLeft: '4px solid #f44336' }}>
+                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '5px' }}>MONTHLY EXPENSE</p>
+                                    <h2 style={{ fontSize: '1.4rem', color: '#f44336' }}>₹{thisMonthExpensesTotal}</h2>
+                                </div>
+                            </div>
+
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 {expenses.map(exp => (
                                     <div key={exp.id} className="glass-card" style={{ padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <div>
-                                            <h5 style={{ textTransform: 'capitalize', fontSize: '1rem', fontWeight: 600 }}>{exp.item}</h5>
-                                            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Paid by: {exp.paidBy || 'N/A'} • {new Date(exp.date).toLocaleDateString()}</p>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <h5 style={{ textTransform: 'capitalize', fontSize: '1rem', fontWeight: 600 }}>{exp.item}</h5>
+                                                <span style={{ fontSize: '0.65rem', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>By {exp.paidBy || 'N/A'}</span>
+                                            </div>
+                                            {exp.description && <p style={{ fontSize: '0.8rem', color: 'var(--primary)', marginTop: '4px' }}>{exp.description}</p>}
+                                            <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{new Date(exp.date).toLocaleDateString()}</p>
                                         </div>
-                                        <div style={{ textAlign: 'right' }}>
+                                        <div style={{ textAlign: 'right', marginLeft: '15px' }}>
                                             <span style={{ display: 'block', fontWeight: 800, color: '#f44336' }}>-₹{exp.amount}</span>
                                             <button onClick={() => deleteExpense(exp.id)} style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', marginTop: '5px' }}>Remove</button>
                                         </div>
