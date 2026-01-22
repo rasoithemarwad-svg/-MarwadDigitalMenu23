@@ -1,0 +1,104 @@
+/* Orders Grid Styles */
+.orders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 25px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.order-card {
+    background: rgba(30, 30, 30, 0.85);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(212, 175, 55, 0.3);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(212, 175, 55, 0.1);
+    transition: all 0.3s ease;
+}
+
+.order-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(212, 175, 55, 0.5);
+    box-shadow:
+        0 15px 40px rgba(0, 0, 0, 0.5),
+        0 0 30px rgba(212, 175, 55, 0.2);
+}
+
+.order-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.order-header h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.4rem;
+    color: #d4af37;
+    margin: 0;
+    letter-spacing: 1px;
+}
+
+.order-time {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.9rem;
+    color: #c9b896;
+}
+
+.order-items {
+    margin-bottom: 20px;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+    font-family: 'Cormorant Garamond', serif;
+    color: #c9b896;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.order-footer {
+    padding-top: 15px;
+    border-top: 2px solid rgba(212, 175, 55, 0.3);
+}
+
+.order-total {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-family: 'Cinzel', serif;
+    font-size: 1.2rem;
+    color: #d4af37;
+}
+
+.complete-order-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.1) 100%);
+    border: 2px solid rgba(76, 175, 80, 0.4);
+    border-radius: 10px;
+    color: #4caf50;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
+}
+
+.complete-order-btn:hover {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(76, 175, 80, 0.2) 100%);
+    border-color: rgba(76, 175, 80, 0.6);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+    transform: translateY(-2px);
+}
