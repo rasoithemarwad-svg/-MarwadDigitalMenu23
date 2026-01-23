@@ -178,6 +178,22 @@ if (fs.existsSync(distPath)) {
 
 // PERSISTENCE SETUP
 const DATA_FILE = path.join(__dirname, 'menu_data.json');
+const SETTINGS_FILE = path.join(__dirname, 'settings.json');
+
+let appSettings = { deliveryRadiusKm: 5.0 };
+
+// Load settings from file if exists
+if (fs.existsSync(SETTINGS_FILE)) {
+    try {
+        const settingsData = fs.readFileSync(SETTINGS_FILE, 'utf8');
+        appSettings = JSON.parse(settingsData);
+        console.log('✓ Loaded settings from settings.json');
+    } catch (err) {
+        console.error('Error reading settings file:', err);
+    }
+} else {
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(appSettings, null, 2));
+}
 
 // Load menu from file if exists
 if (fs.existsSync(DATA_FILE)) {
