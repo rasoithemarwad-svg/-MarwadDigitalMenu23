@@ -251,10 +251,12 @@ const CustomerView = () => {
 
                                 <motion.div
                                     drag="x"
+                                    dragDirectionLock
+                                    dragElastic={0.2}
                                     dragConstraints={{ left: 0, right: 0 }}
                                     onDragEnd={(e, { offset, velocity }) => {
                                         const swipe = offset.x;
-                                        const threshold = 50;
+                                        const threshold = 30; // Lowered threshold
                                         if (swipe < -threshold) {
                                             // Swipe Left -> Next SubCategory
                                             const currentIndex = subCategories.indexOf(activeSubCategory);
@@ -269,7 +271,13 @@ const CustomerView = () => {
                                             }
                                         }
                                     }}
-                                    style={{ padding: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}
+                                    style={{
+                                        padding: '20px',
+                                        display: 'grid',
+                                        gridTemplateColumns: '1fr 1fr',
+                                        gap: '15px',
+                                        touchAction: 'pan-y' // Crucial for mobile scroll compatibility
+                                    }}
                                 >
                                     {filteredMenu.map(item => (
                                         <motion.div
