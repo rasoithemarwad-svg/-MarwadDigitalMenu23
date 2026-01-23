@@ -267,7 +267,7 @@ const CustomerView = () => {
 
                                         <div style={{ textAlign: 'center', marginBottom: '40px', marginTop: '30px' }}>
                                             <div style={{ fontSize: '2.4rem', fontWeight: 900, lineHeight: 1.1 }}>
-                                                <span style={{ color: 'var(--primary)', display: 'block' }}>THE MARWAD</span>
+                                                <span style={{ color: 'white', display: 'block' }}>THE MARWAD</span>
                                                 <span style={{ color: '#ff4d4d', fontFamily: "'Hind', sans-serif" }}>रसोई</span>
                                             </div>
                                             <p style={{ color: 'var(--text-secondary)', letterSpacing: '4px', marginTop: '10px', fontSize: '0.7rem', opacity: 0.8 }}>DIGITAL MENU SYSTEM</p>
@@ -277,7 +277,10 @@ const CustomerView = () => {
                                         </div>
 
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                            {ACTIONS.map(action => (
+                                            {(tableId === 'delivery'
+                                                ? ACTIONS.filter(a => ['CAFE', 'RESTAURANT', 'RATE'].includes(a.id))
+                                                : ACTIONS
+                                            ).map(action => (
                                                 <motion.button
                                                     key={action.id}
                                                     whileHover={{ scale: 1.05 }}
