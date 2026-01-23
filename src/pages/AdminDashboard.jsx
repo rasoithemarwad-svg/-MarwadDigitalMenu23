@@ -91,7 +91,10 @@ const AdminDashboard = () => {
         socket.on('new-service-alert', (newAlert) => {
             setServiceAlerts(prev => {
                 if (prev.find(a => a.id === newAlert.id)) return prev;
-                return [newAlert, ...prev];
+                const updated = [newAlert, ...prev];
+                const existing = JSON.parse(localStorage.getItem('marwad_service_alerts') || '[]');
+                localStorage.setItem('marwad_service_alerts', JSON.stringify([newAlert, ...existing.filter(a => a.id !== newAlert.id)]));
+                return updated;
             });
         });
 
@@ -152,6 +155,9 @@ const AdminDashboard = () => {
     const clearAlert = (alertId) => {
         setServiceAlerts(prev => {
             const updated = prev.filter(a => a.id !== alertId);
+            const existing = JSON.parse(localStorage.getItem('marwad_service_alerts') || '[]');
+            const filtered = existing.map(a => a.id === alertId ? { ...a, status: 'cleared' } : a);
+            localStorage.setItem('marwad_service_alerts', JSON.stringify(filtered));
             return updated;
         });
     };
