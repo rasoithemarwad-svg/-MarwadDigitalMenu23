@@ -151,8 +151,11 @@ const CustomerView = () => {
                                 style={{ padding: '30px 20px' }}
                             >
                                 <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                                    <h1 className="gold-text" style={{ fontSize: '2.5rem', marginBottom: '10px' }}>MARWAD</h1>
-                                    <p style={{ color: 'var(--text-secondary)', letterSpacing: '2px' }}>DIGITAL MENU SYSTEM</p>
+                                    <div style={{ fontSize: '2.4rem', fontWeight: 900, lineHeight: 1.1 }}>
+                                        <span style={{ color: 'var(--primary)', display: 'block' }}>THE MARWAD</span>
+                                        <span style={{ color: '#ff4d4d', fontFamily: "'Hind', sans-serif" }}>रसोई</span>
+                                    </div>
+                                    <p style={{ color: 'var(--text-secondary)', letterSpacing: '4px', marginTop: '10px', fontSize: '0.7rem', opacity: 0.8 }}>DIGITAL MENU SYSTEM</p>
                                     <div style={{ marginTop: '15px', display: 'inline-block', padding: '5px 15px', borderRadius: '20px', background: 'var(--glass)', fontSize: '0.8rem' }}>
                                         TABLE NUMBER: <span style={{ color: 'var(--primary)', fontWeight: 800 }}>{tableId}</span>
                                     </div>
