@@ -131,3 +131,17 @@ body {
     background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
   }
 }
+
+@media (max-width: 480px) {
+  .mobile-frame {
+    max-width: 100% !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    height: 100vh !important;
+  }
+
+  .app-container {
+    padding: 0 !important;
+  }
+}
