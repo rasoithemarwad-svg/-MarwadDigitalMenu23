@@ -224,7 +224,7 @@ const CustomerView = () => {
 
                                     {/* Sub-Category Filter Bar */}
                                     {subCategories.length > 1 && (
-                                        <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '15px 0 5px', color: 'white', scrollbarWidth: 'none' }}>
+                                        <div className="no-scrollbar" style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '15px 0 5px', color: 'white' }}>
                                             {subCategories.map(sub => (
                                                 <button
                                                     key={sub}
@@ -238,6 +238,7 @@ const CustomerView = () => {
                                                         fontSize: '0.75rem',
                                                         fontWeight: 800,
                                                         whiteSpace: 'nowrap',
+                                                        flexShrink: 0,
                                                         transition: 'var(--transition)'
                                                     }}
                                                 >
@@ -251,7 +252,6 @@ const CustomerView = () => {
                                 <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                     {filteredMenu.map(item => (
                                         <motion.div
-                                            layout
                                             key={item.id}
                                             className="glass-card"
                                             style={{ display: 'flex', flexDirection: 'column' }}

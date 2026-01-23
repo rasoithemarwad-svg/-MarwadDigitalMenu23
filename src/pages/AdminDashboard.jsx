@@ -431,7 +431,7 @@ const AdminDashboard = () => {
 
                             <div style={{
                                 display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                                gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
                                 gap: '20px'
                             }}>
                                 {orders.map((order, idx) => (
@@ -533,7 +533,7 @@ const AdminDashboard = () => {
                                 {['HUT', 'RESTAURANT', 'CAFE'].map(cat => (
                                     <div key={cat} style={{ gridColumn: '1 / -1' }}>
                                         <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--glass-border)', paddingBottom: '5px', marginBottom: '15px', fontSize: '1rem' }}>{cat} CATEGORY</h4>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '15px' }}>
                                             {menuItems.filter(item => item.category === cat).map(item => (
                                                 <div key={item.id} className="glass-card" style={{ display: 'flex', padding: '15px', gap: '15px', alignItems: 'center' }}>
                                                     <img src={item.image} style={{ width: '60px', height: '60px', borderRadius: '10px', objectFit: 'cover' }} alt="" />
