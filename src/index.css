@@ -91,11 +91,11 @@ body {
 
 .mobile-frame {
   width: 100%;
-  max-width: 480px;
+  max-width: 500px;
   background-color: var(--bg-dark);
   min-height: 100vh;
   position: relative;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+  transition: var(--transition);
 }
 
 /* Admin Dashboard Wide Layout */

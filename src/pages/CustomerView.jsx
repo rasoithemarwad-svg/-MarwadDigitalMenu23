@@ -181,8 +181,8 @@ const CustomerView = () => {
                                         >
                                             <div style={{ color: action.color }}>{action.icon}</div>
                                             <div>
-                                                <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'white' }}>{action.label}</div>
-                                                <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '4px' }}>{action.desc}</div>
+                                                <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'white' }}>{action.label}</div>
+                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>{action.desc}</div>
                                             </div>
                                         </motion.button>
                                     ))}
@@ -260,13 +260,13 @@ const CustomerView = () => {
                                                 <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                             </div>
                                             <div style={{ padding: '12px' }}>
-                                                <h3 style={{ fontSize: '0.8rem', marginBottom: '8px', height: '32px', overflow: 'hidden' }}>{item.name}</h3>
+                                                <h3 style={{ fontSize: '1rem', marginBottom: '8px', height: '40px', overflow: 'hidden', fontWeight: 700 }}>{item.name}</h3>
 
                                                 {item.portions ? (
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                                         {item.portions.map(p => (
                                                             <div key={p.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass)', padding: '5px 8px', borderRadius: '8px' }}>
-                                                                <span style={{ fontSize: '0.7rem', fontWeight: 600 }}>{p.label} <span style={{ color: 'var(--primary)' }}>₹{p.price}</span></span>
+                                                                <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{p.label} <span style={{ color: 'var(--primary)' }}>₹{p.price}</span></span>
                                                                 <motion.button
                                                                     whileTap={{ scale: 0.8 }}
                                                                     onClick={() => isKitchenOpen ? addToCart(item, p) : alert('Kitchen is closed!')}
@@ -279,7 +279,7 @@ const CustomerView = () => {
                                                     </div>
                                                 ) : (
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '0.9rem' }}>₹{item.price}</span>
+                                                        <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.1rem' }}>₹{item.price}</span>
                                                         <motion.button
                                                             whileTap={{ scale: 0.8 }}
                                                             onClick={() => isKitchenOpen ? addToCart(item) : alert('Kitchen is closed!')}
