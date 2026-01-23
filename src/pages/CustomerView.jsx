@@ -249,7 +249,28 @@ const CustomerView = () => {
                                     )}
                                 </header>
 
-                                <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                <motion.div
+                                    drag="x"
+                                    dragConstraints={{ left: 0, right: 0 }}
+                                    onDragEnd={(e, { offset, velocity }) => {
+                                        const swipe = offset.x;
+                                        const threshold = 50;
+                                        if (swipe < -threshold) {
+                                            // Swipe Left -> Next SubCategory
+                                            const currentIndex = subCategories.indexOf(activeSubCategory);
+                                            if (currentIndex < subCategories.length - 1) {
+                                                setActiveSubCategory(subCategories[currentIndex + 1]);
+                                            }
+                                        } else if (swipe > threshold) {
+                                            // Swipe Right -> Prev SubCategory
+                                            const currentIndex = subCategories.indexOf(activeSubCategory);
+                                            if (currentIndex > 0) {
+                                                setActiveSubCategory(subCategories[currentIndex - 1]);
+                                            }
+                                        }
+                                    }}
+                                    style={{ padding: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}
+                                >
                                     {filteredMenu.map(item => (
                                         <motion.div
                                             key={item.id}
@@ -292,7 +313,7 @@ const CustomerView = () => {
                                             </div>
                                         </motion.div>
                                     ))}
-                                </div>
+                                </motion.div>
                             </motion.div>
                         )}
                     </AnimatePresence>
