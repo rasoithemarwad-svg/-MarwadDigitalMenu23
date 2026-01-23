@@ -41,7 +41,6 @@ const AdminDashboard = () => {
         description: '', // New field
         date: new Date().toISOString().split('T')[0]
     });
-    const [isAudioEnabled, setIsAudioEnabled] = useState(false);
     const audioRef = useRef(null);
     const prevAlertsCount = useRef(0);
 
@@ -68,24 +67,13 @@ const AdminDashboard = () => {
     };
 
     const playNotificationSound = (loop = false) => {
-        if (!isAudioEnabled) return; // Don't play if context not unlocked
         if (!audioRef.current) {
             audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
         }
         audioRef.current.loop = loop;
         audioRef.current.play().catch(e => {
-            console.log("Sound play blocked by browser. Click 'Enable Audio' button.");
+            console.log("Sound play blocked by browser. Please interact with the page first.");
         });
-    };
-
-    const enableAudio = () => {
-        setIsAudioEnabled(true);
-        // Play a silent or very brief sound to unlock
-        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-        audio.volume = 0.01;
-        audio.play().then(() => {
-            console.log("Audio Context Unlocked");
-        }).catch(err => console.log("Unlock failed", err));
     };
 
     const stopNotificationSound = () => {
@@ -288,23 +276,6 @@ const AdminDashboard = () => {
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Automated Kitchen System</p>
                     </div>
                     <div className="flex gap-4 items-center">
-                        <button
-                            onClick={enableAudio}
-                            style={{
-                                padding: '8px 12px',
-                                borderRadius: '12px',
-                                border: isAudioEnabled ? '1px solid #4caf50' : '1px solid var(--primary)',
-                                background: isAudioEnabled ? 'rgba(76, 175, 80, 0.1)' : 'rgba(212, 175, 55, 0.1)',
-                                color: isAudioEnabled ? '#4caf50' : 'var(--primary)',
-                                fontSize: '0.75rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '5px'
-                            }}
-                        >
-                            <BellRing size={16} className={isAudioEnabled ? '' : 'ring-animation'} />
-                            {isAudioEnabled ? 'Audio Ready' : 'Enable Bell'}
-                        </button>
                         <button
                             onClick={toggleKitchenStatus}
                             className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${isKitchenOpen
