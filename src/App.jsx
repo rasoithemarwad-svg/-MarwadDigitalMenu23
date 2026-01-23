@@ -1,21 +1,25 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import CustomerView from './pages/CustomerView';
+import AppHome from './pages/AppHome';
 import AdminDashboard from './pages/AdminDashboard';
+import CustomerView from './pages/CustomerView';
 import './index.css';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Customer view with table ID param */}
+        {/* Admin Dashboard is now the primary landing page */}
+        <Route path="/" element={<AdminDashboard />} />
+
+        {/* Customer view remains accessible via QR code / URL params */}
         <Route path="/table/:tableId" element={<CustomerView />} />
-        
-        {/* Default route for customers without table ID */}
-        <Route path="/" element={<Navigate to="/table/1" replace />} />
-        
-        {/* Admin Dashboard */}
+
+        {/* Maintain /admin path for convenience */}
         <Route path="/admin" element={<AdminDashboard />} />
+
+        {/* Old landing page moved to /home if ever needed */}
+        <Route path="/home" element={<AppHome />} />
       </Routes>
     </BrowserRouter>
   );

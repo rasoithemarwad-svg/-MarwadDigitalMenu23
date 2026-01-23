@@ -36,6 +36,13 @@
     </application>
 
     <!-- Permissions -->
-
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Location Permissions for ordering restriction -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
+    <!-- Camera Permission for QR Scanning -->
+    <uses-permission android:name="android.permission.CAMERA" />
 </manifest>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, CheckCircle, Clock, Timer, User, RefreshCcw, QrCode, ClipboardList, ScanLine, Receipt, BarChart3, Calendar, ChevronRight, BellRing, X, Utensils, Plus, Trash2 } from 'lucide-react';
 import { io } from 'socket.io-client';
@@ -8,6 +9,7 @@ import QRScanner from '../components/QRScanner';
 const socket = io(); // Connects to the same host that served this page
 
 const AdminDashboard = () => {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('orders'); // 'orders', 'billing', 'sales', 'menu', 'expenses', 'qr'
     const [orders, setOrders] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
@@ -41,6 +43,14 @@ const AdminDashboard = () => {
         description: '', // New field
         date: new Date().toISOString().split('T')[0]
     });
+
+    // --- REPORTS STATE ---
+    const [reportDateRange, setReportDateRange] = useState({ start: '', end: '' });
+    const [reportData, setReportData] = useState({ sales: 0, expenses: 0, profit: 0, salesList: [], expenseList: [] });
+    // ---------------------
+
+    const [appSettings, setAppSettings] = useState({ deliveryRadiusKm: 5.0 }); // Default settings
+
     const audioRef = useRef(null);
     const prevAlertsCount = useRef(0);
 
@@ -66,6 +76,48 @@ const AdminDashboard = () => {
         setTimeout(() => setIsRefreshing(false), 500);
     };
 
+    const downloadReport = (type) => { // 'sales' or 'expenses'
+        let data = [];
+        let headers = [];
+        let filename = '';
+
+        if (type === 'sales') {
+            data = salesHistory;
+            headers = ['Date', 'Table ID', 'Items', 'Total'];
+            filename = 'Sales_Report';
+        } else if (type === 'expenses') {
+            data = expenses;
+            headers = ['Date', 'Item', 'Amount', 'Paid By', 'Description'];
+            filename = 'Expenses_Report';
+        }
+
+        if (data.length === 0) return alert("No data to export");
+
+        const csvContent = [
+            headers.join(','),
+            ...data.map(row => {
+                if (type === 'sales') {
+                    const date = new Date(row.settledAt).toLocaleDateString();
+                    const items = row.items.map(i => `${i.qty}x ${i.name}`).join(' | ').replace(/,/g, '');
+                    return `${date},${row.tableId},"${items}",${row.total}`;
+                } else {
+                    const date = new Date(row.date).toLocaleDateString();
+                    return `${date},${row.item},${row.amount},${row.paidBy},"${row.description || ''}"`;
+                }
+            })
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${filename}_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const playNotificationSound = (loop = false) => {
         if (!audioRef.current) {
             audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -85,9 +137,24 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         fetchData();
-        const interval = setInterval(fetchData, 10000); // Poll orders less frequently
 
-        // Socket listener for real-time service alerts
+        // Restore Server State
+        const savedMenu = JSON.parse(localStorage.getItem('marwad_menu_items') || '[]');
+        if (savedMenu.length > 0) {
+            socket.emit('update-menu', savedMenu);
+        } else {
+            socket.emit('get-menu');
+        }
+
+        socket.emit('get-settings');
+        socket.emit('get-sales');
+
+        const interval = setInterval(fetchData, 10000);
+
+        socket.on('settings-updated', (newSettings) => {
+            setAppSettings(newSettings);
+        });
+
         socket.on('new-service-alert', (newAlert) => {
             setServiceAlerts(prev => {
                 if (prev.find(a => a.id === newAlert.id)) return prev;
@@ -98,7 +165,6 @@ const AdminDashboard = () => {
             });
         });
 
-        // Socket listener for real-time orders
         socket.on('new-order-alert', (newOrder) => {
             setOrders(prev => {
                 const existing = JSON.parse(localStorage.getItem('marwad_orders') || '[]');
@@ -106,35 +172,34 @@ const AdminDashboard = () => {
                 localStorage.setItem('marwad_orders', JSON.stringify([newOrder, ...existing]));
                 return updated;
             });
-
-            // Add to order alerts popup
             const orderAlert = { id: Date.now(), tableId: newOrder.tableId, total: newOrder.total };
             setOrderAlerts(prev => [orderAlert, ...prev]);
-
-            // Play a quick sound for order (non-looping)
-            if (serviceAlerts.length === 0) {
-                playNotificationSound(false);
-            }
-        });
-
-        // Socket listener for real-time menu updates
-        socket.on('menu-updated', (newMenu) => {
-            setMenuItems(newMenu);
-            localStorage.setItem('marwad_menu_items', JSON.stringify(newMenu));
+            if (serviceAlerts.length === 0) playNotificationSound(false);
         });
 
         socket.on('kitchen-status-updated', (status) => {
             setIsKitchenOpen(status);
         });
 
+        socket.on('sales-updated', (serverSales) => {
+            setSalesHistory(serverSales);
+            localStorage.setItem('marwad_sales_history', JSON.stringify(serverSales));
+        });
+
         return () => {
             clearInterval(interval);
+            socket.off('settings-updated');
             socket.off('new-service-alert');
             socket.off('new-order-alert');
-            socket.off('menu-updated');
             socket.off('kitchen-status-updated');
+            socket.off('sales-updated');
         };
-    }, [serviceAlerts.length, orders.length]); // Fixed dependency array
+    }, [serviceAlerts.length, orders.length]);
+
+    const saveSettings = (newSettings) => {
+        setAppSettings(newSettings);
+        socket.emit('update-settings', newSettings);
+    };
 
     // Handle persistent ringing
     useEffect(() => {
@@ -225,9 +290,11 @@ const AdminDashboard = () => {
             settledAt: new Date().toISOString(),
         };
 
-        const updatedHistory = [saleRecord, ...salesHistory];
         localStorage.setItem('marwad_sales_history', JSON.stringify(updatedHistory));
         setSalesHistory(updatedHistory);
+
+        // Sync with server
+        socket.emit('save-sale', saleRecord);
 
         const remainingOrders = orders.filter(o => o.tableId !== tableId);
         localStorage.setItem('marwad_orders', JSON.stringify(remainingOrders));
@@ -271,6 +338,35 @@ const AdminDashboard = () => {
         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     });
     const thisMonthExpensesTotal = thisMonthExpenses.reduce((acc, e) => acc + e.amount, 0);
+
+    const generateReport = () => {
+        if (!reportDateRange.start || !reportDateRange.end) return alert("Please select start and end dates");
+
+        const start = new Date(reportDateRange.start);
+        const end = new Date(reportDateRange.end);
+        end.setHours(23, 59, 59, 999); // Include the entire end day
+
+        const filteredSales = salesHistory.filter(s => {
+            const d = new Date(s.settledAt);
+            return d >= start && d <= end;
+        });
+
+        const filteredExpenses = expenses.filter(e => {
+            const d = new Date(e.date);
+            return d >= start && d <= end;
+        });
+
+        const totalSales = filteredSales.reduce((acc, s) => acc + s.total, 0);
+        const totalExpenses = filteredExpenses.reduce((acc, e) => acc + e.amount, 0);
+
+        setReportData({
+            sales: totalSales,
+            expenses: totalExpenses,
+            profit: totalSales - totalExpenses,
+            salesList: filteredSales,
+            expenseList: filteredExpenses
+        });
+    };
 
     return (
         <div style={{ minHeight: '100vh', background: '#0a0a0a', paddingBottom: '90px' }}>
@@ -322,6 +418,14 @@ const AdminDashboard = () => {
                 <div style={{ position: 'fixed', top: '20px', left: '20px', right: '20px', zIndex: 2000, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <AnimatePresence>
                         {/* Service Bell Alerts (Persistent & Ringing) */}
+                        {serviceAlerts.length > 0 && (
+                            <button onClick={() => {
+                                setServiceAlerts([]);
+                                localStorage.setItem('marwad_service_alerts', '[]');
+                            }} style={{ alignSelf: 'flex-end', background: 'white', color: 'red', border: 'none', padding: '5px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 'bold', boxShadow: '0 2px 5px rgba(0,0,0,0.2)', marginBottom: '-5px', zIndex: 2001, cursor: 'pointer' }}>
+                                Clear All Bells
+                            </button>
+                        )}
                         {serviceAlerts.map(alert => (
                             <motion.div
                                 key={alert.id}
@@ -493,8 +597,48 @@ const AdminDashboard = () => {
                     {activeTab === 'qr' && (
                         <motion.div key="qr" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                                <section><h3 className="gold-text" style={{ marginBottom: '15px' }}>Scan Any QR</h3><QRScanner onScanSuccess={(txt) => alert(`Scanned: ${txt}`)} /></section>
+                                <section><h3 className="gold-text" style={{ marginBottom: '15px' }}>Scan Any QR</h3>
+                                    <QRScanner onScanSuccess={(txt) => {
+                                        // Handle Table Redirect logic
+                                        if (txt.includes('/table/')) {
+                                            const parts = txt.split('/table/');
+                                            if (parts.length > 1) {
+                                                const tableId = parts[1];
+                                                if (tableId) {
+                                                    const confirmNav = window.confirm(`Identify Table #${tableId}? Redirecting to Customer View...`);
+                                                    if (confirmNav) {
+                                                        navigate(`/table/${tableId}`);
+                                                    }
+                                                    return;
+                                                }
+                                            }
+                                        }
+                                        alert(`Scanned: ${txt}`);
+                                    }} />
+                                </section>
                                 <section><QRManager /></section>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {activeTab === 'settings' && (
+                        <motion.div key="settings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                            <div className="glass-card" style={{ padding: '20px', marginBottom: '20px' }}>
+                                <h3 className="gold-text" style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <User size={20} /> System Settings
+                                </h3>
+
+                                <div style={{ marginBottom: '20px' }}>
+                                    <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Delivery / Testing Range (km)</label>
+                                    <p style={{ fontSize: '0.75rem', color: '#aaa', marginBottom: '10px' }}>Maximum distance allowed for 'Delivery' QR code scans.</p>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        value={appSettings.deliveryRadiusKm}
+                                        onChange={(e) => saveSettings({ ...appSettings, deliveryRadiusKm: parseFloat(e.target.value) })}
+                                        style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white' }}
+                                    />
+                                </div>
                             </div>
                         </motion.div>
                     )}
@@ -646,6 +790,78 @@ const AdminDashboard = () => {
                     )}
                 </AnimatePresence>
 
+                <AnimatePresence>
+                    {activeTab === 'reports' && (
+                        <motion.div key="reports" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                            <div className="glass-card" style={{ padding: '20px', marginBottom: '25px' }}>
+                                <h3 className="gold-text" style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <BarChart3 size={20} /> Financial Reports
+                                </h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                                    <div>
+                                        <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>Start Date</label>
+                                        <input type="date" value={reportDateRange.start} onChange={(e) => setReportDateRange({ ...reportDateRange, start: e.target.value })} style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '10px', color: 'white' }} />
+                                    </div>
+                                    <div>
+                                        <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>End Date</label>
+                                        <input type="date" value={reportDateRange.end} onChange={(e) => setReportDateRange({ ...reportDateRange, end: e.target.value })} style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '10px', color: 'white' }} />
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button onClick={generateReport} className="btn-primary" style={{ flex: 1, padding: '12px' }}>Generate Report</button>
+                                    <button onClick={() => downloadReport('sales')} className="glass-card" style={{ padding: '12px', border: '1px solid #4caf50', color: '#4caf50', fontWeight: 'bold' }}>Export Sales (Excel)</button>
+                                    <button onClick={() => downloadReport('expenses')} className="glass-card" style={{ padding: '12px', border: '1px solid #f44336', color: '#f44336', fontWeight: 'bold' }}>Export Expense (Excel)</button>
+                                </div>
+                            </div>
+
+                            {reportData.sales > 0 || reportData.expenses > 0 ? (
+                                <>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '25px' }}>
+                                        <div className="glass-card" style={{ padding: '15px', textAlign: 'center' }}>
+                                            <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>SALES</p>
+                                            <h3 style={{ color: '#4caf50', fontSize: '1.1rem' }}>₹{reportData.sales}</h3>
+                                        </div>
+                                        <div className="glass-card" style={{ padding: '15px', textAlign: 'center' }}>
+                                            <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>EXPENSES</p>
+                                            <h3 style={{ color: '#f44336', fontSize: '1.1rem' }}>₹{reportData.expenses}</h3>
+                                        </div>
+                                        <div className="glass-card" style={{ padding: '15px', textAlign: 'center', background: reportData.profit >= 0 ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)' }}>
+                                            <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>NET PROFIT</p>
+                                            <h3 style={{ color: reportData.profit >= 0 ? '#4caf50' : '#f44336', fontSize: '1.1rem' }}>
+                                                {reportData.profit >= 0 ? '+' : ''}₹{reportData.profit}
+                                            </h3>
+                                        </div>
+                                    </div>
+
+                                    <h4 className="gold-text" style={{ marginBottom: '15px', fontSize: '1rem' }}>Detailed Breakdown</h4>
+
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <h5 style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '10px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '5px' }}>Sales Transactions ({reportData.salesList.length})</h5>
+                                        {reportData.salesList.map(sale => (
+                                            <div key={sale.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '8px 0', borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
+                                                <span>Table #{sale.tableId} <span style={{ opacity: 0.5 }}>({new Date(sale.settledAt).toLocaleDateString()})</span></span>
+                                                <span style={{ color: '#4caf50' }}>+₹{sale.total}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div>
+                                        <h5 style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '10px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '5px' }}>Expense Transactions ({reportData.expenseList.length})</h5>
+                                        {reportData.expenseList.map(exp => (
+                                            <div key={exp.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '8px 0', borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
+                                                <span>{exp.item} <span style={{ opacity: 0.5 }}>({new Date(exp.date).toLocaleDateString()})</span></span>
+                                                <span style={{ color: '#f44336' }}>-₹{exp.amount}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            ) : (
+                                <p style={{ textAlign: 'center', color: 'var(--text-secondary)', opacity: 0.7, padding: '20px' }}>Select dates and click Generate to view the report.</p>
+                            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 {/* Settle Modal */}
                 {selectedTableBill && (
                     <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'var(--bg-card)', borderTopLeftRadius: '30px', borderTopRightRadius: '30px', zIndex: 1001, padding: '30px 20px', maxHeight: '80vh', overflowY: 'auto' }}>
@@ -670,7 +886,9 @@ const AdminDashboard = () => {
                     <button onClick={() => setActiveTab('billing')} style={{ background: 'none', border: 'none', color: activeTab === 'billing' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Receipt size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Billing</span></button>
                     <button onClick={() => setActiveTab('menu')} style={{ background: 'none', border: 'none', color: activeTab === 'menu' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Utensils size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Menu</span></button>
                     <button onClick={() => setActiveTab('expenses')} style={{ background: 'none', border: 'none', color: activeTab === 'expenses' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Receipt size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Exp.</span></button>
+                    <button onClick={() => setActiveTab('reports')} style={{ background: 'none', border: 'none', color: activeTab === 'reports' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><BarChart3 size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Reports</span></button>
                     <button onClick={() => setActiveTab('qr')} style={{ background: 'none', border: 'none', color: activeTab === 'qr' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><QrCode size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>QR</span></button>
+                    <button onClick={() => setActiveTab('settings')} style={{ background: 'none', border: 'none', color: activeTab === 'settings' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><User size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>System</span></button>
                 </div>
 
                 {/* Add/Edit Item Modal */}
@@ -712,7 +930,8 @@ const AdminDashboard = () => {
 
                                     <div>
                                         <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Image URL</label>
-                                        <input type="text" value={newItemForm.image} onChange={(e) => setNewItemForm({ ...newItemForm, image: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white' }} placeholder="https://images.unsplash.com/..." />
+                                        <input type="text" value={newItemForm.image} onChange={(e) => setNewItemForm({ ...newItemForm, image: e.target.value })} style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white' }} placeholder="Paste Image Link (e.g. from Google Images)..." />
+                                        <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '5px' }}>Tip: Right-click any image on Google -&gt; "Copy Image Link" -&gt; Paste here.</p>
                                     </div>
 
                                     <div>

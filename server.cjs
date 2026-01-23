@@ -173,8 +173,24 @@ console.log('Checking dist folder at:', distPath);
 
 if (fs.existsSync(distPath)) {
     console.log('✓ dist folder found');
-} else {
     console.warn('! WARNING: dist folder NOT found. Run "npm run build" first.');
+}
+
+// PERSISTENCE SETUP
+const DATA_FILE = path.join(__dirname, 'menu_data.json');
+
+// Load menu from file if exists
+if (fs.existsSync(DATA_FILE)) {
+    try {
+        const fileData = fs.readFileSync(DATA_FILE, 'utf8');
+        currentMenu = JSON.parse(fileData);
+        console.log('✓ Loaded menu from menu_data.json');
+    } catch (err) {
+        console.error('Error reading data file:', err);
+    }
+} else {
+    // Initial Save
+    fs.writeFileSync(DATA_FILE, JSON.stringify(currentMenu, null, 2));
 }
 
 // Health check route
@@ -222,7 +238,7 @@ io.on('connection', (socket) => {
     });
 
     // Provide current status to new connections
-    socket.emit('menu-updated', currentMenu);
+    // socket.emit('menu-updated', currentMenu); // REMOVED: Prevent overwriting client local storage with default menu on restart
     socket.emit('kitchen-status-updated', isKitchenOpen);
 
     socket.on('get-menu', () => {
@@ -232,6 +248,14 @@ io.on('connection', (socket) => {
     socket.on('update-menu', (newMenu) => {
         console.log('Global Menu Updated');
         currentMenu = newMenu;
+
+        // Persist to file
+        try {
+            fs.writeFileSync(DATA_FILE, JSON.stringify(currentMenu, null, 2));
+        } catch (err) {
+            console.error('Error saving menu to file:', err);
+        }
+
         io.emit('menu-updated', currentMenu);
     });
 
@@ -239,6 +263,24 @@ io.on('connection', (socket) => {
         console.log('Kitchen Status Updated:', status);
         isKitchenOpen = status;
         io.emit('kitchen-status-updated', isKitchenOpen);
+    });
+
+    // SETTINGS SYNC
+    socket.on('get-settings', () => {
+        socket.emit('settings-updated', appSettings);
+    });
+
+    socket.on('update-settings', (newSettings) => {
+        console.log('Settings Updated:', newSettings);
+        appSettings = newSettings;
+
+        try {
+            fs.writeFileSync(SETTINGS_FILE, JSON.stringify(appSettings, null, 2));
+        } catch (err) {
+            console.error('Error saving settings to file:', err);
+        }
+
+        io.emit('settings-updated', appSettings);
     });
 
     socket.on('disconnect', () => {

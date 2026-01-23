@@ -64,6 +64,50 @@ const QRManager = () => {
             </div>
 
             <h3 className="gold-text" style={{ fontSize: '1.2rem', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Smartphone size={20} /> Special QRs
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
+                {/* DELIVERY QR */}
+                <div className="glass-card" style={{ padding: '15px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <p style={{ fontSize: '0.8rem', marginBottom: '12px', fontWeight: 800, color: '#4caf50' }}>DELIVERY / TAKEAWAY</p>
+                    <div style={{ background: 'white', padding: '12px', borderRadius: '15px' }}>
+                        <QRCodeSVG
+                            id="qr-table-delivery"
+                            value={`${baseUrl}/table/delivery`}
+                            size={100}
+                            level="H"
+                        />
+                    </div>
+                    <button
+                        onClick={() => downloadQR('delivery')}
+                        style={{ marginTop: '15px', width: '100%', padding: '10px', borderRadius: '10px', border: 'none', background: 'var(--primary)', fontWeight: 700 }}
+                    >
+                        <Download size={14} /> PNG
+                    </button>
+                </div>
+
+                {/* TESTING QR */}
+                <div className="glass-card" style={{ padding: '15px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <p style={{ fontSize: '0.8rem', marginBottom: '12px', fontWeight: 800, color: '#ff4d4d' }}>TESTING (NO LOCATION)</p>
+                    <div style={{ background: 'white', padding: '12px', borderRadius: '15px' }}>
+                        <QRCodeSVG
+                            id="qr-table-testing"
+                            value={`${baseUrl}/table/testing`}
+                            size={100}
+                            level="H"
+                        />
+                    </div>
+                    <button
+                        onClick={() => downloadQR('testing')}
+                        style={{ marginTop: '15px', width: '100%', padding: '10px', borderRadius: '10px', border: 'none', background: 'var(--primary)', fontWeight: 700 }}
+                    >
+                        <Download size={14} /> PNG
+                    </button>
+                </div>
+            </div>
+
+            <h3 className="gold-text" style={{ fontSize: '1.2rem', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Smartphone size={20} /> Table QR Grid (1-20)
             </h3>
 
