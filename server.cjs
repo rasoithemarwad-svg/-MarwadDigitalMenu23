@@ -16,6 +16,7 @@ const Expense = require('./models/Expense.cjs');
 const Setting = require('./models/Setting.cjs');
 
 const app = express();
+app.get('/health', (req, res) => res.status(200).send('OK')); // Immediate health check response
 app.use(cors());
 app.use(express.json());
 
@@ -70,7 +71,6 @@ async function initializeData() {
 }
 
 // Routes
-app.get('/health', (req, res) => res.status(200).send('OK'));
 app.use(express.static(distPath));
 
 app.get('*', (req, res) => {
