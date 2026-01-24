@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const mongoose = require('mongoose');
+const https = require('https');
 
 // Models
 const MenuItem = require('./models/MenuItem.cjs');
@@ -24,22 +25,25 @@ const distPath = path.join(__dirname, 'dist');
 // Global States
 let isKitchenOpen = true;
 
-// MongoDB Connection with Stable API
-mongoose.connect(process.env.MONGODB_URI, {
-    serverApi: {
-        version: '1',
-        strict: true,
-        deprecationErrors: true,
-    }
-})
-    .then(() => {
-        console.log('✓ Connected to MongoDB');
-        initializeData();
+// MongoDB Connection safely
+if (!process.env.MONGODB_URI) {
+    console.error('✗ CRITICAL: MONGODB_URI is not defined in environment variables!');
+} else {
+    mongoose.connect(process.env.MONGODB_URI, {
+        serverApi: {
+            version: '1',
+            strict: true,
+            deprecationErrors: true,
+        }
     })
-    .catch(err => {
-        console.error('✗ Initial MongoDB connection error:', err.message);
-        console.log('Please ensure MONGODB_URI is correctly set in your .env file.');
-    });
+        .then(() => {
+            console.log('✓ Connected to MongoDB');
+            initializeData();
+        })
+        .catch(err => {
+            console.error('✗ Initial MongoDB connection error:', err.message);
+        });
+}
 
 // Port Data from JSON to DB if empty
 async function initializeData() {
@@ -92,7 +96,7 @@ io.on('connection', async (socket) => {
     settings.forEach(s => settingsObj[s.key] = s.value);
     socket.emit('settings-updated', settingsObj);
 
-    // Service Alerts (In-memory for now as they are ephemeral, or could be stored in DB if needed)
+    // Service Alerts
     socket.on('service-call', (data) => {
         io.emit('new-service-alert', {
             id: Date.now(),
@@ -113,7 +117,6 @@ io.on('connection', async (socket) => {
             const newOrder = new Order(orderData);
             await newOrder.save();
             io.emit('new-order-alert', newOrder);
-            // Also notify all admins to update their lists
             const allOrders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
             io.emit('orders-updated', allOrders);
         } catch (err) {
@@ -158,7 +161,6 @@ io.on('connection', async (socket) => {
     socket.on('save-sale', async (saleData) => {
         const newSale = new Sale(saleData);
         await newSale.save();
-        // Clear active orders for this table
         await Order.updateMany({ tableId: saleData.tableId, status: 'completed' }, { status: 'cancelled' });
         const updatedSales = await Sale.find({}).sort({ settledAt: -1 });
         io.emit('sales-updated', updatedSales);
@@ -202,41 +204,39 @@ io.on('connection', async (socket) => {
     socket.on('disconnect', () => console.log('User disconnected:', socket.id));
 });
 
-server.listen(PORT, () => {
-    console.log(`✓ Server running on port ${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`✓ Server running on port ${PORT} (0.0.0.0)`);
 
-    // Self-ping mechanism to keep Render server awake (prevents cold starts)
-    const PING_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
-    const RENDER_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+    // Self-ping mechanism to keep Render server awake
+    const RENDER_URL = process.env.RENDER_EXTERNAL_URL;
 
-    if (process.env.RENDER_EXTERNAL_URL) {
-        console.log('🔄 Self-ping keep-alive enabled (every 5 minutes)');
+    if (RENDER_URL) {
+        console.log(`🔄 Self-ping keep-alive enabled for: ${RENDER_URL}`);
 
-        setInterval(async () => {
+        setInterval(() => {
             try {
-                const https = require('https');
                 const url = `${RENDER_URL}/health`;
-
                 https.get(url, (res) => {
+                    res.resume(); // Consume data
                     if (res.statusCode === 200) {
                         console.log(`✓ Keep-alive ping successful at ${new Date().toLocaleTimeString()}`);
                     }
                 }).on('error', (err) => {
-                    console.log(`⚠ Keep-alive ping failed: ${err.message}`);
+                    console.log(`⚠ Keep-alive ping error: ${err.message}`);
                 });
             } catch (error) {
                 console.log(`⚠ Keep-alive error: ${error.message}`);
             }
-        }, PING_INTERVAL);
+        }, 5 * 60 * 1000); // 5 minutes
 
-        // Initial ping after 1 minute
+        // Initial ping after 30 seconds
         setTimeout(() => {
-            const https = require('https');
-            https.get(`${RENDER_URL}/health`, () => {
+            https.get(`${RENDER_URL}/health`, (res) => {
+                res.resume();
                 console.log('✓ Initial keep-alive ping sent');
             }).on('error', () => { });
-        }, 60000);
+        }, 30000);
     } else {
-        console.log('ℹ Running locally - self-ping disabled');
+        console.log('ℹ RENDER_EXTERNAL_URL not set - self-ping disabled');
     }
 });
