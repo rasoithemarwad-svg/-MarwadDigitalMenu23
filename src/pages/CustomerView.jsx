@@ -29,6 +29,10 @@ const CustomerView = () => {
     const [orderPlaced, setOrderPlaced] = useState(false);
     const [isKitchenOpen, setIsKitchenOpen] = useState(true);
     const [deliveryRadius, setDeliveryRadius] = useState(5.0); // Default, updated from server
+    const [restaurantCoords, setRestaurantCoords] = useState({
+        lat: 26.909919, // Fallback
+        lng: 75.722024
+    });
     useEffect(() => {
         socket.emit('get-menu'); // existing
         socket.emit('get-settings'); // Fetch settings
@@ -36,8 +40,9 @@ const CustomerView = () => {
         socket.on('menu-updated', (newMenu) => setMenuItems(newMenu));
         socket.on('kitchen-status-updated', (status) => setIsKitchenOpen(status));
         socket.on('settings-updated', (settings) => {
-            if (settings && settings.deliveryRadiusKm) {
-                setDeliveryRadius(settings.deliveryRadiusKm);
+            if (settings) {
+                if (settings.deliveryRadiusKm) setDeliveryRadius(settings.deliveryRadiusKm);
+                if (settings.restaurantLocation) setRestaurantCoords(settings.restaurantLocation);
             }
         });
 
@@ -90,7 +95,7 @@ const CustomerView = () => {
                 const userLng = position.coords.longitude;
                 const distance = calculateDistance(
                     userLat, userLng,
-                    RESTAURANT_LOCATION.lat, RESTAURANT_LOCATION.lng
+                    restaurantCoords.lat, restaurantCoords.lng
                 );
 
                 console.log(`User Distance: ${distance.toFixed(3)} km`);
@@ -141,7 +146,7 @@ const CustomerView = () => {
 
     const addToCart = (item, portion = null) => {
         setCart(prev => {
-            const cartItemId = portion ? `${item.id}-${portion.label}` : item.id;
+            const cartItemId = portion ? `${item._id}-${portion.label}` : item._id;
             const cartItemName = portion ? `${item.name} (${portion.label})` : item.name;
             const cartItemPrice = portion ? portion.price : item.price;
 
@@ -168,14 +173,15 @@ const CustomerView = () => {
     const placeOrder = () => {
         const order = {
             tableId,
-            items: cart,
+            items: cart.map(i => ({
+                name: i.name,
+                price: i.price,
+                qty: i.qty,
+                category: i.category,
+                portion: i.cartId.includes('-') ? i.cartId.split('-')[1] : null
+            })),
             total: cartTotal,
-            status: 'pending',
-            timestamp: new Date().toISOString()
         };
-
-        const orders = JSON.parse(localStorage.getItem('marwad_orders') || '[]');
-        localStorage.setItem('marwad_orders', JSON.stringify([...orders, order]));
 
         // Emit real-time order to backend
         socket.emit('place-order', order);
@@ -185,7 +191,7 @@ const CustomerView = () => {
         setTimeout(() => {
             setOrderPlaced(false);
             setIsCartOpen(false);
-            setView('landing'); // Return to landing after order
+            setView('landing');
         }, 3000);
     };
 

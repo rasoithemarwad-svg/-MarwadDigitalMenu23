@@ -1,245 +1,99 @@
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const mongoose = require('mongoose');
 
-let isKitchenOpen = true; // Initial state
+// Models
+const MenuItem = require('./models/MenuItem.cjs');
+const Order = require('./models/Order.cjs');
+const Sale = require('./models/Sale.cjs');
+const Expense = require('./models/Expense.cjs');
+const Setting = require('./models/Setting.cjs');
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 
 const PORT = process.env.PORT || 3001;
 const distPath = path.join(__dirname, 'dist');
 
-// In-memory menu storage (with default items)
-let currentMenu = [
-    { id: 1, name: 'Marwad Special Dal Bati', price: 350, category: 'RESTAURANT', subCategory: 'Main Course', isAvailable: true, image: 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=500&q=80', description: 'Traditional Rajasthani dal with baked bati and ghee.' },
-    { id: 2, name: 'Paneer Tikka Masala', price: 280, category: 'RESTAURANT', subCategory: 'Main Course', isAvailable: true, image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&q=80', description: 'Grilled paneer cubes in rich tomato gravy.' },
-    { id: 3, name: 'Club Sandwich', price: 180, category: 'CAFE', subCategory: 'Snacks', isAvailable: true, image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&q=80', description: 'Triple decker sandwich with fresh veggies.' },
-    { id: 4, name: 'Masala Fries', price: 120, category: 'CAFE', subCategory: 'Snacks', isAvailable: true, image: 'https://images.unsplash.com/photo-1630384066252-1911ca992f16?w=500&q=80', description: 'Crispy fries with marwad spices.' },
-    { id: 5, name: 'Special Garlic Naan', price: 60, category: 'RESTAURANT', subCategory: 'Breads', isAvailable: true, image: 'https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80', description: 'Soft leavened bread with garlic.' },
-    { id: 6, name: 'Cold Coffee with Ice Cream', price: 150, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1517701550927-30cf4bb1dba5?w=500&q=80', description: 'Rich creamy cold coffee.' },
-    { id: 7, name: 'Hut Special Thali', price: 450, category: 'HUT', subCategory: 'Platter', isAvailable: true, image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&q=80', description: 'Exclusive premium Rajasthani meal.' },
-    { id: 8, name: 'Smoked Junglee Maas', price: 550, category: 'HUT', subCategory: 'Platter', isAvailable: true, image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=80', description: 'Smoked spicy meat speciality.' },
-    { id: 9, name: 'Tea+Toast', price: 40, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1544787210-2211d7c928c0?w=500&q=80', description: 'Refreshing tea served with crispy toast.' },
-    { id: 10, name: 'Coffee hot', price: 50, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&q=80', description: 'Hot brewed classic coffee.' },
-    { id: 11, name: 'cold coffee', price: 80, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1517701550927-30cf4bb1dba5?w=500&q=80', description: 'Chilled coffee with a creamy texture.' },
-    { id: 12, name: 'lemon tea', price: 30, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=500&q=80', description: 'Light tea with a zing of lemon.' },
-    { id: 13, name: 'ginger honey tea', price: 50, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1556881286-fc6915169721?w=500&q=80', description: 'Warm tea with ginger and honey notes.' },
-    { id: 14, name: 'coke', price: 35, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&q=80', description: 'Classic Coca-Cola.' },
-    { id: 15, name: 'thumps up', price: 35, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1581006852262-e4307cf6283a?w=500&q=80', description: 'Strong thumps up cola.' },
-    { id: 16, name: 'dew', price: 35, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=500&q=80', description: 'Mountain Dew citrus soda.' },
-    { id: 17, name: 'sprite', price: 35, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=500&q=80', description: 'Clear lemon-lime soda.' },
-    { id: 18, name: 'fanta', price: 35, category: 'CAFE', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1624517452488-04869289c4ca?w=500&q=80', description: 'Bubbly orange fanta.' },
-    { id: 19, name: 'Egg maggie', price: 100, category: 'CAFE', subCategory: 'Maggie', isAvailable: true, image: 'https://images.unsplash.com/photo-1626808642820-20059969562a?w=500&q=80', description: 'Classic maggie noodles with scrambled eggs.' },
-    { id: 20, name: 'peri peri maggie', price: 120, category: 'CAFE', subCategory: 'Maggie', isAvailable: true, image: 'https://images.unsplash.com/photo-1623245455621-933618de488f?w=500&q=80', description: 'Spicy maggie with a peri-peri kick.' },
-    { id: 21, name: 'Masala maggie', price: 120, category: 'CAFE', subCategory: 'Maggie', isAvailable: true, image: 'https://images.unsplash.com/photo-1612927601601-663840275991?w=500&q=80', description: 'Extra spicy masala maggie.' },
-    { id: 22, name: 'vegitable maggie', price: 110, category: 'CAFE', subCategory: 'Maggie', isAvailable: true, image: 'https://images.unsplash.com/photo-1526318896980-cf78c088247c?w=500&q=80', description: 'Healthy maggie loaded with fresh vegetables.' },
-    { id: 23, name: 'maggie with cheese', price: 140, category: 'CAFE', subCategory: 'Maggie', isAvailable: true, image: 'https://images.unsplash.com/photo-1619531043563-780ba306354a?w=500&q=80', description: 'Creamy maggie topped with melted cheese.' },
-    { id: 24, name: 'hakka noodels', price: 130, category: 'CAFE', subCategory: 'NOODELS', isAvailable: true, image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=500&q=80', description: 'Classic stir-fried hakka noodles.' },
-    { id: 25, name: 'veg chowmine', price: 140, category: 'CAFE', subCategory: 'NOODELS', isAvailable: true, image: 'https://images.unsplash.com/photo-1617093727343-374698b1b08d?w=500&q=80', description: 'Delicious vegetable chowmein.' },
-    { id: 26, name: 'shejwan noodel', price: 150, category: 'CAFE', subCategory: 'NOODELS', isAvailable: true, image: 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=500&q=80', description: 'Spicy Schezwan style noodles.' },
-    { id: 27, name: 'veg paneer noodels', price: 170, category: 'CAFE', subCategory: 'NOODELS', isAvailable: true, image: 'https://images.unsplash.com/photo-1645177623570-5283899933c7?w=500&q=80', description: 'Stir-fried noodles with fresh paneer cubes.' },
-    { id: 28, name: 'paneer pakode', price: 200, category: 'CAFE', subCategory: 'pakode', isAvailable: true, image: 'https://plus.unsplash.com/premium_photo-1694141253457-4187317730e2?w=500&q=80', description: 'Crispy paneer fritters.' },
-    { id: 29, name: 'veg pakode', price: 180, category: 'CAFE', subCategory: 'pakode', isAvailable: true, image: 'https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80', description: 'Assorted vegetable fritters.' },
-    { id: 30, name: 'egg pakode', price: 180, category: 'CAFE', subCategory: 'pakode', isAvailable: true, image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=500&q=80', description: 'Spicy egg fritters.' },
-    { id: 31, name: 'chicken roll', price: 100, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?w=500&q=80', description: 'Spicy chicken filled roll.' },
-    { id: 32, name: 'egg roll', price: 80, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=500&q=80', description: 'Classic egg paratha roll.' },
-    { id: 33, name: 'veg roll', price: 60, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1626776876729-bab4369a5a5a?w=500&q=80', description: 'Fresh vegetable roll.' },
-    { id: 34, name: 'spring roll', price: 50, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1517433367423-c7e5b0f35086?w=500&q=80', description: 'Crispy vegetable spring rolls.' },
-    { id: 35, name: 'veg paneer roll', price: 120, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=500&q=80', description: 'Soft roll with paneer stuffing.' },
-    { id: 36, name: 'cheese corn roll', price: 140, category: 'CAFE', subCategory: 'ROLLS', isAvailable: true, image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500&q=80', description: 'Cheesy corn filled roll.' },
-    { id: 37, name: 'Plain aloo tikki burger', price: 90, category: 'CAFE', subCategory: 'BURGER', isAvailable: true, image: 'https://images.unsplash.com/photo-1571091718767-18b5c1457add?w=500&q=80', description: 'Classic potato patty burger.' },
-    { id: 38, name: 'cheese burger', price: 130, category: 'CAFE', subCategory: 'BURGER', isAvailable: true, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&q=80', description: 'Burger with extra melted cheese.' },
-    { id: 39, name: 'egg burger', price: 140, category: 'CAFE', subCategory: 'BURGER', isAvailable: true, image: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=500&q=80', description: 'Burger with a fluffy fried egg.' },
-    { id: 40, name: 'double tiki burger', price: 120, category: 'CAFE', subCategory: 'BURGER', isAvailable: true, image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=500&q=80', description: 'Double patty burger for double taste.' },
-    { id: 41, name: 'chicken BURGER', price: 180, category: 'CAFE', subCategory: 'BURGER', isAvailable: true, image: 'https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?w=500&q=80', description: 'Juicy chicken patty burger.' },
-    { id: 42, name: 'peri peri fries', price: 130, category: 'CAFE', subCategory: 'fries', isAvailable: true, image: 'https://images.unsplash.com/photo-1628191010210-a59de33e5941?w=500&q=80', description: 'Crispy fries with spicy peri-peri seasoning.' },
-    { id: 43, name: 'french fries', price: 100, category: 'CAFE', subCategory: 'fries', isAvailable: true, image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500&q=80', description: 'Classic salted french fries.' },
-    { id: 44, name: 'cheese fries', price: 160, category: 'CAFE', subCategory: 'fries', isAvailable: true, image: 'https://images.unsplash.com/photo-1576101226942-dfc76b53cbfc?w=500&q=80', description: 'Fries topped with rich melted cheese.' },
-    // CAFE - Sandwiches
-    { id: 45, name: 'chese garlic bread', price: 150, category: 'CAFE', subCategory: 'Sandwich', isAvailable: true, image: 'https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=500&q=80', description: 'Cheesy garlic bread with herbs.' },
-    { id: 46, name: 'periperi sandwich', price: 80, category: 'CAFE', subCategory: 'Sandwich', isAvailable: true, image: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&q=80', description: 'Spicy peri-peri vegetable sandwich.' },
-    { id: 47, name: 'Plain Sandwich', price: 100, category: 'CAFE', subCategory: 'Sandwich', isAvailable: true, image: 'https://images.unsplash.com/photo-1539252554453-80ab65ce3586?w=500&q=80', description: 'Classic vegetable sandwich.' },
-    { id: 48, name: 'Grilled sandwich', price: 140, category: 'CAFE', subCategory: 'Sandwich', isAvailable: true, image: 'https://images.unsplash.com/photo-1481070414801-51fd732d7444?w=500&q=80', description: 'Butter grilled vegetable sandwich.' },
-    { id: 49, name: 'cheese corn sandwich', price: 140, category: 'CAFE', subCategory: 'Sandwich', isAvailable: true, image: 'https://images.unsplash.com/photo-1550507992-eb63ffee0847?w=500&q=80', description: 'Sandwich filled with cheese and corn.' },
-    { id: 50, name: 'Paneer grilled sandwich', price: 160, category: 'CAFE', subCategory: 'Sandwich', isAvailable: true, image: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=500&q=80', description: 'Grilled sandwich with paneer stuffing.' },
-    { id: 51, name: 'egg Sandwich', price: 120, category: 'CAFE', subCategory: 'Sandwich', isAvailable: true, image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&q=80', description: 'Healthy egg and mayonnaise sandwich.' },
-    { id: 52, name: 'Chicken Sandwich', price: 180, category: 'CAFE', subCategory: 'Sandwich', isAvailable: true, image: 'https://images.unsplash.com/photo-1567234665766-474023166ed4?w=500&q=80', description: 'Classic chicken sandwich.' },
+// Global States
+let isKitchenOpen = true;
 
-    // RESTAURANT - Breakfast
-    { id: 53, name: 'Aloo Parantha (2pcs)', price: 100, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=500&q=80', description: '2 Aloo paranthas with curd and pickle.' },
-    { id: 54, name: 'Paneer Parantha (2pcs)', price: 150, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1626082854614-83e83993826a?w=500&q=80', description: '2 Paneer paranthas with curd and pickle.' },
-    { id: 55, name: 'Plain Parantha (2pcs)', price: 80, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1626082854614-83e83993826a?w=500&q=80', description: '2 Plain paranthas with curd and pickle.' },
-    { id: 56, name: 'Pyaz Parantha (2pcs)', price: 100, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1626082854614-83e83993826a?w=500&q=80', description: '2 Pyaz paranthas with curd and pickle.' },
-    { id: 57, name: 'Gobhi Parantha (2pcs)', price: 120, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1626082854614-83e83993826a?w=500&q=80', description: '2 Gobhi paranthas with curd and pickle.' },
-    { id: 58, name: 'Poha', price: 50, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1599307767316-776533bb9420?w=500&q=80', description: 'Flattened rice with spices and peanuts.' },
-    { id: 59, name: 'Upma', price: 50, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1626777551410-60b138692631?w=500&q=80', description: 'Savory semolina porridge.' },
-    { id: 60, name: 'Omellete', price: 90, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80', description: 'Classic fluffy egg omelette.' },
-    { id: 61, name: 'butter bread', price: 50, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&q=80', description: 'Toasted bread with butter.' },
-    { id: 62, name: 'bread jam', price: 40, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1484723088339-fe44125fe55a?w=500&q=80', description: 'Toasted bread with fruit jam.' },
-    { id: 63, name: 'Tea+Toast', price: 40, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1544787210-2211d7c928c0?w=500&q=80', description: 'Refreshing tea with toast.' },
-    { id: 64, name: 'Coffee hot', price: 50, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&q=80', description: 'Hot brewed coffee.' },
-    { id: 65, name: 'cold coffee', price: 80, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1517701550927-30cf4bb1dba5?w=500&q=80', description: 'Chilled creamy coffee.' },
-    { id: 66, name: 'lemon tea', price: 30, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=500&q=80', description: 'Tea with lemon.' },
-    { id: 67, name: 'ginger honey tea', price: 50, category: 'RESTAURANT', subCategory: 'Breakfast', isAvailable: true, image: 'https://images.unsplash.com/photo-1556881286-fc6915169721?w=500&q=80', description: 'Ginger honey tea.' },
-
-    // RESTAURANT - VEG MAIN COURSE
-    { id: 68, name: 'Dal Tadka', price: 100, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=500&q=80', description: 'Lentils tempered with spices.' },
-    { id: 69, name: 'Dal fry', price: 80, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=500&q=80', description: 'Classic yellow dal fry.' },
-    { id: 70, name: 'mix veg', price: 120, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&q=80', description: 'Assorted seasonal vegetables.' },
-    { id: 71, name: 'chole paneer', price: 140, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500&q=80', description: 'Chickpeas and paneer in gravy.' },
-    { id: 72, name: 'allo chole', price: 120, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500&q=80', description: 'Potatoes and chickpeas curry.' },
-    { id: 73, name: 'besan gatta', price: 120, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=500&q=80', description: 'Rajasthani gram flour dumplings.' },
-    { id: 74, name: 'sev tamatar', price: 100, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=500&q=80', description: 'Savory sev in tomato gravy.' },
-    { id: 75, name: 'palak paneer', price: 140, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80', description: 'Spinach and paneer curry.' },
-    { id: 76, name: 'paneer bhurji', price: 200, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&q=80', description: 'Scrambled paneer with spices.' },
-    { id: 77, name: 'paneer tika masala', price: 200, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&q=80', description: 'Grilled paneer in spicy gravy.' },
-    { id: 78, name: 'Matar paneer', price: 200, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80', description: 'Peas and paneer curry.' },
-    { id: 79, name: 'Kadhai paneer', price: 200, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&q=80', description: 'Paneer cooked in a wok.' },
-    { id: 80, name: 'Dahi', price: 40, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1481931098730-119839ec81e7?w=500&q=80', description: 'Fresh plain curd.' },
-    { id: 81, name: 'dahi tadka', price: 50, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1481931098730-119839ec81e7?w=500&q=80', description: 'Tempered curd.' },
-    { id: 82, name: 'veg raita', price: 60, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1481931098730-119839ec81e7?w=500&q=80', description: 'Curd with mixed vegetables.' },
-    { id: 83, name: 'bondi raita', price: 40, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1481931098730-119839ec81e7?w=500&q=80', description: 'Curd with crispy boondi.' },
-    { id: 84, name: 'chaach', price: 20, category: 'RESTAURANT', subCategory: 'VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1481931098730-119839ec81e7?w=500&q=80', description: 'Refreshing buttermilk.' },
-    // RESTAURANT - roti
-    { id: 85, name: 'Tawa roti plain', price: 10, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1589113103131-70043c748c90?w=500&q=80', description: 'Freshly made plain tawa roti.' },
-    { id: 86, name: 'Tawa roti butter', price: 12, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1589113103131-70043c748c90?w=500&q=80', description: 'Butter topped tawa roti.' },
-    { id: 87, name: 'Tandoori roti plain', price: 15, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=500&q=80', description: 'Clay oven baked plain roti.' },
-    { id: 88, name: 'Tandoori roti butter', price: 18, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=500&q=80', description: 'Clay oven baked butter roti.' },
-    { id: 89, name: 'Baati', price: 25, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=500&q=80', description: 'Traditional Rajasthani baked baati.' },
-    { id: 90, name: 'Makke ki roti', price: 60, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80', description: 'Corn meal flatbread.' },
-    { id: 91, name: 'Bajre ki roti', price: 80, category: 'RESTAURANT', subCategory: 'roti', isAvailable: true, image: 'https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80', description: 'Millet flatbread.' },
-    // RESTAURANT - Rice
-    { id: 92, name: 'plain rice', price: 50, category: 'RESTAURANT', subCategory: 'Rice', isAvailable: true, image: 'https://images.unsplash.com/photo-1516684732162-798a0062be99?w=500&q=80', description: 'Steamed plain basmati rice.' },
-    { id: 93, name: 'shejwan rice', price: 80, category: 'RESTAURANT', subCategory: 'Rice', isAvailable: true, image: 'https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80', description: 'Spicy Schezwan fried rice.' },
-    { id: 94, name: 'jeera rice', price: 70, category: 'RESTAURANT', subCategory: 'Rice', isAvailable: true, image: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=500&q=80', description: 'Basmati rice tempered with cumin seeds.' },
-    { id: 95, name: 'panner fried rice', price: 120, category: 'RESTAURANT', subCategory: 'Rice', isAvailable: true, image: 'https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80', description: 'Fried rice with cottage cheese cubes.' },
-    { id: 96, name: 'fried rice', price: 100, category: 'RESTAURANT', subCategory: 'Rice', isAvailable: true, image: 'https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80', description: 'Classic vegetable fried rice.' },
-    { id: 97, name: 'chicken fried rice', price: 180, category: 'RESTAURANT', subCategory: 'Rice', isAvailable: true, image: 'https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80', description: 'Fried rice with succulent chicken pieces.' },
-    { id: 98, name: 'egg fried rice', price: 160, category: 'RESTAURANT', subCategory: 'Rice', isAvailable: true, image: 'https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80', description: 'Fried rice with scrambled eggs.' },
-
-    // RESTAURANT - NON-VEG MAIN COURSE
-    { id: 99, name: 'Grilled chicken', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 350 }, { label: 'Full', price: 650 }], image: 'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=500&q=80', description: 'Juicy charcoal grilled chicken.' },
-    { id: 100, name: 'Grilled Fish', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 300 }, { label: 'Full', price: 550 }], image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&q=80', description: 'Grilled seasonal fish filaments.' },
-    { id: 101, name: 'Fish Fry', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 300 }, { label: 'Full', price: 550 }], image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&q=80', description: 'Crispy deep fried fish.' },
-    { id: 102, name: 'Chicken Fry', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 350 }, { label: 'Full', price: 650 }], image: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=500&q=80', description: 'Spicy deep fried chicken.' },
-    { id: 103, name: 'Chicken fry boneless', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 400 }, { label: 'Full', price: 750 }], image: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=500&q=80', description: 'Boneless deep fried spicy chicken.' },
-    { id: 104, name: 'Chicken Curry', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 380 }, { label: 'Full', price: 700 }], image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=500&q=80', description: 'Home style spicy chicken curry.' },
-    { id: 105, name: 'chicken masala', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 400 }, { label: 'Full', price: 750 }], image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=500&q=80', description: 'Chicken cooked in rich masala gravy.' },
-    { id: 106, name: 'kadhai chicken', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 400 }, { label: 'Full', price: 750 }], image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=500&q=80', description: 'Spicy wok tossed chicken.' },
-    { id: 107, name: 'butter chicken', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 400 }, { label: 'Full', price: 750 }], image: 'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=500&q=80', description: 'Mild and creamy tandoori chicken gravy.' },
-    { id: 108, name: 'Handi chicken Special', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 700 }, { label: 'Full', price: 1400 }], image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=500&q=80', description: 'Slow cooked marinated chicken special.' },
-    { id: 109, name: 'Mutton Curry', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 600 }, { label: 'Full', price: 1150 }], image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=80', description: 'Traditional mutton gravy curry.' },
-    { id: 110, name: 'Masala mutton', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 700 }, { label: 'Full', price: 1350 }], image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=80', description: 'Tender mutton in chunky masala.' },
-    { id: 111, name: 'Handi mutton Special', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 900 }, { label: 'Full', price: 1750 }], image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&q=80', description: 'Marwad special slow cooked handi mutton.' },
-    { id: 112, name: 'Fish Curry', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 300 }, { label: 'Full', price: 600 }], image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&q=80', description: 'Fish in traditional spicy gravy.' },
-    { id: 113, name: 'Egg Curry', category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, portions: [{ label: 'Half', price: 120 }, { label: 'Full', price: 200 }], image: 'https://images.unsplash.com/photo-1542826438-bd32f43d626f?w=500&q=80', description: 'Boiled eggs in tomato onion gravy.' },
-    { id: 114, name: 'Boiled Egg', price: 30, category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&q=80', description: 'Nutritious plain boiled eggs.' },
-    { id: 115, name: 'Egg bhurji', price: 90, category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80', description: 'Spicy scrambled eggs with onions.' },
-    { id: 116, name: 'boiled Egg bhurji', price: 90, category: 'RESTAURANT', subCategory: 'NON-VEG MAIN COURSE', isAvailable: true, image: 'https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80', description: 'Scrambled boiled eggs with masala.' },
-
-    // HUT - Drinks & Essentials
-    { id: 117, name: 'Water', price: 20, category: 'HUT', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=500&q=80', description: 'Mineral water bottle.' },
-    { id: 118, name: 'GLASS', price: 5, category: 'HUT', subCategory: 'DRINKS', isAvailable: true, image: 'https://images.unsplash.com/photo-1570700005389-221627791f1f?w=500&q=80', description: 'Disposable glass.' },
-
-    // HUT - Snacks & Masala
-    { id: 119, name: 'PAPAD', price: 20, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500&q=80', description: 'Roasted papad.' },
-    { id: 120, name: 'MASALA PAPAD', price: 40, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500&q=80', description: 'Papad topped with spicy salad.' },
-    { id: 121, name: 'PEANUT MASALA', price: 70, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1621539203741-2854316dc757?w=500&q=80', description: 'Spicy roasted peanuts with veggies.' },
-    { id: 122, name: 'CHANA MASALA', price: 70, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&q=80', description: 'Spicy roasted chickpeas snack.' },
-    { id: 123, name: 'MATAR MASALA', price: 70, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&q=80', description: 'Spicy dry pea snack.' },
-    { id: 124, name: 'DAAL MASALA', price: 70, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&q=80', description: 'Fried lentil snack with spices.' },
-    { id: 125, name: 'NAMKEEN MASALA', price: 70, category: 'HUT', subCategory: 'Snack', isAvailable: true, image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500&q=80', description: 'Spicy mixed savoury snack.' },
-    { id: 126, name: 'GREEN SALAD', price: 60, category: 'HUT', subCategory: 'Salad', isAvailable: true, image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&q=80', description: 'Fresh sliced vegetable salad.' },
-
-    // HUT - Egg Specials
-    { id: 127, name: 'BOILED EGG (2 piece)', price: 30, category: 'HUT', subCategory: 'Egg Specials', isAvailable: true, image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&q=80', description: 'Two boiled eggs.' },
-    { id: 128, name: 'EGG FRY (2 piece)', price: 40, category: 'HUT', subCategory: 'Egg Specials', isAvailable: true, image: 'https://images.unsplash.com/photo-1588833959959-197e4125b271?w=500&q=80', description: 'Two fried eggs.' },
-    { id: 129, name: 'EGG BHURJI (2 piece)', price: 80, category: 'HUT', subCategory: 'Egg Specials', isAvailable: true, image: 'https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80', description: 'Spicy scrambled eggs.' },
-    { id: 130, name: 'BOILED EGG BHURJI (2 piece)', price: 80, category: 'HUT', subCategory: 'Egg Specials', isAvailable: true, image: 'https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80', description: 'Bhurji made with boiled eggs.' },
-    { id: 131, name: 'OMELLETE (2 piece)', price: 90, category: 'HUT', subCategory: 'Egg Specials', isAvailable: true, image: 'https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80', description: 'Two egg omelette.' },
-
-    // HUT - Cover Charges
-    { id: 132, name: 'SEATING COVER CHARGES', price: 500, category: 'HUT', subCategory: 'Cover Charge', isAvailable: true, image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500&q=80', description: 'ROASTED CHICKEN+MASALA PAPAD+1ltr WATER BOTTEL OR CHILLY PANEER+MASALA PAPAD+1ltr WATER BOTTEL. OUTSIDE FOOD NOT ALLOWED' },
-];
-
-console.log('--- Server Startup ---');
-console.log('__dirname:', __dirname);
-console.log('PORT:', PORT);
-console.log('Checking dist folder at:', distPath);
-
-if (fs.existsSync(distPath)) {
-    console.log('✓ dist folder found');
-    console.warn('! WARNING: dist folder NOT found. Run "npm run build" first.');
-}
-
-// PERSISTENCE SETUP
-const DATA_FILE = path.join(__dirname, 'menu_data.json');
-const SETTINGS_FILE = path.join(__dirname, 'settings.json');
-
-let appSettings = { deliveryRadiusKm: 5.0 };
-
-// Load settings from file if exists
-if (fs.existsSync(SETTINGS_FILE)) {
-    try {
-        const settingsData = fs.readFileSync(SETTINGS_FILE, 'utf8');
-        appSettings = JSON.parse(settingsData);
-        console.log('✓ Loaded settings from settings.json');
-    } catch (err) {
-        console.error('Error reading settings file:', err);
+// MongoDB Connection with Stable API
+mongoose.connect(process.env.MONGODB_URI, {
+    serverApi: {
+        version: '1',
+        strict: true,
+        deprecationErrors: true,
     }
-} else {
-    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(appSettings, null, 2));
-}
+})
+    .then(() => {
+        console.log('✓ Connected to MongoDB');
+        initializeData();
+    })
+    .catch(err => {
+        console.error('✗ Initial MongoDB connection error:', err.message);
+        console.log('Please ensure MONGODB_URI is correctly set in your .env file.');
+    });
 
-// Load menu from file if exists
-if (fs.existsSync(DATA_FILE)) {
+// Port Data from JSON to DB if empty
+async function initializeData() {
     try {
-        const fileData = fs.readFileSync(DATA_FILE, 'utf8');
-        currentMenu = JSON.parse(fileData);
-        console.log('✓ Loaded menu from menu_data.json');
+        const menuCount = await MenuItem.countDocuments();
+        if (menuCount === 0) {
+            const DATA_FILE = path.join(__dirname, 'menu_data.json');
+            if (fs.existsSync(DATA_FILE)) {
+                const fileData = fs.readFileSync(DATA_FILE, 'utf8');
+                const legacyMenu = JSON.parse(fileData);
+                await MenuItem.insertMany(legacyMenu);
+                console.log('✓ Ported legacy menu to MongoDB');
+            }
+        }
+
+        // Initial Settings
+        const radiusSetting = await Setting.findOne({ key: 'deliveryRadiusKm' });
+        if (!radiusSetting) {
+            await Setting.create({ key: 'deliveryRadiusKm', value: 5.0 });
+        }
     } catch (err) {
-        console.error('Error reading data file:', err);
+        console.error('Error initializing data:', err);
     }
-} else {
-    // Initial Save
-    fs.writeFileSync(DATA_FILE, JSON.stringify(currentMenu, null, 2));
 }
 
-// Health check route
-app.get('/health', (req, res) => {
-    res.status(200).send('OK');
-});
-
-// Serve static files from the React app build directory
+// Routes
+app.get('/health', (req, res) => res.status(200).send('OK'));
 app.use(express.static(distPath));
 
-// Catch-all route to serve the index.html for any request (SPA support)
 app.get('*', (req, res) => {
     const indexPath = path.join(distPath, 'index.html');
     if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
     } else {
-        res.status(404).send('Frontend build not found. Please ensure "npm run build" was successful.');
+        res.status(404).send('Frontend build not found.');
     }
 });
 
 const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
-});
+const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 
-io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
+io.on('connection', async (socket) => {
+    console.log('User connected:', socket.id);
 
+    // Initial Sync
+    socket.emit('kitchen-status-updated', isKitchenOpen);
+
+    const settings = await Setting.find({});
+    const settingsObj = {};
+    settings.forEach(s => settingsObj[s.key] = s.value);
+    socket.emit('settings-updated', settingsObj);
+
+    // Service Alerts (In-memory for now as they are ephemeral, or could be stored in DB if needed)
     socket.on('service-call', (data) => {
-        console.log(`Service request from Table: ${data.tableId}`);
         io.emit('new-service-alert', {
             id: Date.now(),
             tableId: data.tableId,
@@ -248,63 +102,141 @@ io.on('connection', (socket) => {
         });
     });
 
-    socket.on('place-order', (orderData) => {
-        console.log(`New order from Table: ${orderData.tableId}`);
-        io.emit('new-order-alert', orderData);
+    // Orders
+    socket.on('get-orders', async () => {
+        const orders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
+        socket.emit('orders-updated', orders);
     });
 
-    // Provide current status to new connections
-    // socket.emit('menu-updated', currentMenu); // REMOVED: Prevent overwriting client local storage with default menu on restart
-    socket.emit('kitchen-status-updated', isKitchenOpen);
-
-    socket.on('get-menu', () => {
-        socket.emit('menu-updated', currentMenu);
-    });
-
-    socket.on('update-menu', (newMenu) => {
-        console.log('Global Menu Updated');
-        currentMenu = newMenu;
-
-        // Persist to file
+    socket.on('place-order', async (orderData) => {
         try {
-            fs.writeFileSync(DATA_FILE, JSON.stringify(currentMenu, null, 2));
+            const newOrder = new Order(orderData);
+            await newOrder.save();
+            io.emit('new-order-alert', newOrder);
+            // Also notify all admins to update their lists
+            const allOrders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
+            io.emit('orders-updated', allOrders);
         } catch (err) {
-            console.error('Error saving menu to file:', err);
+            console.error('Error placing order:', err);
         }
-
-        io.emit('menu-updated', currentMenu);
     });
 
-    socket.on('update-kitchen-status', (status) => {
-        console.log('Kitchen Status Updated:', status);
+    socket.on('update-order-status', async ({ id, status }) => {
+        await Order.findByIdAndUpdate(id, { status });
+        const allOrders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
+        io.emit('orders-updated', allOrders);
+    });
+
+    // Menu
+    socket.on('get-menu', async () => {
+        const menu = await MenuItem.find({});
+        socket.emit('menu-updated', menu);
+    });
+
+    socket.on('update-menu-item', async (item) => {
+        if (item._id) {
+            await MenuItem.findByIdAndUpdate(item._id, item);
+        } else {
+            await MenuItem.create(item);
+        }
+        const updatedMenu = await MenuItem.find({});
+        io.emit('menu-updated', updatedMenu);
+    });
+
+    socket.on('delete-menu-item', async (id) => {
+        await MenuItem.findByIdAndDelete(id);
+        const updatedMenu = await MenuItem.find({});
+        io.emit('menu-updated', updatedMenu);
+    });
+
+    socket.on('toggle-kitchen-status', (status) => {
         isKitchenOpen = status;
         io.emit('kitchen-status-updated', isKitchenOpen);
     });
 
-    // SETTINGS SYNC
-    socket.on('get-settings', () => {
-        socket.emit('settings-updated', appSettings);
+    // Sales
+    socket.on('save-sale', async (saleData) => {
+        const newSale = new Sale(saleData);
+        await newSale.save();
+        // Clear active orders for this table
+        await Order.updateMany({ tableId: saleData.tableId, status: 'completed' }, { status: 'cancelled' });
+        const updatedSales = await Sale.find({}).sort({ settledAt: -1 });
+        io.emit('sales-updated', updatedSales);
+        const allOrders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
+        io.emit('orders-updated', allOrders);
     });
 
-    socket.on('update-settings', (newSettings) => {
-        console.log('Settings Updated:', newSettings);
-        appSettings = newSettings;
+    socket.on('get-sales', async () => {
+        const sales = await Sale.find({}).sort({ settledAt: -1 });
+        socket.emit('sales-updated', sales);
+    });
 
-        try {
-            fs.writeFileSync(SETTINGS_FILE, JSON.stringify(appSettings, null, 2));
-        } catch (err) {
-            console.error('Error saving settings to file:', err);
+    // Expenses
+    socket.on('get-expenses', async () => {
+        const expenses = await Expense.find({}).sort({ date: -1 });
+        socket.emit('expenses-updated', expenses);
+    });
+
+    socket.on('add-expense', async (expenseData) => {
+        await Expense.create(expenseData);
+        const updatedExpenses = await Expense.find({}).sort({ date: -1 });
+        io.emit('expenses-updated', updatedExpenses);
+    });
+
+    socket.on('delete-expense', async (id) => {
+        await Expense.findByIdAndDelete(id);
+        const updatedExpenses = await Expense.find({}).sort({ date: -1 });
+        io.emit('expenses-updated', updatedExpenses);
+    });
+
+    socket.on('update-settings', async (settings) => {
+        for (const [key, value] of Object.entries(settings)) {
+            await Setting.findOneAndUpdate({ key }, { value }, { upsert: true });
         }
-
-        io.emit('settings-updated', appSettings);
+        const updatedSettings = await Setting.find({});
+        const settingsObj = {};
+        updatedSettings.forEach(s => settingsObj[s.key] = s.value);
+        io.emit('settings-updated', settingsObj);
     });
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
-    });
+    socket.on('disconnect', () => console.log('User disconnected:', socket.id));
 });
 
 server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-    console.log('-----------------------');
+    console.log(`✓ Server running on port ${PORT}`);
+
+    // Self-ping mechanism to keep Render server awake (prevents cold starts)
+    const PING_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
+    const RENDER_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+
+    if (process.env.RENDER_EXTERNAL_URL) {
+        console.log('🔄 Self-ping keep-alive enabled (every 5 minutes)');
+
+        setInterval(async () => {
+            try {
+                const https = require('https');
+                const url = `${RENDER_URL}/health`;
+
+                https.get(url, (res) => {
+                    if (res.statusCode === 200) {
+                        console.log(`✓ Keep-alive ping successful at ${new Date().toLocaleTimeString()}`);
+                    }
+                }).on('error', (err) => {
+                    console.log(`⚠ Keep-alive ping failed: ${err.message}`);
+                });
+            } catch (error) {
+                console.log(`⚠ Keep-alive error: ${error.message}`);
+            }
+        }, PING_INTERVAL);
+
+        // Initial ping after 1 minute
+        setTimeout(() => {
+            const https = require('https');
+            https.get(`${RENDER_URL}/health`, () => {
+                console.log('✓ Initial keep-alive ping sent');
+            }).on('error', () => { });
+        }, 60000);
+    } else {
+        console.log('ℹ Running locally - self-ping disabled');
+    }
 });

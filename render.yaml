@@ -7,3 +7,5 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 18.0.0
+      - key: RENDER_EXTERNAL_URL
+        value: https://digital-marwad-2.onrender.com

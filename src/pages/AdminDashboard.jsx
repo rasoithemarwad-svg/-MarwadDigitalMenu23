@@ -56,100 +56,32 @@ const AdminDashboard = () => {
 
     const fetchData = () => {
         setIsRefreshing(true);
-        const savedOrders = JSON.parse(localStorage.getItem('marwad_orders') || '[]');
-        const savedHistory = JSON.parse(localStorage.getItem('marwad_sales_history') || '[]');
-        const savedAlerts = JSON.parse(localStorage.getItem('marwad_service_alerts') || '[]');
-        const savedMenu = JSON.parse(localStorage.getItem('marwad_menu_items') || '[]');
-
-        setMenuItems(savedMenu.length > 0 ? savedMenu : []);
-
-        setOrders(savedOrders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
-        setSalesHistory(savedHistory.sort((a, b) => new Date(b.settledAt) - new Date(a.settledAt)));
-        setServiceAlerts(savedAlerts.filter(a => a.status === 'new'));
-
-        // Sound notification for new alerts
-        if (savedAlerts.filter(a => a.status === 'new').length > prevAlertsCount.current) {
-            playNotificationSound();
-        }
-        prevAlertsCount.current = savedAlerts.filter(a => a.status === 'new').length;
-
+        socket.emit('get-orders');
+        socket.emit('get-menu');
+        socket.emit('get-sales');
+        socket.emit('get-expenses');
+        socket.emit('get-settings');
         setTimeout(() => setIsRefreshing(false), 500);
-    };
-
-    const downloadReport = (type) => { // 'sales' or 'expenses'
-        let data = [];
-        let headers = [];
-        let filename = '';
-
-        if (type === 'sales') {
-            data = salesHistory;
-            headers = ['Date', 'Table ID', 'Items', 'Total'];
-            filename = 'Sales_Report';
-        } else if (type === 'expenses') {
-            data = expenses;
-            headers = ['Date', 'Item', 'Amount', 'Paid By', 'Description'];
-            filename = 'Expenses_Report';
-        }
-
-        if (data.length === 0) return alert("No data to export");
-
-        const csvContent = [
-            headers.join(','),
-            ...data.map(row => {
-                if (type === 'sales') {
-                    const date = new Date(row.settledAt).toLocaleDateString();
-                    const items = row.items.map(i => `${i.qty}x ${i.name}`).join(' | ').replace(/,/g, '');
-                    return `${date},${row.tableId},"${items}",${row.total}`;
-                } else {
-                    const date = new Date(row.date).toLocaleDateString();
-                    return `${date},${row.item},${row.amount},${row.paidBy},"${row.description || ''}"`;
-                }
-            })
-        ].join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `${filename}_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    const playNotificationSound = (loop = false) => {
-        if (!audioRef.current) {
-            audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-        }
-        audioRef.current.loop = loop;
-        audioRef.current.play().catch(e => {
-            console.log("Sound play blocked by browser. Please interact with the page first.");
-        });
-    };
-
-    const stopNotificationSound = () => {
-        if (audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current.currentTime = 0;
-        }
     };
 
     useEffect(() => {
         fetchData();
 
-        // Restore Server State
-        const savedMenu = JSON.parse(localStorage.getItem('marwad_menu_items') || '[]');
-        if (savedMenu.length > 0) {
-            socket.emit('update-menu', savedMenu);
-        } else {
-            socket.emit('get-menu');
-        }
+        socket.on('orders-updated', (updatedOrders) => {
+            setOrders(updatedOrders);
+        });
 
-        socket.emit('get-settings');
-        socket.emit('get-sales');
+        socket.on('menu-updated', (updatedMenu) => {
+            setMenuItems(updatedMenu);
+        });
 
-        const interval = setInterval(fetchData, 10000);
+        socket.on('sales-updated', (updatedSales) => {
+            setSalesHistory(updatedSales);
+        });
+
+        socket.on('expenses-updated', (updatedExpenses) => {
+            setExpenses(updatedExpenses);
+        });
 
         socket.on('settings-updated', (newSettings) => {
             setAppSettings(newSettings);
@@ -158,148 +90,126 @@ const AdminDashboard = () => {
         socket.on('new-service-alert', (newAlert) => {
             setServiceAlerts(prev => {
                 if (prev.find(a => a.id === newAlert.id)) return prev;
-                const updated = [newAlert, ...prev];
-                const existing = JSON.parse(localStorage.getItem('marwad_service_alerts') || '[]');
-                localStorage.setItem('marwad_service_alerts', JSON.stringify([newAlert, ...existing.filter(a => a.id !== newAlert.id)]));
-                return updated;
+                return [newAlert, ...prev];
             });
+            playNotificationSound(true);
         });
 
         socket.on('new-order-alert', (newOrder) => {
-            setOrders(prev => {
-                const existing = JSON.parse(localStorage.getItem('marwad_orders') || '[]');
-                const updated = [newOrder, ...prev];
-                localStorage.setItem('marwad_orders', JSON.stringify([newOrder, ...existing]));
-                return updated;
-            });
             const orderAlert = { id: Date.now(), tableId: newOrder.tableId, total: newOrder.total };
             setOrderAlerts(prev => [orderAlert, ...prev]);
-            if (serviceAlerts.length === 0) playNotificationSound(false);
+            playNotificationSound(false);
+            socket.emit('get-orders');
         });
 
         socket.on('kitchen-status-updated', (status) => {
             setIsKitchenOpen(status);
         });
 
-        socket.on('sales-updated', (serverSales) => {
-            setSalesHistory(serverSales);
-            localStorage.setItem('marwad_sales_history', JSON.stringify(serverSales));
-        });
-
         return () => {
-            clearInterval(interval);
+            socket.off('orders-updated');
+            socket.off('menu-updated');
+            socket.off('sales-updated');
+            socket.off('expenses-updated');
             socket.off('settings-updated');
             socket.off('new-service-alert');
             socket.off('new-order-alert');
             socket.off('kitchen-status-updated');
-            socket.off('sales-updated');
         };
-    }, [serviceAlerts.length, orders.length]);
+    }, []);
 
-    const saveSettings = (newSettings) => {
-        setAppSettings(newSettings);
-        socket.emit('update-settings', newSettings);
-    };
-
-    // Handle persistent ringing
-    useEffect(() => {
-        if (serviceAlerts.length > 0) {
-            playNotificationSound(true); // Loop if there are service alerts
-        } else {
-            stopNotificationSound();
-        }
-    }, [serviceAlerts.length]);
-
-    const updateStatus = (index, newStatus) => {
-        const updated = [...orders];
-        updated[index].status = newStatus;
-        localStorage.setItem('marwad_orders', JSON.stringify(updated));
-        setOrders(updated);
+    const updateStatus = (id, newStatus) => {
+        socket.emit('update-order-status', { id, status: newStatus });
     };
 
     const clearAlert = (alertId) => {
-        setServiceAlerts(prev => {
-            const updated = prev.filter(a => a.id !== alertId);
-            const existing = JSON.parse(localStorage.getItem('marwad_service_alerts') || '[]');
-            const filtered = existing.map(a => a.id === alertId ? { ...a, status: 'cleared' } : a);
-            localStorage.setItem('marwad_service_alerts', JSON.stringify(filtered));
-            return updated;
-        });
-    };
-
-    const clearOrderAlert = (alertId) => {
-        setOrderAlerts(prev => prev.filter(a => a.id !== alertId));
+        setServiceAlerts(prev => prev.filter(a => a.id !== alertId));
     };
 
     const toggleKitchenStatus = () => {
-        const newStatus = !isKitchenOpen;
-        socket.emit('update-kitchen-status', newStatus);
-    };
-
-    const saveExpenses = (newExpenses) => {
-        setExpenses(newExpenses);
-        localStorage.setItem('marwad_expenses', JSON.stringify(newExpenses));
+        socket.emit('toggle-kitchen-status', !isKitchenOpen);
     };
 
     const addExpense = (expense) => {
-        const newExpenses = [expense, ...expenses];
-        saveExpenses(newExpenses);
+        socket.emit('add-expense', { ...expense, id: undefined }); // Remove client-side ID for DB
     };
 
     const deleteExpense = (id) => {
-        const newExpenses = expenses.filter(e => e.id !== id);
-        saveExpenses(newExpenses);
+        socket.emit('delete-expense', id);
     };
 
-    const saveMenu = (newMenu) => {
-        setMenuItems(newMenu);
-        localStorage.setItem('marwad_menu_items', JSON.stringify(newMenu));
-        socket.emit('update-menu', newMenu);
+    const saveMenu = (item) => {
+        socket.emit('update-menu-item', item);
+        setIsAddModalOpen(false);
+        setEditingItem(null);
     };
 
     const deleteMenuItem = (id) => {
-        const updated = menuItems.filter(item => item.id !== id);
-        saveMenu(updated);
+        socket.emit('delete-menu-item', id);
     };
 
-    const toggleAvailability = (id) => {
-        const updated = menuItems.map(item =>
-            item.id === id ? { ...item, isAvailable: !item.isAvailable } : item
-        );
-        saveMenu(updated);
+    const saveSettings = (settings) => {
+        socket.emit('update-settings', settings);
+        setAppSettings(settings);
+    };
+
+    const setRestaurantLocation = () => {
+        if (!navigator.geolocation) return alert("Geolocation not supported");
+        navigator.geolocation.getCurrentPosition((pos) => {
+            const newSettings = {
+                ...appSettings,
+                restaurantLocation: {
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude
+                }
+            };
+            saveSettings(newSettings);
+            alert("Restaurant location updated successfully!");
+        }, (err) => alert("Failed to get location: " + err.message));
+    };
+
+    const toggleAvailability = (item) => {
+        socket.emit('update-menu-item', { ...item, isAvailable: !item.isAvailable });
     };
 
     const startEditing = (item) => {
         setEditingItem(item);
-        setNewItemForm({ ...item });
+        setNewItemForm({
+            ...newItemForm,
+            _id: item._id,
+            name: item.name,
+            price: item.price,
+            category: item.category,
+            subCategory: item.subCategory || '',
+            image: item.image || '',
+            description: item.description || '',
+            isAvailable: item.isAvailable !== false,
+            usePortions: item.usePortions || false,
+            portions: item.portions || [{ label: 'Half', price: '' }, { label: 'Full', price: '' }]
+        });
         setIsAddModalOpen(true);
     };
 
     const settleBill = (tableId) => {
         const tableOrders = orders.filter(o => o.tableId === tableId);
-        if (tableOrders.length === 0) return;
+        const completedOrders = tableOrders.filter(o => o.status === 'completed');
 
-        const total = tableOrders.reduce((acc, o) => acc + o.total, 0);
-        const allItems = tableOrders.flatMap(o => o.items);
+        if (tableOrders.length === 0) return;
+        if (completedOrders.length === 0) {
+            return alert("Orders must be marked as 'Served' before they can be settled in a bill.");
+        }
+
+        const total = completedOrders.reduce((acc, o) => acc + o.total, 0);
+        const allItems = completedOrders.flatMap(o => o.items);
 
         const saleRecord = {
-            id: Date.now(),
             tableId,
-            items: allItems,
+            items: allItems.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
             total,
             settledAt: new Date().toISOString(),
         };
 
-        localStorage.setItem('marwad_sales_history', JSON.stringify(updatedHistory));
-        setSalesHistory(updatedHistory);
-
-        // Sync with server
         socket.emit('save-sale', saleRecord);
-
-        const remainingOrders = orders.filter(o => o.tableId !== tableId);
-        localStorage.setItem('marwad_orders', JSON.stringify(remainingOrders));
-        setOrders(remainingOrders);
-
         setSelectedTableBill(null);
     };
 
@@ -515,8 +425,8 @@ const AdminDashboard = () => {
                                 gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
                                 gap: '20px'
                             }}>
-                                {orders.map((order, idx) => (
-                                    <div key={idx} className="glass-card" style={{ borderLeft: `8px solid ${getStatusColor(order.status)}`, display: 'flex', flexDirection: 'column' }}>
+                                {orders.filter(o => o.status !== 'completed').map((order) => (
+                                    <div key={order._id} className="glass-card" style={{ borderLeft: `8px solid ${getStatusColor(order.status)}`, display: 'flex', flexDirection: 'column' }}>
                                         <div style={{ padding: '20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                             <div>
                                                 <h4 style={{ fontSize: '1.2rem', fontWeight: 800 }}>Table #{order.tableId}</h4>
@@ -537,14 +447,13 @@ const AdminDashboard = () => {
                                                 ))}
                                             </div>
                                             <div style={{ marginTop: 'auto', display: 'flex', gap: '12px' }}>
-                                                {order.status === 'pending' && <button onClick={() => updateStatus(idx, 'preparing')} className="btn-primary" style={{ flex: 1, padding: '12px', fontSize: '0.85rem' }}>Start Preparing</button>}
-                                                {order.status === 'preparing' && <button onClick={() => updateStatus(idx, 'completed')} className="btn-primary" style={{ flex: 1, padding: '12px', fontSize: '0.85rem', background: '#4caf50' }}>Mark as Served</button>}
-                                                {order.status === 'completed' && <div style={{ flex: 1, textAlign: 'center', color: '#4caf50', fontSize: '0.9rem', fontWeight: 700, padding: '10px', background: 'rgba(76, 175, 80, 0.1)', borderRadius: '10px' }}><CheckCircle size={16} style={{ verticalAlign: 'middle', marginRight: '8px' }} /> ORDER SERVED</div>}
+                                                {order.status === 'pending' && <button onClick={() => updateStatus(order._id, 'preparing')} className="btn-primary" style={{ flex: 1, padding: '12px', fontSize: '0.85rem' }}>Start Preparing</button>}
+                                                {order.status === 'preparing' && <button onClick={() => updateStatus(order._id, 'completed')} className="btn-primary" style={{ flex: 1, padding: '12px', fontSize: '0.85rem', background: '#4caf50' }}>Mark as Served</button>}
                                             </div>
                                         </div>
                                     </div>
                                 ))}
-                                {orders.length === 0 && <div style={{ gridColumn: '1/-1', textAlign: 'center', opacity: 0.3, padding: '100px 0' }}><Clock size={60} style={{ margin: '0 auto 20px' }} /><p style={{ fontSize: '1.2rem' }}>No Active Orders Right Now</p></div>}
+                                {orders.filter(o => o.status !== 'completed').length === 0 && <div style={{ gridColumn: '1/-1', textAlign: 'center', opacity: 0.3, padding: '100px 0' }}><Clock size={60} style={{ margin: '0 auto 20px' }} /><p style={{ fontSize: '1.2rem' }}>No Active Orders Right Now</p></div>}
                             </div>
                         </motion.div>
                     )}
@@ -582,7 +491,7 @@ const AdminDashboard = () => {
                             <h3 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem' }}><Calendar size={18} /> Past Transactions</h3>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 {salesHistory.map(sale => (
-                                    <div key={sale.id} className="glass-card" style={{ padding: '15px', display: 'flex', justifyContent: 'space-between' }}>
+                                    <div key={sale._id} className="glass-card" style={{ padding: '15px', display: 'flex', justifyContent: 'space-between' }}>
                                         <div>
                                             <h5 style={{ fontSize: '0.85rem' }}>Table #{sale.tableId}</h5>
                                             <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>{new Date(sale.settledAt).toLocaleDateString()} {new Date(sale.settledAt).toLocaleTimeString()}</p>
@@ -616,7 +525,13 @@ const AdminDashboard = () => {
                                         alert(`Scanned: ${txt}`);
                                     }} />
                                 </section>
-                                <section><QRManager /></section>
+                                <section>
+                                    <div style={{ marginBottom: '20px', padding: '15px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '15px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600 }}>💡 Pro Tip for Scanning</p>
+                                        <p style={{ fontSize: '0.7rem', color: '#aaa', marginTop: '5px' }}>Make sure the <b>Base URL</b> in the tab below is set to your Public Tunnel (e.g., Serveo or Ngrok URL) so your phone can open the links!</p>
+                                    </div>
+                                    <QRManager />
+                                </section>
                             </div>
                         </motion.div>
                     )}
@@ -634,10 +549,27 @@ const AdminDashboard = () => {
                                     <input
                                         type="number"
                                         step="0.1"
-                                        value={appSettings.deliveryRadiusKm}
+                                        value={appSettings.deliveryRadiusKm || 5.0}
                                         onChange={(e) => saveSettings({ ...appSettings, deliveryRadiusKm: parseFloat(e.target.value) })}
-                                        style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white' }}
+                                        style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white', marginBottom: '15px' }}
                                     />
+                                </div>
+
+                                <div style={{ paddingTop: '15px', borderTop: '1px solid var(--glass-border)' }}>
+                                    <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Restaurant Identity</label>
+                                    <p style={{ fontSize: '0.75rem', color: '#aaa', marginBottom: '15px' }}>If QR codes say "Too far away", use this button while standing inside the restaurant to calibrate your location.</p>
+                                    <button
+                                        onClick={setRestaurantLocation}
+                                        className="btn-primary"
+                                        style={{ width: '100%', padding: '12px', background: 'var(--primary)', color: 'black', fontWeight: 800 }}
+                                    >
+                                        Calibrate Store Location
+                                    </button>
+                                    {appSettings.restaurantLocation && (
+                                        <p style={{ fontSize: '0.65rem', color: '#4caf50', marginTop: '8px', textAlign: 'center' }}>
+                                            ✓ Lat: {appSettings.restaurantLocation.lat.toFixed(6)}, Lng: {appSettings.restaurantLocation.lng.toFixed(6)}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </motion.div>
@@ -656,7 +588,7 @@ const AdminDashboard = () => {
                                         <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--glass-border)', paddingBottom: '5px', marginBottom: '15px', fontSize: '1rem' }}>{cat} CATEGORY</h4>
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '15px' }}>
                                             {menuItems.filter(item => item.category === cat).map(item => (
-                                                <div key={item.id} className="glass-card" style={{ display: 'flex', padding: '15px', gap: '15px', alignItems: 'center' }}>
+                                                <div key={item._id} className="glass-card" style={{ display: 'flex', padding: '15px', gap: '15px', alignItems: 'center' }}>
                                                     <img src={item.image} style={{ width: '60px', height: '60px', borderRadius: '10px', objectFit: 'cover' }} alt="" />
                                                     <div style={{ flex: 1 }}>
                                                         <h5 style={{ fontSize: '0.9rem', opacity: item.isAvailable ? 1 : 0.5 }}>{item.name} {!item.isAvailable && '(Out of Stock)'}</h5>
@@ -664,13 +596,13 @@ const AdminDashboard = () => {
                                                         <p className="gold-text" style={{ fontSize: '0.8rem' }}>₹{item.price}</p>
                                                     </div>
                                                     <div style={{ display: 'flex', gap: '8px' }}>
-                                                        <button onClick={() => toggleAvailability(item.id)} style={{ background: item.isAvailable ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 77, 77, 0.1)', border: 'none', color: item.isAvailable ? '#4caf50' : '#ff4d4d', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}>
+                                                        <button onClick={() => toggleAvailability(item)} style={{ background: item.isAvailable ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 77, 77, 0.1)', border: 'none', color: item.isAvailable ? '#4caf50' : '#ff4d4d', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}>
                                                             {item.isAvailable ? <CheckCircle size={16} /> : <X size={16} />}
                                                         </button>
                                                         <button onClick={() => startEditing(item)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--primary)', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}>
                                                             <ClipboardList size={16} />
                                                         </button>
-                                                        <button onClick={() => deleteMenuItem(item.id)} style={{ background: 'rgba(255, 77, 77, 0.05)', border: 'none', color: '#ff4d4d', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}>
+                                                        <button onClick={() => deleteMenuItem(item._id)} style={{ background: 'rgba(255, 77, 77, 0.05)', border: 'none', color: '#ff4d4d', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}>
                                                             <Trash2 size={16} />
                                                         </button>
                                                     </div>
@@ -742,11 +674,10 @@ const AdminDashboard = () => {
                                         onClick={() => {
                                             if (!expenseForm.amount) return alert('Enter amount');
                                             addExpense({
-                                                id: Date.now(),
                                                 ...expenseForm,
                                                 amount: parseFloat(expenseForm.amount)
                                             });
-                                            setExpenseForm({ item: 'vegitable', amount: '', paidBy: '', date: new Date().toISOString().split('T')[0] });
+                                            setExpenseForm({ item: 'vegitable', amount: '', paidBy: '', description: '', date: new Date().toISOString().split('T')[0] });
                                         }}
                                         className="btn-primary"
                                         style={{ padding: '15px', marginTop: '10px' }}
@@ -769,7 +700,7 @@ const AdminDashboard = () => {
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 {expenses.map(exp => (
-                                    <div key={exp.id} className="glass-card" style={{ padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div key={exp._id} className="glass-card" style={{ padding: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <div style={{ flex: 1 }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 <h5 style={{ textTransform: 'capitalize', fontSize: '1rem', fontWeight: 600 }}>{exp.item}</h5>
@@ -780,7 +711,7 @@ const AdminDashboard = () => {
                                         </div>
                                         <div style={{ textAlign: 'right', marginLeft: '15px' }}>
                                             <span style={{ display: 'block', fontWeight: 800, color: '#f44336' }}>-₹{exp.amount}</span>
-                                            <button onClick={() => deleteExpense(exp.id)} style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', marginTop: '5px' }}>Remove</button>
+                                            <button onClick={() => deleteExpense(exp._id)} style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', marginTop: '5px' }}>Remove</button>
                                         </div>
                                     </div>
                                 ))}
@@ -838,7 +769,7 @@ const AdminDashboard = () => {
                                     <div style={{ marginBottom: '20px' }}>
                                         <h5 style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '10px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '5px' }}>Sales Transactions ({reportData.salesList.length})</h5>
                                         {reportData.salesList.map(sale => (
-                                            <div key={sale.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '8px 0', borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
+                                            <div key={sale._id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '8px 0', borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
                                                 <span>Table #{sale.tableId} <span style={{ opacity: 0.5 }}>({new Date(sale.settledAt).toLocaleDateString()})</span></span>
                                                 <span style={{ color: '#4caf50' }}>+₹{sale.total}</span>
                                             </div>
@@ -848,7 +779,7 @@ const AdminDashboard = () => {
                                     <div>
                                         <h5 style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '10px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '5px' }}>Expense Transactions ({reportData.expenseList.length})</h5>
                                         {reportData.expenseList.map(exp => (
-                                            <div key={exp.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '8px 0', borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
+                                            <div key={exp._id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '8px 0', borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
                                                 <span>{exp.item} <span style={{ opacity: 0.5 }}>({new Date(exp.date).toLocaleDateString()})</span></span>
                                                 <span style={{ color: '#f44336' }}>-₹{exp.amount}</span>
                                             </div>
@@ -946,19 +877,10 @@ const AdminDashboard = () => {
 
                                     <button onClick={() => {
                                         if (newItemForm.name && newItemForm.price && newItemForm.category) {
-                                            if (editingItem) {
-                                                const updatedMenu = menuItems.map(item =>
-                                                    item.id === editingItem.id ? { ...newItemForm, price: parseInt(newItemForm.price) } : item
-                                                );
-                                                saveMenu(updatedMenu);
-                                            } else {
-                                                const newItem = {
-                                                    id: Date.now(),
-                                                    ...newItemForm,
-                                                    price: parseInt(newItemForm.price)
-                                                };
-                                                saveMenu([...menuItems, newItem]);
-                                            }
+                                            saveMenu({
+                                                ...newItemForm,
+                                                price: parseInt(newItemForm.price)
+                                            });
                                             setIsAddModalOpen(false);
                                             setEditingItem(null);
                                             setNewItemForm({ name: '', price: '', category: 'RESTAURANT', subCategory: '', image: '', description: '', isAvailable: true });
