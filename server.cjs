@@ -16,7 +16,12 @@ const Expense = require('./models/Expense.cjs');
 const Setting = require('./models/Setting.cjs');
 
 const app = express();
-app.get('/health', (req, res) => res.status(200).send('OK')); // Immediate health check response
+
+// 1. Immediate Health Check for Render
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
 app.use(cors());
 app.use(express.json());
 
@@ -26,9 +31,9 @@ const distPath = path.join(__dirname, 'dist');
 // Global States
 let isKitchenOpen = true;
 
-// MongoDB Connection safely
+// 2. MongoDB Connection safely
 if (!process.env.MONGODB_URI) {
-    console.error('✗ CRITICAL: MONGODB_URI is not defined in environment variables!');
+    console.error('❌ CRITICAL: MONGODB_URI is not defined in environment variables!');
 } else {
     mongoose.connect(process.env.MONGODB_URI, {
         serverApi: {
@@ -38,11 +43,11 @@ if (!process.env.MONGODB_URI) {
         }
     })
         .then(() => {
-            console.log('✓ Connected to MongoDB');
-            initializeData();
+            console.log('✅ Connected to MongoDB');
+            initializeData().catch(err => console.error('❌ Data initialization error:', err));
         })
         .catch(err => {
-            console.error('✗ Initial MongoDB connection error:', err.message);
+            console.error('❌ MongoDB Connection Error:', err.message);
         });
 }
 
@@ -56,21 +61,20 @@ async function initializeData() {
                 const fileData = fs.readFileSync(DATA_FILE, 'utf8');
                 const legacyMenu = JSON.parse(fileData);
                 await MenuItem.insertMany(legacyMenu);
-                console.log('✓ Ported legacy menu to MongoDB');
+                console.log('✅ legacy menu imported to MongoDB');
             }
         }
 
-        // Initial Settings
         const radiusSetting = await Setting.findOne({ key: 'deliveryRadiusKm' });
         if (!radiusSetting) {
             await Setting.create({ key: 'deliveryRadiusKm', value: 5.0 });
         }
     } catch (err) {
-        console.error('Error initializing data:', err);
+        console.error('❌ Error in initializeData:', err);
     }
 }
 
-// Routes
+// 3. Static Files & Routing
 app.use(express.static(distPath));
 
 app.get('*', (req, res) => {
@@ -78,25 +82,28 @@ app.get('*', (req, res) => {
     if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
     } else {
-        res.status(404).send('Frontend build not found.');
+        res.status(404).send('Frontend build not found. Verify dist folder exists.');
     }
 });
 
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 
+// 4. Socket.IO Events
 io.on('connection', async (socket) => {
-    console.log('User connected:', socket.id);
+    console.log('👤 User connected:', socket.id);
 
-    // Initial Sync
     socket.emit('kitchen-status-updated', isKitchenOpen);
 
-    const settings = await Setting.find({});
-    const settingsObj = {};
-    settings.forEach(s => settingsObj[s.key] = s.value);
-    socket.emit('settings-updated', settingsObj);
+    try {
+        const settings = await Setting.find({});
+        const settingsObj = {};
+        settings.forEach(s => settingsObj[s.key] = s.value);
+        socket.emit('settings-updated', settingsObj);
+    } catch (err) {
+        console.error('❌ Socket initialization error:', err);
+    }
 
-    // Service Alerts
     socket.on('service-call', (data) => {
         io.emit('new-service-alert', {
             id: Date.now(),
@@ -106,7 +113,6 @@ io.on('connection', async (socket) => {
         });
     });
 
-    // Orders
     socket.on('get-orders', async () => {
         const orders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
         socket.emit('orders-updated', orders);
@@ -120,7 +126,7 @@ io.on('connection', async (socket) => {
             const allOrders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
             io.emit('orders-updated', allOrders);
         } catch (err) {
-            console.error('Error placing order:', err);
+            console.error('❌ Error placing order:', err);
         }
     });
 
@@ -130,7 +136,6 @@ io.on('connection', async (socket) => {
         io.emit('orders-updated', allOrders);
     });
 
-    // Menu
     socket.on('get-menu', async () => {
         const menu = await MenuItem.find({});
         socket.emit('menu-updated', menu);
@@ -157,7 +162,6 @@ io.on('connection', async (socket) => {
         io.emit('kitchen-status-updated', isKitchenOpen);
     });
 
-    // Sales
     socket.on('save-sale', async (saleData) => {
         const newSale = new Sale(saleData);
         await newSale.save();
@@ -173,7 +177,6 @@ io.on('connection', async (socket) => {
         socket.emit('sales-updated', sales);
     });
 
-    // Expenses
     socket.on('get-expenses', async () => {
         const expenses = await Expense.find({}).sort({ date: -1 });
         socket.emit('expenses-updated', expenses);
@@ -201,42 +204,57 @@ io.on('connection', async (socket) => {
         io.emit('settings-updated', settingsObj);
     });
 
-    socket.on('disconnect', () => console.log('User disconnected:', socket.id));
+    socket.on('disconnect', () => console.log('👤 User disconnected:', socket.id));
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`✓ Server running on port ${PORT} (0.0.0.0)`);
+// 5. Global Process Handlers
+process.on('uncaughtException', (err) => {
+    console.error('❌ FATAL UNCAUGHT EXCEPTION:', err.stack || err);
+});
 
-    // Self-ping mechanism to keep Render server awake
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ FATAL UNHANDLED REJECTION at:', promise, 'reason:', reason);
+});
+
+// 6. Server Start
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 STARTUP CONFIGURATION`);
+    console.log(`📡 PORT: ${PORT}`);
+    console.log(`🏠 HOST: 0.0.0.0`);
+    console.log(`📦 NODE: ${process.version}`);
+    console.log(`📂 DIR: ${__dirname}`);
+    console.log(`🌍 URL: ${process.env.RENDER_EXTERNAL_URL || 'Not Set'}`);
+
     const RENDER_URL = process.env.RENDER_EXTERNAL_URL;
 
     if (RENDER_URL) {
-        console.log(`🔄 Self-ping keep-alive enabled for: ${RENDER_URL}`);
+        console.log(`🔄 Keep-alive heartbeat enabled for: ${RENDER_URL}`);
 
         setInterval(() => {
             try {
                 const url = `${RENDER_URL}/health`;
                 https.get(url, (res) => {
-                    res.resume(); // Consume data
+                    res.resume();
                     if (res.statusCode === 200) {
-                        console.log(`✓ Keep-alive ping successful at ${new Date().toLocaleTimeString()}`);
+                        console.log(`💓 Heartbeat OK (${new Date().toLocaleTimeString()})`);
+                    } else {
+                        console.log(`💔 Heartbeat Status: ${res.statusCode}`);
                     }
                 }).on('error', (err) => {
-                    console.log(`⚠ Keep-alive ping error: ${err.message}`);
+                    console.log(`💔 Heartbeat Network Error: ${err.message}`);
                 });
             } catch (error) {
-                console.log(`⚠ Keep-alive error: ${error.message}`);
+                console.log(`💔 Heartbeat Timer Error: ${error.message}`);
             }
-        }, 5 * 60 * 1000); // 5 minutes
+        }, 5 * 60 * 1000);
 
-        // Initial ping after 30 seconds
         setTimeout(() => {
             https.get(`${RENDER_URL}/health`, (res) => {
                 res.resume();
-                console.log('✓ Initial keep-alive ping sent');
+                console.log('🏁 Startup self-check ping sent');
             }).on('error', () => { });
         }, 30000);
     } else {
-        console.log('ℹ RENDER_EXTERNAL_URL not set - self-ping disabled');
+        console.log('ℹ️ Local server (No self-ping)');
     }
 });
