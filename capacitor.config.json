@@ -3,7 +3,7 @@
   "appName": "Marwad Menu",
   "webDir": "dist",
   "server": {
-    "url": "https://digital-marwad-2.onrender.com",
+    "url": "https://digital-marwad-1.onrender.com",
     "cleartext": true
   }
 }
