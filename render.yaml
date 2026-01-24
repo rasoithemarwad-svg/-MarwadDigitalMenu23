@@ -6,6 +6,6 @@ services:
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
-        value: 18.0.0
+        value: 22.0.0
       - key: RENDER_EXTERNAL_URL
         value: https://digital-marwad-2.onrender.com
