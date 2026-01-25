@@ -499,6 +499,13 @@ const AdminDashboard = () => {
                                 >
                                     {isSitarPlaying ? '🎵' : '🔇'}
                                 </button>
+                                <button
+                                    onClick={handleSitarEnd}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', color: 'var(--primary)' }}
+                                    title="Next Track"
+                                >
+                                    ⏭️
+                                </button>
                                 {isSitarPlaying && (
                                     <input
                                         type="range"
