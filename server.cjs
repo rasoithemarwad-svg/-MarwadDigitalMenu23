@@ -41,7 +41,10 @@ if (!process.env.MONGODB_URI) {
             version: '1',
             strict: true,
             deprecationErrors: true,
-        }
+        },
+        connectTimeoutMS: 30000,
+        socketTimeoutMS: 45000,
+        bufferCommands: false // Disable buffering to fail fast if not connected
     })
         .then(() => {
             console.log('✅ Connected to MongoDB');
@@ -50,6 +53,14 @@ if (!process.env.MONGODB_URI) {
         .catch(err => {
             console.error('❌ MongoDB Connection Error:', err.message);
         });
+
+    mongoose.connection.on('error', err => {
+        console.error('❌ Mongoose Connection Error Event:', err);
+    });
+
+    mongoose.connection.on('disconnected', () => {
+        console.log('⚠️ Mongoose Disconnected');
+    });
 }
 
 // Port Data from JSON to DB if empty
