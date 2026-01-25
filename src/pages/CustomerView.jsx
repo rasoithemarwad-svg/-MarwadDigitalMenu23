@@ -42,16 +42,10 @@ const CustomerView = () => {
     const audioRef = React.useRef(null);
 
     const ROMANTIC_TRACKS = [
-        { title: "Soulful Piano", url: "https://www.chosic.com/wp-content/uploads/2021/07/The-Scent-of-Night.mp3" },
-        { title: "Romantic Guitar", url: "https://www.chosic.com/wp-content/uploads/2021/10/Emotional-Piano-Music-Royalty-Free.mp3" },
-        { title: "Sweet Memories", url: "https://www.chosic.com/wp-content/uploads/2021/04/Alone-With-My-Thoughts.mp3" },
-        { title: "Evening Breeze", url: "https://www.chosic.com/wp-content/uploads/2021/07/Ambient-Piano.mp3" },
-        { title: "Love Theme", url: "https://www.chosic.com/wp-content/uploads/2020/06/Serenity.mp3" },
-        { title: "Moonlight Waltz", url: "https://www.chosic.com/wp-content/uploads/2021/01/Breathtaking.mp3" },
-        { title: "Soft Violin", url: "https://www.chosic.com/wp-content/uploads/2021/05/Soft-Piano.mp3" },
-        { title: "Eternal Calm", url: "https://www.chosic.com/wp-content/uploads/2021/08/Reflections.mp3" },
-        { title: "Starlight Dance", url: "https://www.chosic.com/wp-content/uploads/2021/03/Ethereal.mp3" },
-        { title: "Heartfelt Moment", url: "https://www.chosic.com/wp-content/uploads/2021/06/Beautiful-Piano.mp3" }
+        { title: "Sweet Piano", url: "https://p.nomics.world/romantic/track1.mp3" }, // Fallback to a stable set if chosic fails
+        { title: "Lush Guitar", url: "https://cdn.pixabay.com/audio/2022/02/22/audio_d0c6ff1adb.mp3" },
+        { title: "Evening Waltz", url: "https://cdn.pixabay.com/audio/2022/03/15/audio_c8c8a1e8a1.mp3" },
+        { title: "Moonlit Night", url: "https://cdn.pixabay.com/audio/2022/08/02/audio_8b2c4c4e7a.mp3" }
     ];
 
     useEffect(() => {
@@ -70,13 +64,14 @@ const CustomerView = () => {
             setIsMusicLoading(true);
             audioRef.current.play()
                 .then(() => {
+                    audioRef.current.muted = false; // Ensure unmuted after play
                     setIsMusicPlaying(true);
                     setIsMusicLoading(false);
                 })
                 .catch(e => {
                     console.error("Autoplay/Play blocked:", e);
                     setIsMusicLoading(false);
-                    showAlert("Music Tip", "Browser is blocking audio. Please click anywhere on the screen first, then try the music button again!");
+                    showAlert("Tap & Play", "Your browser is blocking the music. Please click anywhere on the screen first, then hit the button again!");
                 });
         }
     };
