@@ -248,6 +248,20 @@ io.on('connection', async (socket) => {
         socket.emit('expenses-updated', expenses);
     });
 
+    socket.on('clear-history', async () => {
+        try {
+            await Sale.deleteMany({});
+            await Expense.deleteMany({});
+            await Order.deleteMany({ status: { $in: ['completed', 'cancelled'] } }); // Optional: keep active?
+
+            io.emit('sales-updated', []);
+            io.emit('expenses-updated', []);
+            console.log('🧹 History Cleared via Admin');
+        } catch (err) {
+            console.error('Failed to clear history:', err);
+        }
+    });
+
     socket.on('add-expense', async (expenseData) => {
         await Expense.create(expenseData);
         const updatedExpenses = await Expense.find({}).sort({ date: -1 });

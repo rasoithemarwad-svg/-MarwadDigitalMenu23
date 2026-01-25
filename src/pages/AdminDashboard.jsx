@@ -927,6 +927,34 @@ const AdminDashboard = () => {
                                     <button onClick={() => downloadReport('sales')} className="glass-card" style={{ padding: '12px', border: '1px solid #4caf50', color: '#4caf50', fontWeight: 'bold' }}>Export Sales (Excel)</button>
                                     <button onClick={() => downloadReport('expenses')} className="glass-card" style={{ padding: '12px', border: '1px solid #f44336', color: '#f44336', fontWeight: 'bold' }}>Export Expense (Excel)</button>
                                 </div>
+
+                                <div style={{ marginTop: '20px', borderTop: '1px solid var(--glass-border)', paddingTop: '20px' }}>
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm("⚠️ DANGER ZONE: Are you sure you want to delete ALL sales and expense history? This action cannot be undone.")) {
+                                                if (window.confirm("Please confirm again to ERASE EVERYTHING.")) {
+                                                    socket.emit('clear-history');
+                                                    showAlert("History Cleared", "All sales and expenses have been completely erased.");
+                                                }
+                                            }
+                                        }}
+                                        style={{
+                                            width: '100%',
+                                            padding: '15px',
+                                            background: 'rgba(255, 0, 0, 0.1)',
+                                            border: '2px solid red',
+                                            color: 'red',
+                                            borderRadius: '12px',
+                                            fontWeight: 'bold',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '10px'
+                                        }}
+                                    >
+                                        <Trash2 size={20} /> RESET ALL DATA (ERASE HISTORY)
+                                    </button>
+                                </div>
                             </div>
 
                             {reportData.sales > 0 || reportData.expenses > 0 ? (
