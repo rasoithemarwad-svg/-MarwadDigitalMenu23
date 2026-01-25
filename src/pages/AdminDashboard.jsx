@@ -338,7 +338,13 @@ const AdminDashboard = () => {
                                 required
                             />
                         </div>
-                        {loginError && <p style={{ color: '#ff3b30', fontSize: '0.8rem', textAlign: 'center' }}>{loginError}</p>}
+                        {loginError && (
+                            <div style={{ padding: '10px', borderRadius: '8px', background: 'rgba(255, 59, 48, 0.1)', border: '1px solid rgba(255, 59, 48, 0.2)' }}>
+                                <p style={{ color: '#ff3b30', fontSize: '0.75rem', textAlign: 'center', wordBreak: 'break-word' }}>
+                                    ⚠️ {loginError}
+                                </p>
+                            </div>
+                        )}
                         <button type="submit" className="btn-primary" style={{ padding: '15px', color: 'black', fontWeight: 800 }}>UNLOCK DASHBOARD</button>
                     </form>
                 </motion.div>
