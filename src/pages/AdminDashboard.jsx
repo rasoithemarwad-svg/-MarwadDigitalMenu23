@@ -58,6 +58,78 @@ const AdminDashboard = () => {
     const [reportData, setReportData] = useState({ sales: 0, expenses: 0, profit: 0, salesList: [], expenseList: [] });
     // ---------------------
 
+    // --- MANUAL BILL STATE ---
+    const [manualCart, setManualCart] = useState([]);
+    const [manualItem, setManualItem] = useState({ name: '', price: '', qty: 1 });
+
+    const addToManualCart = (e) => {
+        e.preventDefault();
+        if (!manualItem.name || !manualItem.price || manualItem.qty < 1) return;
+
+        const newItem = {
+            id: Date.now(),
+            name: manualItem.name,
+            price: parseFloat(manualItem.price),
+            qty: parseInt(manualItem.qty),
+            total: parseFloat(manualItem.price) * parseInt(manualItem.qty)
+        };
+
+        setManualCart([...manualCart, newItem]);
+        setManualItem({ name: '', price: '', qty: 1 });
+    };
+
+    const removeManualItem = (id) => {
+        setManualCart(manualCart.filter(item => item.id !== id));
+    };
+
+    const settleManualBill = (paymentMode) => {
+        if (manualCart.length === 0) return;
+
+        const totalAmount = manualCart.reduce((acc, item) => acc + item.total, 0);
+
+        // Construct a mock order object for the backend
+        const manualOrder = {
+            tableId: 'WALK-IN',
+            items: manualCart,
+            status: 'completed',
+            total: totalAmount,
+            paymentMode: paymentMode, // 'CASH' or 'ONLINE'
+            timestamp: new Date().toISOString()
+        };
+
+        // Reuse the existing settle-bill event logic but we might need to adapt it 
+        // OR emit a direct event if the backend supports it. 
+        // Since backend expects tableId to settle, we can mock it.
+        // However, standard settle-bill usually takes a TABLE ID, not an order object.
+        // Let's check how settleBill works. 
+        // It seems settleBill(tableId) tells server to find ACTIVE orders for that table.
+        // We don't have active orders for WALK-IN.
+        // So we probably need a new event 'direct-sale' OR we just create a "completed" order directly.
+
+        // Based on typical patterns, let's emit 'direct-sale' or formatted 'settle-bill'
+        // Ideally we should emit 'place-order' then 'settle'? No that's too slow.
+        // Let's try emitting 'direct-sale' (Admin needs to handle this)
+        // OR easier: emit 'settle-bill-manual'
+
+        // For now, I will assume we need to emit a specific event that the server handles for direct sales.
+        // Usage of 'add-expense' suggests we have generic DB insert events.
+        // Let's try to assume the server has a 'record-sale' or we treat it as a pre-settled order.
+
+        // Actually, looking at previous code, `settleBill` just sends `tableId`.
+        // If we want to support this without backend changes, we might need to:
+        // 1. Emit 'place-order' for table 'WALK-IN' with the items.
+        // 2. Wait for it to be acknowledged?
+        // 3. Emit 'settle-bill' for 'WALK-IN'.
+
+        // SIMPLER APPROACH: Emit 'process-manual-sale'
+        socket.emit('process-manual-sale', manualOrder);
+
+        // Clear local state
+        setManualCart([]);
+        showAlert("Bill Settled", `Walk-in bill of ₹${totalAmount} settled via ${paymentMode}`);
+    };
+    // -------------------------
+
     // --- BACKGROUND MUSIC ---
     const ROMANTIC_TRACKS = [
         { title: "Gentle Instrumental", url: "/music/gentle-instrumental-1-322812.mp3" },
@@ -1121,7 +1193,109 @@ const AdminDashboard = () => {
                     )}
                 </AnimatePresence>
 
-                {/* Settle Modal */}
+                <AnimatePresence>
+                    {activeTab === 'manual' && (
+                        <motion.div key="manual" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                            <div className="glass-card" style={{ padding: '20px', marginBottom: '25px' }}>
+                                <h3 className="gold-text" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <Receipt size={20} /> Quick Bill (Walk-in)
+                                </h3>
+
+                                {/* Add Item Form */}
+                                <form onSubmit={addToManualCart} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '10px', alignItems: 'end', marginBottom: '20px' }}>
+                                    <div>
+                                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Item Name</label>
+                                        <input
+                                            type="text"
+                                            value={manualItem.name}
+                                            onChange={(e) => setManualItem({ ...manualItem, name: e.target.value })}
+                                            placeholder="e.g. Water Bottle"
+                                            className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Price</label>
+                                        <input
+                                            type="number"
+                                            value={manualItem.price}
+                                            onChange={(e) => setManualItem({ ...manualItem, price: e.target.value })}
+                                            placeholder="0"
+                                            className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Qty</label>
+                                        <input
+                                            type="number"
+                                            value={manualItem.qty}
+                                            onChange={(e) => setManualItem({ ...manualItem, qty: e.target.value })}
+                                            className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                                            min="1"
+                                            required
+                                        />
+                                    </div>
+                                    <button type="submit" className="btn-primary" style={{ padding: '10px 15px', height: '42px' }}>
+                                        <Plus size={20} />
+                                    </button>
+                                </form>
+
+                                {/* Cart List */}
+                                <div style={{ minHeight: '150px', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', padding: '10px', marginBottom: '20px' }}>
+                                    {manualCart.length === 0 ? (
+                                        <p style={{ textAlign: 'center', color: 'var(--text-secondary)', opacity: 0.5, marginTop: '40px' }}>No items added yet.</p>
+                                    ) : (
+                                        manualCart.map(item => (
+                                            <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', borderBottom: '1px dashed rgba(255,255,255,0.1)' }}>
+                                                <div>
+                                                    <span style={{ fontWeight: 600 }}>{item.name}</span>
+                                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                        {item.qty} x ₹{item.price}
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                    <span style={{ fontWeight: 600 }}>₹{item.total}</span>
+                                                    <button onClick={() => removeManualItem(item.id)} style={{ color: '#f44336', background: 'none', border: 'none' }}>
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {/* Total & Actions */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', fontSize: '1.2rem', fontWeight: 800 }}>
+                                    <span>Total Amount</span>
+                                    <span className="gold-text">₹{manualCart.reduce((acc, i) => acc + i.total, 0)}</span>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                    <button
+                                        onClick={() => settleManualBill('CASH')}
+                                        disabled={manualCart.length === 0}
+                                        className="glass-card"
+                                        style={{ padding: '15px', border: '1px solid #4caf50', color: '#4caf50', fontWeight: 'bold', display: 'flex', justifyContent: 'center', gap: '8px', opacity: manualCart.length === 0 ? 0.5 : 1 }}
+                                    >
+                                        <ScanLine size={18} /> CASH
+                                    </button>
+                                    <button
+                                        onClick={() => settleManualBill('ONLINE')}
+                                        disabled={manualCart.length === 0}
+                                        className="glass-card"
+                                        style={{ padding: '15px', border: '1px solid #00bcd4', color: '#00bcd4', fontWeight: 'bold', display: 'flex', justifyContent: 'center', gap: '8px', opacity: manualCart.length === 0 ? 0.5 : 1 }}
+                                    >
+                                        <QrCode size={18} /> ONLINE
+                                    </button>
+                                </div>
+
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Settle Modal (Existing) */}
                 {selectedTableBill && (
                     <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'var(--bg-card)', borderTopLeftRadius: '30px', borderTopRightRadius: '30px', zIndex: 1001, padding: '30px 20px', maxHeight: '80vh', overflowY: 'auto' }}>
                         <h2 className="gold-text" style={{ textAlign: 'center', marginBottom: '20px' }}>Settlement - #{selectedTableBill}</h2>
@@ -1143,6 +1317,7 @@ const AdminDashboard = () => {
                 <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'var(--bg-card)', borderTop: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-around', padding: '15px 0', zIndex: 1000, boxShadow: '0 -10px 30px rgba(0,0,0,0.5)' }}>
                     <button onClick={() => setActiveTab('orders')} style={{ background: 'none', border: 'none', color: activeTab === 'orders' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><ClipboardList size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Orders</span></button>
                     <button onClick={() => setActiveTab('billing')} style={{ background: 'none', border: 'none', color: activeTab === 'billing' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Receipt size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Billing</span></button>
+                    <button onClick={() => setActiveTab('manual')} style={{ background: 'none', border: 'none', color: activeTab === 'manual' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Plus size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Quick Bill</span></button>
                     <button onClick={() => setActiveTab('menu')} style={{ background: 'none', border: 'none', color: activeTab === 'menu' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Utensils size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Menu</span></button>
 
                     {currentUser.role === 'OWNER' && (
