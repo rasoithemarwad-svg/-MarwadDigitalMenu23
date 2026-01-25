@@ -126,7 +126,14 @@ const AdminDashboard = () => {
         // Load session if exists
         const savedUser = localStorage.getItem('marwad_user');
         if (savedUser) {
-            setCurrentUser(JSON.parse(savedUser));
+            const parsedUser = JSON.parse(savedUser);
+            // Invalidate stale sessions with old roles (ADMIN/MANAGER)
+            if (parsedUser.role === 'ADMIN' || parsedUser.role === 'MANAGER') {
+                localStorage.removeItem('marwad_user');
+                setCurrentUser(null);
+            } else {
+                setCurrentUser(parsedUser);
+            }
         }
 
         return () => {
