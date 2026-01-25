@@ -60,10 +60,13 @@ const AdminDashboard = () => {
 
     // --- BACKGROUND MUSIC ---
     const ROMANTIC_TRACKS = [
-        { title: "Indian Flute 1", url: "/music/flute1.mp3" },
-        { title: "Indian Flute 2", url: "/music/flute2.mp3" },
-        { title: "Indian Sitar", url: "/music/sitar1.mp3" },
-        { title: "Indian Ambient", url: "/music/ambient1.mp3" }
+        { title: "Gentle Instrumental", url: "/music/gentle-instrumental-1-322812.mp3" },
+        { title: "Inspiring Song 1", url: "/music/inspiring-instrumental-song-462285.mp3" },
+        { title: "Inspiring Song 2", url: "/music/inspiring-instrumental-song-466453.mp3" },
+        { title: "Instrumental Mix", url: "/music/instrumental-136113.mp3" },
+        { title: "Acoustic Guitar", url: "/music/instrumental-acoustic-guitar-music-401434.mp3" },
+        { title: "Flamenco Instrumental", url: "/music/ki-instrumental-flamenco-460208.mp3" },
+        { title: "Sad Instrumental", url: "/music/sad-sad-instrumental-music-471913.mp3" }
     ];
     const [isSitarPlaying, setIsSitarPlaying] = useState(false);
     const [sitarVolume, setSitarVolume] = useState(0.3); // Lower volume for background
