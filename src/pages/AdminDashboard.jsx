@@ -49,7 +49,8 @@ const AdminDashboard = () => {
         item: 'vegitable',
         amount: '',
         paidBy: '',
-        description: '', // New field
+        description: '',
+        paymentMode: 'CASH',
         date: new Date().toISOString().split('T')[0]
     });
 
@@ -1214,7 +1215,10 @@ const AdminDashboard = () => {
                                         {reportData.expenseList.map(exp => (
                                             <div key={exp._id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '8px 0', borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
                                                 <span>{exp.item} <span style={{ opacity: 0.5 }}>({new Date(exp.date).toLocaleDateString()})</span></span>
-                                                <span style={{ color: '#f44336' }}>-₹{exp.amount}</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', background: exp.paymentMode === 'ONLINE' ? 'rgba(0,188,212,0.2)' : 'rgba(76,175,80,0.2)', color: exp.paymentMode === 'ONLINE' ? '#00bcd4' : '#4caf50' }}>{exp.paymentMode || 'CASH'}</span>
+                                                    <span style={{ color: '#f44336' }}>-₹{exp.amount}</span>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>

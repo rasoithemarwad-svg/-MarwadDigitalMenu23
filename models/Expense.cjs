@@ -5,6 +5,7 @@ const ExpenseSchema = new mongoose.Schema({
     amount: { type: Number, required: true },
     paidBy: String,
     description: String,
+    paymentMode: { type: String, enum: ['CASH', 'ONLINE'], default: 'CASH' },
     date: { type: Date, default: Date.now }
 }, { timestamps: true });
 
