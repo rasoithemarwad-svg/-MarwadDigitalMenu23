@@ -44,7 +44,7 @@ if (!process.env.MONGODB_URI) {
         },
         connectTimeoutMS: 30000,
         socketTimeoutMS: 45000,
-        bufferCommands: false // Disable buffering to fail fast if not connected
+        bufferCommands: true // Re-enable buffering to prevent immediate failure
     })
         .then(() => {
             console.log('✅ Connected to MongoDB');
@@ -62,6 +62,9 @@ if (!process.env.MONGODB_URI) {
         console.log('⚠️ Mongoose Disconnected');
     });
 }
+
+// Global check for database readiness
+const checkDB = () => mongoose.connection.readyState === 1;
 
 // Port Data from JSON to DB if empty
 async function initializeData() {
@@ -138,6 +141,9 @@ io.on('connection', async (socket) => {
     }
 
     socket.on('login', async ({ username, password }) => {
+        if (!checkDB()) {
+            return socket.emit('login-error', '❌ Database is still connecting. Please wait 10 seconds and try again.');
+        }
         try {
             const user = await User.findOne({ username, password });
             if (user) {
