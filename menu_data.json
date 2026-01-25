@@ -1583,5 +1583,105 @@
     "isAvailable": true,
     "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=500&q=80",
     "description": "Flavorful veg manchow soup."
+  },
+  {
+    "id": 1600,
+    "name": "Grilled Chicken Breast",
+    "price": 320,
+    "category": "GYM",
+    "subCategory": "HIGH PROTEIN",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=500&q=80",
+    "description": "Lean grilled chicken breast with steamed vegetables. High protein, low fat."
+  },
+  {
+    "id": 1601,
+    "name": "Protein Smoothie Bowl",
+    "price": 250,
+    "category": "GYM",
+    "subCategory": "PRE-WORKOUT",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1590301157890-4810ed352733?w=500&q=80",
+    "description": "Acai bowl with protein powder, fresh fruits, and granola. Perfect pre-workout fuel."
+  },
+  {
+    "id": 1602,
+    "name": "Quinoa Power Salad",
+    "price": 280,
+    "category": "GYM",
+    "subCategory": "LOW CARB",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&q=80",
+    "description": "Quinoa with mixed greens, grilled veggies, and lemon dressing. Nutrient-packed."
+  },
+  {
+    "id": 1603,
+    "name": "Egg White Omelette",
+    "price": 180,
+    "category": "GYM",
+    "subCategory": "HIGH PROTEIN",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&q=80",
+    "description": "Fluffy egg white omelette with spinach and mushrooms. Pure protein."
+  },
+  {
+    "id": 1604,
+    "name": "Greek Yogurt Parfait",
+    "price": 220,
+    "category": "GYM",
+    "subCategory": "POST-WORKOUT",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1488477181946-6428a0291777?w=500&q=80",
+    "description": "Greek yogurt layered with berries, honey, and nuts. Post-workout recovery."
+  },
+  {
+    "id": 1605,
+    "name": "Grilled Fish with Veggies",
+    "price": 380,
+    "category": "GYM",
+    "subCategory": "HIGH PROTEIN",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1580959375944-564167e68584?w=500&q=80",
+    "description": "Fresh grilled fish fillet with seasonal vegetables. Omega-3 rich."
+  },
+  {
+    "id": 1606,
+    "name": "Paneer Tikka Protein Bowl",
+    "price": 300,
+    "category": "GYM",
+    "subCategory": "HIGH PROTEIN",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=500&q=80",
+    "description": "Grilled paneer tikka with brown rice and veggies. Vegetarian protein boost."
+  },
+  {
+    "id": 1607,
+    "name": "Green Detox Smoothie",
+    "price": 180,
+    "category": "GYM",
+    "subCategory": "PRE-WORKOUT",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1610970881699-44a5587cabec?w=500&q=80",
+    "description": "Spinach, kale, apple, and chia seeds blended. Natural energy boost."
+  },
+  {
+    "id": 1608,
+    "name": "Chicken Caesar Salad",
+    "price": 340,
+    "category": "GYM",
+    "subCategory": "LOW CARB",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1546793665-c74683f339c1?w=500&q=80",
+    "description": "Grilled chicken on crisp romaine with light caesar dressing. Balanced nutrition."
+  },
+  {
+    "id": 1609,
+    "name": "Oats Energy Bowl",
+    "price": 200,
+    "category": "GYM",
+    "subCategory": "PRE-WORKOUT",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=500&q=80",
+    "description": "Steel-cut oats with banana, almond butter, and honey. Slow-release energy."
   }
 ]
