@@ -6,7 +6,7 @@ import { io } from 'socket.io-client';
 import QRManager from '../components/QRManager';
 import QRScanner from '../components/QRScanner';
 
-const socket = io(); // Connects to the same host that served this page
+const socket = io('https://digital-marwad-1.onrender.com'); // Connects to the same host that served this page
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -58,10 +58,56 @@ const AdminDashboard = () => {
     const [reportData, setReportData] = useState({ sales: 0, expenses: 0, profit: 0, salesList: [], expenseList: [] });
     // ---------------------
 
-    const [appSettings, setAppSettings] = useState({ deliveryRadiusKm: 5.0 }); // Default settings
+    // --- BACKGROUND MUSIC ---
+    const ROMANTIC_TRACKS = [
+        { title: "Indian Flute 1", url: "/music/flute1.mp3" },
+        { title: "Indian Flute 2", url: "/music/flute2.mp3" },
+        { title: "Indian Sitar", url: "/music/sitar1.mp3" },
+        { title: "Indian Ambient", url: "/music/ambient1.mp3" }
+    ];
+    const [isSitarPlaying, setIsSitarPlaying] = useState(false);
+    const [sitarVolume, setSitarVolume] = useState(0.3); // Lower volume for background
+    const [currentSitarIndex, setCurrentSitarIndex] = useState(0);
+    const sitarRef = useRef(null);
+
+    // Sync state if audio starts playing
+    useEffect(() => {
+        const audio = sitarRef.current;
+        if (!audio) return;
+
+        const onPlay = () => setIsSitarPlaying(true);
+        const onPause = () => setIsSitarPlaying(false);
+
+        audio.addEventListener('play', onPlay);
+        audio.addEventListener('pause', onPause);
+
+        return () => {
+            audio.removeEventListener('play', onPlay);
+            audio.removeEventListener('pause', onPause);
+        };
+    }, []);
+
+    // Handle track ending (loop playlist)
+    const handleSitarEnd = () => {
+        setCurrentSitarIndex((prev) => (prev + 1) % ROMANTIC_TRACKS.length);
+    };
+
+    // Update volume
+    useEffect(() => {
+        if (sitarRef.current) sitarRef.current.volume = sitarVolume;
+    }, [sitarVolume]);
+
 
     const audioRef = useRef(null);
     const prevAlertsCount = useRef(0);
+
+    const playNotificationSound = (isCritical = false) => {
+        if (audioRef.current) {
+            audioRef.current.loop = isCritical;
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(e => console.log("Audio play failed (user interaction needed):", e));
+        }
+    };
 
     const fetchData = () => {
         setIsRefreshing(true);
@@ -208,6 +254,13 @@ const AdminDashboard = () => {
         e.preventDefault();
         setLoginError('');
         socket.emit('login', loginForm);
+
+        // Attempt to start music on user interaction (login click)
+        if (sitarRef.current) {
+            sitarRef.current.play().then(() => {
+                setIsSitarPlaying(true);
+            }).catch(err => console.log("Manual play failed:", err));
+        }
     };
 
     const handleLogout = () => {
@@ -395,6 +448,14 @@ const AdminDashboard = () => {
 
     return (
         <div style={{ minHeight: '100vh', background: '#0a0a0a', paddingBottom: '90px' }}>
+            <audio ref={audioRef} src="/notification.mp3" preload="auto" />
+            {/* Background Music Player */}
+            <audio
+                ref={sitarRef}
+                src={ROMANTIC_TRACKS[currentSitarIndex].url}
+                onEnded={handleSitarEnd}
+            />
+
             <div className="admin-container">
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
@@ -417,9 +478,40 @@ const AdminDashboard = () => {
                             <Utensils size={18} />
                             <span className="font-medium" style={{ fontSize: '0.85rem' }}>{isKitchenOpen ? 'Kitchen Open' : 'Kitchen Closed'}</span>
                         </button>
+                        {/* Music Control */}
+                        {currentUser && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.3)', padding: '5px 12px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)', marginRight: '10px' }}>
+                                <button
+                                    onClick={() => {
+                                        if (isSitarPlaying) {
+                                            sitarRef.current.pause();
+                                            setIsSitarPlaying(false);
+                                        } else {
+                                            sitarRef.current.play();
+                                            setIsSitarPlaying(true);
+                                        }
+                                    }}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}
+                                    title="Toggle Background Music"
+                                >
+                                    {isSitarPlaying ? '🎵' : '🔇'}
+                                </button>
+                                {isSitarPlaying && (
+                                    <input
+                                        type="range"
+                                        min="0" max="1" step="0.05"
+                                        value={sitarVolume}
+                                        onChange={(e) => setSitarVolume(parseFloat(e.target.value))}
+                                        style={{ width: '60px', height: '4px', accentColor: 'var(--primary)' }}
+                                    />
+                                )}
+                            </div>
+                        )}
+
                         <motion.button whileTap={{ scale: 0.9 }} onClick={fetchData} className="glass-card" style={{ padding: '10px', borderRadius: '12px', border: 'none' }}>
                             <RefreshCcw size={18} className={isRefreshing ? 'spin' : ''} style={{ color: 'var(--primary)' }} />
                         </motion.button>
+
                         <motion.button whileTap={{ scale: 0.9 }} onClick={handleLogout} className="glass-card" style={{ padding: '10px', borderRadius: '12px', border: '1px solid rgba(255,59,48,0.2)', color: '#ff3b30' }}>
                             <LogOut size={18} />
                         </motion.button>

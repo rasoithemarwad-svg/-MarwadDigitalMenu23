@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Utensils, Star, Plus, Minus, Check, Clock, Bell, ChevronRight, X } from 'lucide-react';
 import { io } from 'socket.io-client';
 
-const socket = io(); // Connects to the same host that served this page
+const socket = io('https://digital-marwad-1.onrender.com'); // Connects directly to the backend
 
 // Menu data will be fetched from the backend via Socket.io
 
@@ -34,91 +34,9 @@ const CustomerView = () => {
         lng: 75.722024
     });
 
-    // --- BACKGROUND MUSIC STATE ---
-    const [isMusicPlaying, setIsMusicPlaying] = useState(false);
-    const [isMusicLoading, setIsMusicLoading] = useState(false);
-    const [musicVolume, setMusicVolume] = useState(0.5);
-    const [currentTrackIndex, setCurrentTrackIndex] = useState(Math.floor(Math.random() * 5));
-    const [songRequest, setSongRequest] = useState('');
-    const [isRequesting, setIsRequesting] = useState(false);
-    const audioRef = React.useRef(null);
 
-    // Switched back to high-speed demo server (Reliable)
-    const ROMANTIC_TRACKS = [
-        { title: "Sweet Piano", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
-        { title: "Lush Guitar", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
-        { title: "Evening Waltz", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
-        { title: "Moonlit Night", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" }
-    ];
 
-    useEffect(() => {
-        if (audioRef.current) {
-            audioRef.current.volume = musicVolume;
-        }
-    }, [musicVolume]);
 
-    const toggleMusic = () => {
-        if (!audioRef.current) return;
-
-        if (isMusicPlaying) {
-            audioRef.current.pause();
-            setIsMusicPlaying(false);
-        } else {
-            setIsMusicLoading(true);
-
-            // ATTEMPT 1: Direct Play
-            audioRef.current.play()
-                .then(() => {
-                    audioRef.current.muted = false;
-                    setIsMusicPlaying(true);
-                    setIsMusicLoading(false);
-                })
-                .catch(e => {
-                    console.error("Play blocked, trying Muted Play...", e);
-                    // ATTEMPT 2: Muted Play (Always allowed by browsers)
-                    audioRef.current.muted = true;
-                    audioRef.current.play()
-                        .then(() => {
-                            setIsMusicPlaying(true);
-                            setIsMusicLoading(false);
-                            showAlert("Unmute Music", "Tap the volume bar or anywhere on screen to hear the music!");
-
-                            // Try to unmute on the very next click anywhere
-                            const unmute = () => {
-                                if (audioRef.current) audioRef.current.muted = false;
-                                document.removeEventListener('click', unmute);
-                            };
-                            document.addEventListener('click', unmute);
-                        })
-                        .catch(err => {
-                            console.error("Total audio block:", err);
-                            setIsMusicLoading(false);
-                            showAlert("Music Blocked", "Please tap anywhere on the menu first, then hit Start Music again!");
-                        });
-                });
-        }
-    };
-
-    const handleMusicEnd = () => {
-        const nextIndex = (currentTrackIndex + 1) % ROMANTIC_TRACKS.length;
-        setCurrentTrackIndex(nextIndex);
-    };
-
-    const handleSongRequest = () => {
-        if (!songRequest.trim()) return showAlert("Request Error", "Please enter a song name.");
-
-        setIsRequesting(true);
-        socket.emit('song-request', {
-            tableId,
-            songName: songRequest
-        });
-
-        setTimeout(() => {
-            setIsRequesting(false);
-            setSongRequest('');
-            showAlert("Request Sent", "Your song request has been sent to THE MARWAD RASOI! 🎵");
-        }, 1500);
-    };
     // ------------------------------
 
     // Custom Alert State
@@ -140,11 +58,7 @@ const CustomerView = () => {
             }
         });
 
-        socket.on('song-request-accepted', (data) => {
-            if (data.tableId === tableId) {
-                showAlert("Coming Up! 🎵", `The Chef has accepted your request! Your song "${data.songName}" will play on THE MARWAD speakers soon.`);
-            }
-        });
+
 
         return () => {
             socket.off('menu-updated');
@@ -376,116 +290,7 @@ const CustomerView = () => {
                                                 TABLE NUMBER: <span style={{ color: 'var(--primary)', fontWeight: 800 }}>{tableId}</span>
                                             </div>
 
-                                            {/* MUSIC CONTROLLER */}
-                                            <audio
-                                                ref={audioRef}
-                                                src={ROMANTIC_TRACKS[currentTrackIndex].url}
-                                                onEnded={handleMusicEnd}
-                                                autoPlay={false}
-                                                onError={(e) => {
-                                                    console.error("Audio Load Error:", e);
-                                                    setIsMusicLoading(false);
-                                                    setIsMusicPlaying(false);
-                                                }}
-                                            />
-                                            <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
-                                                <motion.button
-                                                    whileTap={{ scale: 0.9 }}
-                                                    onClick={toggleMusic}
-                                                    disabled={isMusicLoading}
-                                                    style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '10px',
-                                                        padding: '10px 20px',
-                                                        borderRadius: '30px',
-                                                        background: isMusicPlaying ? 'rgba(76, 175, 80, 0.2)' : 'rgba(212, 175, 55, 0.1)',
-                                                        border: `1px solid ${isMusicPlaying ? '#4caf50' : 'var(--primary)'}`,
-                                                        color: isMusicPlaying ? '#4caf50' : 'var(--primary)',
-                                                        fontSize: '0.8rem',
-                                                        fontWeight: 800,
-                                                        cursor: isMusicLoading ? 'wait' : 'pointer',
-                                                        opacity: isMusicLoading ? 0.7 : 1
-                                                    }}
-                                                >
-                                                    {isMusicLoading ? (
-                                                        <>
-                                                            <div className="spinner-small"></div>
-                                                            TUNING IN...
-                                                        </>
-                                                    ) : isMusicPlaying ? (
-                                                        <>
-                                                            <div className="pulse-music" style={{ width: '8px', height: '8px', background: '#4caf50', borderRadius: '50%' }}></div>
-                                                            🎶 MUSIC PLAYING (STOP)
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Bell size={14} />
-                                                            🎵 START ROMANTIC MUSIC
-                                                        </>
-                                                    )}
-                                                </motion.button>
 
-                                                {isMusicPlaying && (
-                                                    <div style={{ width: '150px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>VOL</span>
-                                                        <input
-                                                            type="range"
-                                                            min="0" max="1" step="0.01"
-                                                            value={musicVolume}
-                                                            onChange={(e) => setMusicVolume(parseFloat(e.target.value))}
-                                                            style={{ flex: 1, accentColor: 'var(--primary)', height: '4px' }}
-                                                        />
-                                                    </div>
-                                                )}
-
-                                                {/* SONG REQUEST SECTION */}
-                                                <div style={{
-                                                    marginTop: '30px',
-                                                    width: '100%',
-                                                    padding: '20px',
-                                                    background: 'rgba(255,255,255,0.03)',
-                                                    borderRadius: '20px',
-                                                    border: '1px solid rgba(255,255,255,0.05)',
-                                                    textAlign: 'center'
-                                                }}>
-                                                    <h4 style={{ fontSize: '0.9rem', marginBottom: '15px', color: 'var(--text-secondary)' }}>WANNA REQUEST A SONG?</h4>
-                                                    <div style={{ display: 'flex', gap: '10px' }}>
-                                                        <input
-                                                            type="text"
-                                                            value={songRequest}
-                                                            onChange={(e) => setSongRequest(e.target.value)}
-                                                            placeholder="Enter Song Name..."
-                                                            style={{
-                                                                flex: 1,
-                                                                padding: '12px',
-                                                                background: 'rgba(0,0,0,0.3)',
-                                                                border: '1px solid var(--glass-border)',
-                                                                borderRadius: '12px',
-                                                                color: 'white',
-                                                                fontSize: '0.85rem'
-                                                            }}
-                                                        />
-                                                        <motion.button
-                                                            whileTap={{ scale: 0.9 }}
-                                                            onClick={handleSongRequest}
-                                                            disabled={isRequesting}
-                                                            style={{
-                                                                padding: '12px 20px',
-                                                                background: 'var(--primary)',
-                                                                color: 'black',
-                                                                border: 'none',
-                                                                borderRadius: '12px',
-                                                                fontWeight: 800,
-                                                                fontSize: '0.8rem',
-                                                                cursor: 'pointer'
-                                                            }}
-                                                        >
-                                                            {isRequesting ? '...' : 'SEND'}
-                                                        </motion.button>
-                                                    </div>
-                                                </div>
-                                            </div>
                                             <style>{`
                                                 @keyframes musicPulse {
                                                     0% { transform: scale(1); opacity: 1; }

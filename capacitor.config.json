@@ -1,9 +1,5 @@
 {
   "appId": "com.marwad.app",
   "appName": "Marwad Menu",
-  "webDir": "dist",
-  "server": {
-    "url": "https://digital-marwad-1.onrender.com",
-    "cleartext": true
-  }
+  "webDir": "dist"
 }
