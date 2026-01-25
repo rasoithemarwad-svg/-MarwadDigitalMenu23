@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client'
 window.onerror = function (message, source, lineno, colno, error) {
   const errorMsg = `Error: ${message} at ${source}:${lineno}:${colno}`;
   console.error(errorMsg);
-  // Optional: alert(errorMsg); // Temporary for physical mobile debugging
+  if (navigator.userAgent.includes('Mobile')) alert(errorMsg); // Show on mobile for easier debugging
   return false;
 };
 

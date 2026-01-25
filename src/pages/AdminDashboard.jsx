@@ -23,13 +23,19 @@ const AdminDashboard = () => {
     const [currentUser, setCurrentUser] = useState(null); // { username, role }
     const [loginForm, setLoginForm] = useState({ username: 'THEMARWADRASOI', password: '' });
     const [loginError, setLoginError] = useState('');
+    const [appSettings, setAppSettings] = useState({ deliveryRadiusKm: 5.0 });
 
     const showAlert = (title, message) => {
         setCustomAlert({ show: true, title, message });
     };
     const [selectedTableBill, setSelectedTableBill] = useState(null);
     const [expenses, setExpenses] = useState(() => {
-        return JSON.parse(localStorage.getItem('marwad_expenses') || '[]');
+        try {
+            return JSON.parse(localStorage.getItem('marwad_expenses') || '[]');
+        } catch (e) {
+            console.error("Failed to parse expenses from localStorage", e);
+            return [];
+        }
     });
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null); // Track which item is being edited
