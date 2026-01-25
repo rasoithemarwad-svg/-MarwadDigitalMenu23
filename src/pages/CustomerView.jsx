@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Utensils, Star, Plus, Minus, Check, Clock, Bell, ChevronRight, X } from 'lucide-react';
 import { io } from 'socket.io-client';
 
-const socket = io('https://digital-marwad-1.onrender.com'); // Connects directly to the backend
+const socket = io(window.location.origin); // Connects to the same host serving the app
 
 // Menu data will be fetched from the backend via Socket.io
 

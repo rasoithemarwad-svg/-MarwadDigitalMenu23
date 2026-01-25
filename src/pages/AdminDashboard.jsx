@@ -6,7 +6,7 @@ import { io } from 'socket.io-client';
 import QRManager from '../components/QRManager';
 import QRScanner from '../components/QRScanner';
 
-const socket = io('https://digital-marwad-1.onrender.com'); // Connects to the same host that served this page
+const socket = io(window.location.origin); // Connects to the host that served this page
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -16,6 +16,7 @@ const AdminDashboard = () => {
     const [salesHistory, setSalesHistory] = useState([]);
     const [serviceAlerts, setServiceAlerts] = useState([]);
     const [orderAlerts, setOrderAlerts] = useState([]); // New order popups
+    const [songAlerts, setSongAlerts] = useState([]); // New song request popups
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isKitchenOpen, setIsKitchenOpen] = useState(true);
     const [customAlert, setCustomAlert] = useState({ show: false, title: '', message: '' });
@@ -301,6 +302,10 @@ const AdminDashboard = () => {
 
     const clearAlert = (alertId) => {
         setServiceAlerts(prev => prev.filter(a => a.id !== alertId));
+    };
+
+    const clearOrderAlert = (alertId) => {
+        setOrderAlerts(prev => prev.filter(a => a.id !== alertId));
     };
 
     const toggleKitchenStatus = () => {
@@ -881,6 +886,16 @@ const AdminDashboard = () => {
                     {activeTab === 'qr' && (
                         <motion.div key="qr" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <h3 className="gold-text" style={{ margin: 0 }}>QR Management</h3>
+                                    <button
+                                        onClick={() => navigate('/print-qrs')}
+                                        className="btn-primary"
+                                        style={{ padding: '10px 20px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+                                    >
+                                        <QrCode size={18} /> Print All QR Codes
+                                    </button>
+                                </div>
                                 <section><h3 className="gold-text" style={{ marginBottom: '15px' }}>Scan Any QR</h3>
                                     <QRScanner onScanSuccess={(txt) => {
                                         // Handle Table Redirect logic

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppHome from './pages/AppHome';
 import AdminDashboard from './pages/AdminDashboard';
 import CustomerView from './pages/CustomerView';
+import PrintQRs from './pages/PrintQRs';
 import './index.css';
 
 function App() {
@@ -20,6 +21,9 @@ function App() {
 
         {/* Old landing page moved to /home if ever needed */}
         <Route path="/home" element={<AppHome />} />
+
+        {/* Print QR Codes View */}
+        <Route path="/print-qrs" element={<PrintQRs />} />
       </Routes>
     </BrowserRouter>
   );

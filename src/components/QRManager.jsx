@@ -4,7 +4,7 @@ import { Download, Globe, Smartphone } from 'lucide-react';
 
 const QRManager = () => {
     const tables = Array.from({ length: 20 }, (_, i) => i + 1);
-    const [baseUrl, setBaseUrl] = useState('https://digital-marwad-1.onrender.com');
+    const [baseUrl, setBaseUrl] = useState(window.location.origin);
 
     const downloadQR = (tableId) => {
         try {
