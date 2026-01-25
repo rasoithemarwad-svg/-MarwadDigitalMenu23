@@ -43,12 +43,12 @@ const CustomerView = () => {
     const [isRequesting, setIsRequesting] = useState(false);
     const audioRef = React.useRef(null);
 
-    // Indian Romantic Instrumentals (Royalty Free / Demo)
+    // Switched back to high-speed demo server (Reliable)
     const ROMANTIC_TRACKS = [
-        { title: "Flute of Krishna", url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Kevin_MacLeod/Impact/Kevin_MacLeod_-_Healing_and_Relaxation.mp3" },
-        { title: "Sitar Dreams", url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Kai_Engel/Satin/Kai_Engel_-_04_-_Sentinel.mp3" },
-        { title: "Royal Evening", url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Kevin_MacLeod/Contemporary_Breaks/Kevin_MacLeod_-_Comfortable_Mystery_3.mp3" },
-        { title: "Marwad Breeze", url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Kevin_MacLeod/Impact/Kevin_MacLeod_-_Lotus.mp3" }
+        { title: "Sweet Piano", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+        { title: "Lush Guitar", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+        { title: "Evening Waltz", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
+        { title: "Moonlit Night", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" }
     ];
 
     useEffect(() => {
