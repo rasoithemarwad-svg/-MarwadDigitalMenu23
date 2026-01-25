@@ -1184,12 +1184,27 @@ const AdminDashboard = () => {
                                     <div style={{ marginBottom: '20px' }}>
                                         <h5 style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '10px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '5px' }}>Sales Transactions ({reportData.salesList.length})</h5>
                                         {reportData.salesList.map(sale => (
-                                            <div key={sale._id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '8px 0', borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
-                                                <span>Table #{sale.tableId} <span style={{ opacity: 0.5 }}>({new Date(sale.settledAt).toLocaleDateString()})</span></span>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', background: sale.paymentMode === 'ONLINE' ? 'rgba(0,188,212,0.2)' : 'rgba(76,175,80,0.2)', color: sale.paymentMode === 'ONLINE' ? '#00bcd4' : '#4caf50' }}>{sale.paymentMode || 'CASH'}</span>
-                                                    <span style={{ color: '#4caf50' }}>+₹{sale.total}</span>
+                                            <div key={sale._id} style={{ marginBottom: '12px', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px dashed rgba(255,255,255,0.1)' }}>
+                                                    <div>
+                                                        <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>Table #{sale.tableId}</span>
+                                                        <span style={{ opacity: 0.5, fontSize: '0.7rem', marginLeft: '8px' }}>({new Date(sale.settledAt).toLocaleDateString()} {new Date(sale.settledAt).toLocaleTimeString()})</span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', background: sale.paymentMode === 'ONLINE' ? 'rgba(0,188,212,0.2)' : 'rgba(76,175,80,0.2)', color: sale.paymentMode === 'ONLINE' ? '#00bcd4' : '#4caf50' }}>{sale.paymentMode || 'CASH'}</span>
+                                                        <span style={{ color: '#4caf50', fontWeight: 700 }}>₹{sale.total}</span>
+                                                    </div>
                                                 </div>
+                                                {sale.items && sale.items.length > 0 && (
+                                                    <div style={{ paddingLeft: '10px' }}>
+                                                        {sale.items.map((item, idx) => (
+                                                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', opacity: 0.8, padding: '4px 0' }}>
+                                                                <span>{item.qty}x {item.name}</span>
+                                                                <span>₹{item.price} × {item.qty} = ₹{item.price * item.qty}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
