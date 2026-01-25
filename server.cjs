@@ -143,11 +143,11 @@ io.on('connection', async (socket) => {
     socket.on('login', async ({ password }) => {
         // STATIC AUTHENTICATION (Bypasses DB for reliability)
         if (password === 'THEMARWADRASOI@2026') {
-            socket.emit('login-success', { username: 'ADMIN', role: 'ADMIN' });
-            console.log(`🔑 Admin logged in via password`);
+            socket.emit('login-success', { username: 'THE MARWAD RASOI', role: 'OWNER' });
+            console.log(`🔑 Owner logged in via password`);
         } else if (password === '130289') {
-            socket.emit('login-success', { username: 'MANAGER', role: 'MANAGER' });
-            console.log(`🔑 Manager logged in via password`);
+            socket.emit('login-success', { username: 'STAFF', role: 'STAFF' });
+            console.log(`🔑 Staff logged in via password`);
         } else {
             socket.emit('login-error', 'Invalid password');
         }

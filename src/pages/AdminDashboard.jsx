@@ -168,7 +168,7 @@ const AdminDashboard = () => {
     };
 
     const deleteMenuItem = (id) => {
-        if (currentUser?.role !== 'ADMIN') return showAlert("Access Denied", "Managers are not allowed to delete menu items.");
+        if (currentUser?.role !== 'OWNER') return showAlert("Access Denied", "Only the Owner is allowed to delete menu items.");
         socket.emit('delete-menu-item', id);
     };
 
@@ -316,7 +316,7 @@ const AdminDashboard = () => {
             <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="glass-card" style={{ width: '100%', maxWidth: '400px', padding: '40px 30px' }}>
                     <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                        <h2 className="gold-text" style={{ fontSize: '1.8rem', fontWeight: 900 }}>MARWAD ADMIN</h2>
+                        <h2 className="gold-text" style={{ fontSize: '1.8rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '4px' }}>THE MARWAD RASOI</h2>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '5px' }}>Authentication Required</p>
                     </div>
 
@@ -358,7 +358,7 @@ const AdminDashboard = () => {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
                     <div>
-                        <h1 className="gold-text" style={{ fontSize: '1.4rem' }}>Marwad Admin</h1>
+                        <h1 className="gold-text" style={{ fontSize: '1.4rem', textTransform: 'uppercase', letterSpacing: '2px' }}>THE MARWAD RASOI</h1>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{currentUser.role} SESSION • {currentUser.username}</p>
                     </div>
                     <div className="flex gap-4 items-center">
@@ -927,7 +927,7 @@ const AdminDashboard = () => {
                     <button onClick={() => setActiveTab('menu')} style={{ background: 'none', border: 'none', color: activeTab === 'menu' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Utensils size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Menu</span></button>
                     <button onClick={() => setActiveTab('expenses')} style={{ background: 'none', border: 'none', color: activeTab === 'expenses' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Receipt size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Exp.</span></button>
 
-                    {currentUser.role === 'ADMIN' && (
+                    {currentUser.role === 'OWNER' && (
                         <>
                             <button onClick={() => setActiveTab('reports')} style={{ background: 'none', border: 'none', color: activeTab === 'reports' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><BarChart3 size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Reports</span></button>
                             <button onClick={() => setActiveTab('qr')} style={{ background: 'none', border: 'none', color: activeTab === 'qr' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><QrCode size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>QR</span></button>
