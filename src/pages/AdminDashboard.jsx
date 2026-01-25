@@ -167,6 +167,14 @@ const AdminDashboard = () => {
 
     const updateStatus = (id, newStatus) => {
         socket.emit('update-order-status', { id, status: newStatus });
+
+        // If we acknowledge the order (Preparing) or Serve it, dismiss the alert
+        if (newStatus === 'preparing' || newStatus === 'completed') {
+            const order = orders.find(o => o._id === id);
+            if (order) {
+                setOrderAlerts(prev => prev.filter(a => a.tableId !== order.tableId));
+            }
+        }
     };
 
     const clearAlert = (alertId) => {
@@ -268,6 +276,9 @@ const AdminDashboard = () => {
 
         socket.emit('save-sale', saleRecord);
         setSelectedTableBill(null);
+
+        // Auto-dismiss "New Order" alerts for this table
+        setOrderAlerts(prev => prev.filter(alert => alert.tableId !== tableId));
     };
 
     const getStatusColor = (status) => {
