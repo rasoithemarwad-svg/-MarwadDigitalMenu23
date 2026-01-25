@@ -1053,6 +1053,25 @@ const AdminDashboard = () => {
                                             style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white' }}
                                         />
                                     </div>
+                                    <div>
+                                        <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '5px', display: 'block' }}>Payment Mode</label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => setExpenseForm({ ...expenseForm, paymentMode: 'CASH' })}
+                                                style={{ padding: '12px', borderRadius: '8px', border: expenseForm.paymentMode === 'CASH' ? '2px solid #4caf50' : '1px solid rgba(255,255,255,0.2)', background: expenseForm.paymentMode === 'CASH' ? 'rgba(76,175,80,0.1)' : 'rgba(255,255,255,0.02)', color: expenseForm.paymentMode === 'CASH' ? '#4caf50' : 'white', fontWeight: 600, cursor: 'pointer' }}
+                                            >
+                                                💵 CASH
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setExpenseForm({ ...expenseForm, paymentMode: 'ONLINE' })}
+                                                style={{ padding: '12px', borderRadius: '8px', border: expenseForm.paymentMode === 'ONLINE' ? '2px solid #00bcd4' : '1px solid rgba(255,255,255,0.2)', background: expenseForm.paymentMode === 'ONLINE' ? 'rgba(0,188,212,0.1)' : 'rgba(255,255,255,0.02)', color: expenseForm.paymentMode === 'ONLINE' ? '#00bcd4' : 'white', fontWeight: 600, cursor: 'pointer' }}
+                                            >
+                                                💳 ONLINE
+                                            </button>
+                                        </div>
+                                    </div>
                                     <button
                                         onClick={() => {
                                             if (!expenseForm.amount) return showAlert('Information Needed', 'Please enter the expense amount');
@@ -1060,7 +1079,7 @@ const AdminDashboard = () => {
                                                 ...expenseForm,
                                                 amount: parseFloat(expenseForm.amount)
                                             });
-                                            setExpenseForm({ item: 'vegitable', amount: '', paidBy: '', description: '', date: new Date().toISOString().split('T')[0] });
+                                            setExpenseForm({ item: 'vegitable', amount: '', paidBy: '', description: '', paymentMode: 'CASH', date: new Date().toISOString().split('T')[0] });
                                         }}
                                         className="btn-primary"
                                         style={{ padding: '15px', marginTop: '10px' }}
