@@ -18,6 +18,11 @@ const AdminDashboard = () => {
     const [orderAlerts, setOrderAlerts] = useState([]); // New order popups
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isKitchenOpen, setIsKitchenOpen] = useState(true);
+    const [customAlert, setCustomAlert] = useState({ show: false, title: '', message: '' });
+
+    const showAlert = (title, message) => {
+        setCustomAlert({ show: true, title, message });
+    };
     const [selectedTableBill, setSelectedTableBill] = useState(null);
     const [expenses, setExpenses] = useState(() => {
         return JSON.parse(localStorage.getItem('marwad_expenses') || '[]');
@@ -154,7 +159,7 @@ const AdminDashboard = () => {
     };
 
     const setRestaurantLocation = () => {
-        if (!navigator.geolocation) return alert("Geolocation not supported");
+        if (!navigator.geolocation) return showAlert("Error", "Geolocation not supported");
         navigator.geolocation.getCurrentPosition((pos) => {
             const newSettings = {
                 ...appSettings,
@@ -164,8 +169,8 @@ const AdminDashboard = () => {
                 }
             };
             saveSettings(newSettings);
-            alert("Restaurant location updated successfully!");
-        }, (err) => alert("Failed to get location: " + err.message));
+            showAlert("Success", "Restaurant location updated successfully!");
+        }, (err) => showAlert("Error", "Failed to get location: " + err.message));
     };
 
     const toggleAvailability = (item) => {
@@ -196,7 +201,7 @@ const AdminDashboard = () => {
 
         if (tableOrders.length === 0) return;
         if (completedOrders.length === 0) {
-            return alert("Orders must be marked as 'Served' before they can be settled in a bill.");
+            return showAlert("Action Required", "Orders must be marked as 'Served' before they can be settled in a bill.");
         }
 
         const total = completedOrders.reduce((acc, o) => acc + o.total, 0);
@@ -250,7 +255,7 @@ const AdminDashboard = () => {
     const thisMonthExpensesTotal = thisMonthExpenses.reduce((acc, e) => acc + e.amount, 0);
 
     const generateReport = () => {
-        if (!reportDateRange.start || !reportDateRange.end) return alert("Please select start and end dates");
+        if (!reportDateRange.start || !reportDateRange.end) return showAlert("Dates Required", "Please select start and end dates");
 
         const start = new Date(reportDateRange.start);
         const end = new Date(reportDateRange.end);
@@ -522,7 +527,7 @@ const AdminDashboard = () => {
                                                 }
                                             }
                                         }
-                                        alert(`Scanned: ${txt}`);
+                                        showAlert("QR Result", `Scanned: ${txt}`);
                                     }} />
                                 </section>
                                 <section>
@@ -672,7 +677,7 @@ const AdminDashboard = () => {
                                     </div>
                                     <button
                                         onClick={() => {
-                                            if (!expenseForm.amount) return alert('Enter amount');
+                                            if (!expenseForm.amount) return showAlert('Information Needed', 'Please enter the expense amount');
                                             addExpense({
                                                 ...expenseForm,
                                                 amount: parseFloat(expenseForm.amount)
@@ -885,7 +890,7 @@ const AdminDashboard = () => {
                                             setEditingItem(null);
                                             setNewItemForm({ name: '', price: '', category: 'RESTAURANT', subCategory: '', image: '', description: '', isAvailable: true });
                                         } else {
-                                            alert("Please fill in Name, Price and Category");
+                                            showAlert("Incomplete Form", "Please fill in Name, Price and Category");
                                         }
                                     }} className="btn-primary" style={{ marginTop: '10px', padding: '18px' }}>{editingItem ? 'Update Item' : 'Save Item to Menu'}</button>
                                 </div>
@@ -894,6 +899,57 @@ const AdminDashboard = () => {
                     )}
                 </AnimatePresence>
 
+                {/* Custom Alert Modal */}
+                <AnimatePresence>
+                    {customAlert.show && (
+                        <div style={{ position: 'fixed', inset: 0, zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setCustomAlert({ ...customAlert, show: false })}
+                                style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}
+                            />
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                className="glass-card"
+                                style={{
+                                    position: 'relative',
+                                    width: '100%',
+                                    maxWidth: '350px',
+                                    padding: '40px 30px',
+                                    textAlign: 'center',
+                                    border: '1px solid var(--glass-border)',
+                                    boxShadow: '0 25px 60px rgba(0,0,0,0.6)'
+                                }}
+                            >
+                                <button
+                                    onClick={() => setCustomAlert({ ...customAlert, show: false })}
+                                    style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                                >
+                                    <X size={20} />
+                                </button>
+
+                                <div style={{ marginBottom: '20px', display: 'inline-flex', padding: '15px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', color: 'var(--primary)' }}>
+                                    <BellRing size={32} />
+                                </div>
+
+                                <h3 className="gold-text" style={{ fontSize: '1.4rem', marginBottom: '15px' }}>{customAlert.title}</h3>
+                                <p style={{ color: 'white', lineHeight: 1.6, fontSize: '1rem', marginBottom: '30px' }}>{customAlert.message}</p>
+
+                                <button
+                                    onClick={() => setCustomAlert({ ...customAlert, show: false })}
+                                    className="btn-primary"
+                                    style={{ width: '100%', padding: '15px', borderRadius: '12px', fontWeight: 800, fontSize: '1rem' }}
+                                >
+                                    OK
+                                </button>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

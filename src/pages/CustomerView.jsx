@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Utensils, Star, Plus, Minus, Check, Clock, Bell, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Utensils, Star, Plus, Minus, Check, Clock, Bell, ChevronRight, X } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 const socket = io(); // Connects to the same host that served this page
@@ -33,6 +33,13 @@ const CustomerView = () => {
         lat: 26.909919, // Fallback
         lng: 75.722024
     });
+
+    // Custom Alert State
+    const [customAlert, setCustomAlert] = useState({ show: false, title: '', message: '' });
+
+    const showAlert = (title, message) => {
+        setCustomAlert({ show: true, title, message });
+    };
     useEffect(() => {
         socket.emit('get-menu'); // existing
         socket.emit('get-settings'); // Fetch settings
@@ -198,11 +205,11 @@ const CustomerView = () => {
     const handleAction = (id) => {
         if (id === 'SERVICE') {
             socket.emit('service-call', { tableId: tableId });
-            alert("Service bell rung! Waiter is on the way to Table #" + tableId);
+            showAlert("Request Received", "Thank you for your request from THE MARWAD RASOI");
             return;
         }
         if (id === 'RATE') {
-            alert("Thank you for choosing to rate us! You could win exciting vouchers.");
+            showAlert("Rate & Win", "Thank you for choosing to rate us! You could win exciting vouchers.");
             window.open('https://maps.app.goo.gl/wqDfq7TFw8Vq61Xv7?g_st=aw', '_blank');
             return;
         }
@@ -420,7 +427,7 @@ const CustomerView = () => {
                                                                         <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{p.label} <span style={{ color: 'var(--primary)' }}>₹{p.price}</span></span>
                                                                         <motion.button
                                                                             whileTap={{ scale: 0.8 }}
-                                                                            onClick={() => isKitchenOpen ? addToCart(item, p) : alert('Kitchen is closed!')}
+                                                                            onClick={() => isKitchenOpen ? addToCart(item, p) : showAlert('Kitchen Closed', 'Sorry, orders are not being accepted right now.')}
                                                                             style={{ width: '24px', height: '24px', borderRadius: '50%', border: 'none', background: isKitchenOpen ? 'var(--primary)' : '#555', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isKitchenOpen ? 'pointer' : 'not-allowed' }}
                                                                         >
                                                                             <Plus size={14} color={isKitchenOpen ? "black" : "#aaa"} />
@@ -433,7 +440,7 @@ const CustomerView = () => {
                                                                 <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.1rem' }}>₹{item.price}</span>
                                                                 <motion.button
                                                                     whileTap={{ scale: 0.8 }}
-                                                                    onClick={() => isKitchenOpen ? addToCart(item) : alert('Kitchen is closed!')}
+                                                                    onClick={() => isKitchenOpen ? addToCart(item) : showAlert('Kitchen Closed', 'Sorry, orders are not being accepted right now.')}
                                                                     style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', background: isKitchenOpen ? 'var(--primary)' : '#555', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isKitchenOpen ? 'pointer' : 'not-allowed' }}
                                                                 >
                                                                     <Plus size={16} color={isKitchenOpen ? "black" : "#aaa"} />
@@ -544,6 +551,58 @@ const CustomerView = () => {
                             </AnimatePresence>
                         </>
                     )} {/* End of Location Restricted Content */}
+
+                    {/* Custom Alert Modal */}
+                    <AnimatePresence>
+                        {customAlert.show && (
+                            <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    onClick={() => setCustomAlert({ ...customAlert, show: false })}
+                                    style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}
+                                />
+                                <motion.div
+                                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                    className="glass-card"
+                                    style={{
+                                        position: 'relative',
+                                        width: '100%',
+                                        maxWidth: '320px',
+                                        padding: '40px 30px',
+                                        textAlign: 'center',
+                                        border: '1px solid var(--glass-border)',
+                                        boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                                    }}
+                                >
+                                    <button
+                                        onClick={() => setCustomAlert({ ...customAlert, show: false })}
+                                        style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                                    >
+                                        <X size={20} />
+                                    </button>
+
+                                    <div style={{ marginBottom: '20px', display: 'inline-flex', padding: '15px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', color: 'var(--primary)' }}>
+                                        <Bell size={32} />
+                                    </div>
+
+                                    <h3 className="gold-text" style={{ fontSize: '1.4rem', marginBottom: '15px' }}>{customAlert.title}</h3>
+                                    <p style={{ color: 'white', lineHeight: 1.6, fontSize: '1rem', marginBottom: '30px' }}>{customAlert.message}</p>
+
+                                    <button
+                                        onClick={() => setCustomAlert({ ...customAlert, show: false })}
+                                        className="btn-primary"
+                                        style={{ width: '100%', padding: '15px', borderRadius: '12px', fontWeight: 800, fontSize: '1rem' }}
+                                    >
+                                        UNDERSTOOD
+                                    </button>
+                                </motion.div>
+                            </div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         </div>
