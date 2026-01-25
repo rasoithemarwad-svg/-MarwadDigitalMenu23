@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Utensils, Star, Plus, Minus, Check, Clock, Bell, ChevronRight, Home } from 'lucide-react';
+import { ShoppingCart, Utensils, Star, Plus, Minus, Check, Clock, Bell, ChevronRight } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 const socket = io(); // Connects to the same host that served this page
@@ -264,12 +264,7 @@ const CustomerView = () => {
                                         exit={{ opacity: 0, y: -20 }}
                                         style={{ padding: '30px 20px', position: 'relative' }}
                                     >
-                                        <button
-                                            onClick={() => navigate('/')}
-                                            style={{ position: 'absolute', top: '20px', left: '20px', background: 'rgba(255,255,255,0.1)', border: 'none', color: 'var(--text-secondary)', padding: '10px', borderRadius: '50%', cursor: 'pointer', zIndex: 10 }}
-                                        >
-                                            <Home size={24} />
-                                        </button>
+
 
                                         <div style={{ textAlign: 'center', marginBottom: '40px', marginTop: '30px' }}>
                                             <div style={{ fontSize: '2.4rem', fontWeight: 900, lineHeight: 1.1 }}>
