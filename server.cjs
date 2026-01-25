@@ -14,6 +14,7 @@ const Order = require('./models/Order.cjs');
 const Sale = require('./models/Sale.cjs');
 const Expense = require('./models/Expense.cjs');
 const Setting = require('./models/Setting.cjs');
+const User = require('./models/User.cjs');
 
 const app = express();
 
@@ -69,6 +70,27 @@ async function initializeData() {
         if (!radiusSetting) {
             await Setting.create({ key: 'deliveryRadiusKm', value: 5.0 });
         }
+
+        // Initialize RBAC Users
+        const adminUser = await User.findOne({ role: 'ADMIN' });
+        if (!adminUser) {
+            await User.create({
+                username: 'THEMARWADRASOI',
+                password: 'THEMARWADRASOI@2026',
+                role: 'ADMIN'
+            });
+            console.log('👤 Admin user created');
+        }
+
+        const managerUser = await User.findOne({ role: 'MANAGER' });
+        if (!managerUser) {
+            await User.create({
+                username: 'THEMARWADRASOI',
+                password: '130289',
+                role: 'MANAGER'
+            });
+            console.log('👤 Manager user created');
+        }
     } catch (err) {
         console.error('❌ Error in initializeData:', err);
     }
@@ -103,6 +125,21 @@ io.on('connection', async (socket) => {
     } catch (err) {
         console.error('❌ Socket initialization error:', err);
     }
+
+    socket.on('login', async ({ username, password }) => {
+        try {
+            const user = await User.findOne({ username, password });
+            if (user) {
+                socket.emit('login-success', { username: user.username, role: user.role });
+                console.log(`🔑 User ${username} logged in as ${user.role}`);
+            } else {
+                socket.emit('login-error', 'Invalid username or password');
+            }
+        } catch (err) {
+            console.error('❌ Login error:', err);
+            socket.emit('login-error', 'Internal server error');
+        }
+    });
 
     socket.on('service-call', (data) => {
         io.emit('new-service-alert', {
@@ -165,7 +202,7 @@ io.on('connection', async (socket) => {
     socket.on('save-sale', async (saleData) => {
         const newSale = new Sale(saleData);
         await newSale.save();
-        await Order.updateMany({ tableId: saleData.tableId, status: 'completed' }, { status: 'cancelled' });
+        await Order.updateMany({ tableId: saleData.tableId, status: { $ne: 'cancelled' } }, { status: 'cancelled' });
         const updatedSales = await Sale.find({}).sort({ settledAt: -1 });
         io.emit('sales-updated', updatedSales);
         const allOrders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });

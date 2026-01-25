@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
 import { styled } from 'nativewind';
 import { useRouter } from 'expo-router';
-import { Shield, Lock } from 'lucide-react-native';
+import { Shield, Lock, Eye, EyeOff } from 'lucide-react-native';
+import io from 'socket.io-client';
+import { API_URL } from '../../constants/Config';
+
+const socket = io(API_URL);
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
@@ -11,15 +15,35 @@ const StyledTouchableOpacity = styled(TouchableOpacity);
 
 export default function AdminLogin() {
     const router = useRouter();
-    const [otp, setOtp] = useState('');
-    const FIXED_OTP = '130289';
+    const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    React.useEffect(() => {
+        socket.on('login-success', (userData) => {
+            setLoading(false);
+            // In a real app we'd use AsyncStorage, but for now we can pass as params or use a global store
+            router.replace({
+                pathname: '/admin/dashboard',
+                params: { role: userData.role, username: userData.username }
+            });
+        });
+
+        socket.on('login-error', (error) => {
+            setLoading(false);
+            Alert.alert('Login Failed', error);
+        });
+
+        return () => {
+            socket.off('login-success');
+            socket.off('login-error');
+        };
+    }, []);
 
     const handleLogin = () => {
-        if (otp === FIXED_OTP) {
-            router.replace('/admin/dashboard');
-        } else {
-            Alert.alert('Access Denied', 'Invalid Access PIN');
-        }
+        if (!password) return Alert.alert('Error', 'Please enter your password');
+        setLoading(true);
+        socket.emit('login', { username: 'THEMARWADRASOI', password });
     };
 
     return (
@@ -34,25 +58,34 @@ export default function AdminLogin() {
                 <StyledText className="text-gray-400 text-sm mb-10">Enter your secure PIN to continue</StyledText>
 
                 <StyledView className="w-full space-y-4">
-                    <StyledView className="flex-row items-center bg-white/5 border border-white/10 rounded-xl p-4 mb-4">
+                    {/* Username (Pre-filled) */}
+                    <StyledView className="bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-4 mb-4 items-center">
+                        <StyledText className="text-gray-500 text-[10px] tracking-[2px] uppercase mb-1">Username</StyledText>
+                        <StyledText className="text-yellow-500 text-lg font-bold">THEMARWADRASOI</StyledText>
+                    </StyledView>
+
+                    {/* Password Input */}
+                    <StyledView className="flex-row items-center bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
                         <Lock size={20} color="#666" style={{ marginRight: 10 }} />
                         <StyledTextInput
-                            value={otp}
-                            onChangeText={setOtp}
-                            secureTextEntry
-                            keyboardType="numeric"
-                            placeholder="Enter 6-digit PIN"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry={!showPassword}
+                            placeholder="Enter Password"
                             placeholderTextColor="#666"
-                            maxLength={6}
-                            className="flex-1 text-white text-lg tracking-widest"
+                            className="flex-1 text-white text-lg"
                         />
+                        <StyledTouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                            {showPassword ? <EyeOff size={20} color="#666" /> : <Eye size={20} color="#666" />}
+                        </StyledTouchableOpacity>
                     </StyledView>
 
                     <StyledTouchableOpacity
-                        className="bg-yellow-500 w-full p-4 rounded-xl items-center"
+                        className={`w-full p-4 rounded-xl items-center ${loading ? 'bg-yellow-500/50' : 'bg-yellow-500'}`}
                         onPress={handleLogin}
+                        disabled={loading}
                     >
-                        <StyledText className="text-black font-bold text-lg">Access Dashboard</StyledText>
+                        <StyledText className="text-black font-bold text-lg">{loading ? 'Verifying...' : 'Unlock Dashboard'}</StyledText>
                     </StyledTouchableOpacity>
 
                     <StyledTouchableOpacity

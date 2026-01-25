@@ -3,8 +3,10 @@ import { View, Text, TouchableOpacity, ScrollView, FlatList, Modal, TextInput, A
 import { styled } from 'nativewind';
 import { useRouter } from 'expo-router';
 import io from 'socket.io-client';
-import { Bell, CheckCircle, Clock, Receipt, Utensils, RefreshCcw, LogOut, ChevronRight, Plus, X, Trash2 } from 'lucide-react-native';
+import { Bell, CheckCircle, Clock, Receipt, Utensils, RefreshCcw, LogOut, ChevronRight, Plus, X, Trash2, LineChart } from 'lucide-react-native';
 import { API_URL } from '../../constants/Config';
+import { useLocalSearchParams } from 'expo-router';
+import { scheduleLocalNotification } from '../../utils/NotificationHelper';
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
@@ -15,9 +17,11 @@ const socket = io(API_URL);
 
 export default function AdminDashboard() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState('orders'); // orders, menu
+    const { role, username } = useLocalSearchParams();
+    const [activeTab, setActiveTab] = useState('orders'); // orders, menu, sales
     const [orders, setOrders] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
+    const [salesHistory, setSalesHistory] = useState([]);
     const [isKitchenOpen, setIsKitchenOpen] = useState(true);
     const [serviceAlerts, setServiceAlerts] = useState([]);
 
@@ -37,7 +41,12 @@ export default function AdminDashboard() {
             setMenuItems(updatedMenu);
         });
 
+        socket.on('sales-updated', (updatedSales) => {
+            setSalesHistory(updatedSales);
+        });
+
         socket.on('new-order-alert', (order) => {
+            scheduleLocalNotification("New Order Received!", `Table #${order.tableId} - ₹${order.total}`);
             Alert.alert("New Order", `Table #${order.tableId} - ₹${order.total}`);
             socket.emit('get-orders');
         });
@@ -45,6 +54,7 @@ export default function AdminDashboard() {
         socket.on('kitchen-status-updated', (status) => setIsKitchenOpen(status));
 
         socket.on('new-service-alert', (alert) => {
+            scheduleLocalNotification("Service Bell Rung!", `Table #${alert.tableId} is calling for help!`);
             setServiceAlerts(prev => [alert, ...prev]);
             Alert.alert("Service Called", `Table #${alert.tableId} needs help!`);
         });
@@ -52,6 +62,7 @@ export default function AdminDashboard() {
         return () => {
             socket.off('orders-updated');
             socket.off('menu-updated');
+            socket.off('sales-updated');
             socket.off('new-order-alert');
             socket.off('kitchen-status-updated');
             socket.off('new-service-alert');
@@ -61,6 +72,7 @@ export default function AdminDashboard() {
     const fetchData = () => {
         socket.emit('get-menu');
         socket.emit('get-orders');
+        socket.emit('get-sales');
     }
 
     const updateOrderStatus = (id, status) => {
@@ -80,7 +92,38 @@ export default function AdminDashboard() {
     };
 
     const deleteItem = (id) => {
+        if (role !== 'ADMIN') {
+            return Alert.alert('Access Denied', 'Managers are not allowed to delete menu items.');
+        }
         socket.emit('delete-menu-item', id);
+    };
+
+    const settleBill = (tableId) => {
+        const tableOrders = orders.filter(o => o.tableId === tableId && o.status !== 'cancelled');
+        if (tableOrders.length === 0) return;
+
+        const total = tableOrders.reduce((acc, o) => acc + o.total, 0);
+        const allItems = tableOrders.flatMap(o => o.items);
+
+        Alert.alert(
+            "Settle Bill",
+            `Settle Table #${tableId} for ₹${total}?`,
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Settle Now",
+                    onPress: () => {
+                        socket.emit('save-sale', {
+                            tableId,
+                            items: allItems.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
+                            total,
+                            settledAt: new Date().toISOString()
+                        });
+                        Alert.alert("Success", `Table #${tableId} settled!`);
+                    }
+                }
+            ]
+        );
     };
 
     const renderOrderCard = ({ item }) => (
@@ -132,13 +175,16 @@ export default function AdminDashboard() {
             <View className="flex-row justify-between items-center p-4 border-b border-white/10">
                 <View>
                     <StyledText className="text-yellow-500 font-bold text-xl">Admin Panel</StyledText>
-                    <StyledText className="text-gray-500 text-xs">Marwad Rasoi</StyledText>
+                    <StyledText className="text-gray-500 text-xs">{role === 'ADMIN' ? 'Full Admin' : 'Manager'} • {username}</StyledText>
                 </View>
                 <View className="flex-row gap-4">
                     <StyledTouchableOpacity onPress={toggleKitchen} className={`p-2 rounded-lg border ${isKitchenOpen ? 'bg-green-900/50 border-green-500' : 'bg-red-900/50 border-red-500'}`}>
                         <Utensils size={20} color={isKitchenOpen ? '#4caf50' : '#f44336'} />
                     </StyledTouchableOpacity>
-                    <StyledTouchableOpacity onPress={() => router.replace('/')} className="p-2 bg-white/10 rounded-lg">
+                    <StyledTouchableOpacity onPress={() => {
+                        socket.emit('toggle-kitchen-status', false);
+                        router.replace('/');
+                    }} className="p-2 bg-white/10 rounded-lg">
                         <LogOut size={20} color="white" />
                     </StyledTouchableOpacity>
                 </View>
@@ -146,7 +192,7 @@ export default function AdminDashboard() {
 
             {/* Tab Bar */}
             <View className="flex-row p-2 bg-neutral-800">
-                {['orders', 'menu', 'sales'].map(tab => (
+                {['orders', 'menu', role === 'ADMIN' ? 'sales' : null].filter(Boolean).map(tab => (
                     <StyledTouchableOpacity
                         key={tab}
                         onPress={() => setActiveTab(tab)}
@@ -162,10 +208,15 @@ export default function AdminDashboard() {
 
                 {activeTab === 'orders' && (
                     <FlatList
-                        data={orders.filter(o => o.status !== 'completed')}
+                        data={orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled')}
                         renderItem={renderOrderCard}
                         keyExtractor={(item) => item._id || item.timestamp}
-                        ListEmptyComponent={<StyledText className="text-gray-500 text-center mt-10">No active orders</StyledText>}
+                        ListEmptyComponent={
+                            <View className="items-center mt-10">
+                                <Clock size={48} color="#333" />
+                                <StyledText className="text-gray-500 text-center mt-4">No active kitchen orders</StyledText>
+                            </View>
+                        }
                     />
                 )}
 
@@ -193,9 +244,11 @@ export default function AdminDashboard() {
                                         <StyledText className="text-white font-bold">{item.name}</StyledText>
                                         <StyledText className="text-yellow-500 font-bold">₹{item.price}</StyledText>
                                     </View>
-                                    <StyledTouchableOpacity onPress={() => deleteItem(item._id)} className="p-2 bg-red-500/10 rounded-lg">
-                                        <Trash2 size={18} color="#ff4d4d" />
-                                    </StyledTouchableOpacity>
+                                    {role === 'ADMIN' && (
+                                        <StyledTouchableOpacity onPress={() => deleteItem(item._id)} className="p-2 bg-red-500/10 rounded-lg">
+                                            <Trash2 size={18} color="#ff4d4d" />
+                                        </StyledTouchableOpacity>
+                                    )}
                                 </StyledView>
                             )}
                         />
@@ -203,9 +256,51 @@ export default function AdminDashboard() {
                 )}
 
                 {activeTab === 'sales' && (
-                    <StyledView className="items-center justify-center flex-1">
-                        <StyledText className="text-gray-500">Sales Reports Coming Soon</StyledText>
-                    </StyledView>
+                    <ScrollView className="flex-1">
+                        <StyledView className="bg-yellow-500/10 p-4 rounded-2xl mb-6 items-center">
+                            <StyledText className="text-gray-500 text-xs uppercase mb-1">Today's Revenue</StyledText>
+                            <StyledText className="text-yellow-500 text-3xl font-black">
+                                ₹{salesHistory.filter(s => new Date(s.settledAt).toDateString() === new Date().toDateString()).reduce((acc, s) => acc + s.total, 0)}
+                            </StyledText>
+                        </StyledView>
+
+                        {/* Active Tables for Settlement */}
+                        <StyledText className="text-white font-bold text-lg mb-4">Active Tables</StyledText>
+                        {Object.entries(orders.reduce((groups, order) => {
+                            if (order.status !== 'cancelled') {
+                                if (!groups[order.tableId]) groups[order.tableId] = [];
+                                groups[order.tableId].push(order);
+                            }
+                            return groups;
+                        }, {})).map(([tid, torders]) => (
+                            <StyledTouchableOpacity
+                                key={tid}
+                                onPress={() => settleBill(tid)}
+                                className="bg-white/5 border-l-4 border-yellow-500 p-4 rounded-xl mb-3 flex-row justify-between items-center"
+                            >
+                                <View>
+                                    <StyledText className="text-white font-bold text-lg">Table #{tid}</StyledText>
+                                    <StyledText className="text-gray-500 text-xs">{torders.length} orders pending bill</StyledText>
+                                </View>
+                                <View className="items-end">
+                                    <StyledText className="text-yellow-500 font-black text-lg">₹{torders.reduce((acc, o) => acc + o.total, 0)}</StyledText>
+                                    <StyledText className="text-yellow-500/50 text-[10px]">TAP TO SETTLE</StyledText>
+                                </View>
+                            </StyledTouchableOpacity>
+                        ))}
+
+                        {/* Recent History */}
+                        <StyledText className="text-white font-bold text-lg mt-6 mb-4">Recent Sales</StyledText>
+                        {salesHistory.slice(0, 10).map((sale) => (
+                            <StyledView key={sale._id} className="bg-white/5 p-3 rounded-xl mb-2 flex-row justify-between items-center opacity-70">
+                                <View>
+                                    <StyledText className="text-white font-medium">Table #{sale.tableId}</StyledText>
+                                    <StyledText className="text-gray-500 text-[10px]">{new Date(sale.settledAt).toLocaleTimeString()}</StyledText>
+                                </View>
+                                <StyledText className="text-green-500 font-bold">+₹{sale.total}</StyledText>
+                            </StyledView>
+                        ))}
+                    </ScrollView>
                 )}
 
             </View>

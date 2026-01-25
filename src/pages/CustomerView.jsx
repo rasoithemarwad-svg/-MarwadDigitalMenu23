@@ -34,6 +34,39 @@ const CustomerView = () => {
         lng: 75.722024
     });
 
+    // --- BACKGROUND MUSIC STATE ---
+    const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+    const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+    const audioRef = React.useRef(null);
+
+    const ROMANTIC_TRACKS = [
+        { title: "Soulful Piano", url: "https://www.chosic.com/wp-content/uploads/2021/07/The-Scent-of-Night.mp3" },
+        { title: "Romantic Guitar", url: "https://www.chosic.com/wp-content/uploads/2021/10/Emotional-Piano-Music-Royalty-Free.mp3" },
+        { title: "Sweet Memories", url: "https://www.chosic.com/wp-content/uploads/2021/04/Alone-With-My-Thoughts.mp3" },
+        { title: "Evening Breeze", url: "https://www.chosic.com/wp-content/uploads/2021/07/Ambient-Piano.mp3" },
+        { title: "Love Theme", url: "https://www.chosic.com/wp-content/uploads/2020/06/Serenity.mp3" },
+        { title: "Moonlight Waltz", url: "https://www.chosic.com/wp-content/uploads/2021/01/Breathtaking.mp3" },
+        { title: "Soft Violin", url: "https://www.chosic.com/wp-content/uploads/2021/05/Soft-Piano.mp3" },
+        { title: "Eternal Calm", url: "https://www.chosic.com/wp-content/uploads/2021/08/Reflections.mp3" },
+        { title: "Starlight Dance", url: "https://www.chosic.com/wp-content/uploads/2021/03/Ethereal.mp3" },
+        { title: "Heartfelt Moment", url: "https://www.chosic.com/wp-content/uploads/2021/06/Beautiful-Piano.mp3" }
+    ];
+
+    const toggleMusic = () => {
+        if (isMusicPlaying) {
+            audioRef.current.pause();
+        } else {
+            audioRef.current.play().catch(e => console.log("Autoplay blocked:", e));
+        }
+        setIsMusicPlaying(!isMusicPlaying);
+    };
+
+    const handleMusicEnd = () => {
+        const nextIndex = Math.floor(Math.random() * ROMANTIC_TRACKS.length);
+        setCurrentTrackIndex(nextIndex);
+    };
+    // ------------------------------
+
     // Custom Alert State
     const [customAlert, setCustomAlert] = useState({ show: false, title: '', message: '' });
 
@@ -282,6 +315,53 @@ const CustomerView = () => {
                                             <div style={{ marginTop: '15px', display: 'inline-block', padding: '5px 15px', borderRadius: '20px', background: 'var(--glass)', fontSize: '0.8rem' }}>
                                                 TABLE NUMBER: <span style={{ color: 'var(--primary)', fontWeight: 800 }}>{tableId}</span>
                                             </div>
+
+                                            {/* MUSIC CONTROLLER */}
+                                            <audio
+                                                ref={audioRef}
+                                                src={ROMANTIC_TRACKS[currentTrackIndex].url}
+                                                onEnded={handleMusicEnd}
+                                                autoPlay={false}
+                                            />
+                                            <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                                                <motion.button
+                                                    whileTap={{ scale: 0.9 }}
+                                                    onClick={toggleMusic}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '10px',
+                                                        padding: '10px 20px',
+                                                        borderRadius: '30px',
+                                                        background: isMusicPlaying ? 'rgba(76, 175, 80, 0.2)' : 'rgba(212, 175, 55, 0.1)',
+                                                        border: `1px solid ${isMusicPlaying ? '#4caf50' : 'var(--primary)'}`,
+                                                        color: isMusicPlaying ? '#4caf50' : 'var(--primary)',
+                                                        fontSize: '0.8rem',
+                                                        fontWeight: 800,
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    {isMusicPlaying ? (
+                                                        <>
+                                                            <div className="pulse-music" style={{ width: '8px', height: '8px', background: '#4caf50', borderRadius: '50%' }}></div>
+                                                            🎶 MUSIC PLAYING (STOP)
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Utensils size={14} />
+                                                            🎵 START AMBIENT MUSIC
+                                                        </>
+                                                    )}
+                                                </motion.button>
+                                            </div>
+                                            <style>{`
+                                                @keyframes musicPulse {
+                                                    0% { transform: scale(1); opacity: 1; }
+                                                    50% { transform: scale(1.5); opacity: 0.5; }
+                                                    100% { transform: scale(1); opacity: 1; }
+                                                }
+                                                .pulse-music { animation: musicPulse 1s infinite; }
+                                            `}</style>
                                         </div>
 
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
@@ -318,7 +398,7 @@ const CustomerView = () => {
                                         </div>
 
                                         <div className="glass-card" style={{ marginTop: '40px', padding: '20px', textAlign: 'center' }}>
-                                            {!isKitchenOpen ? (
+                                            {!isKitchenOpen && tableId?.toLowerCase() !== 'testing' ? (
                                                 <div style={{ color: '#ff3b30', fontWeight: 800, fontSize: '1rem', letterSpacing: '1px' }}>
                                                     ⚠️ KITCHEN IS CURRENTLY CLOSED
                                                     <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '5px', fontWeight: 400 }}>Orders cannot be placed right now.</p>
@@ -427,7 +507,7 @@ const CustomerView = () => {
                                                                         <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{p.label} <span style={{ color: 'var(--primary)' }}>₹{p.price}</span></span>
                                                                         <motion.button
                                                                             whileTap={{ scale: 0.8 }}
-                                                                            onClick={() => isKitchenOpen ? addToCart(item, p) : showAlert('Kitchen Closed', 'Sorry, orders are not being accepted right now.')}
+                                                                            onClick={() => (isKitchenOpen || tableId?.toLowerCase() === 'testing') ? addToCart(item, p) : showAlert('Kitchen Closed', 'Sorry, orders are not being accepted right now.')}
                                                                             style={{ width: '24px', height: '24px', borderRadius: '50%', border: 'none', background: isKitchenOpen ? 'var(--primary)' : '#555', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isKitchenOpen ? 'pointer' : 'not-allowed' }}
                                                                         >
                                                                             <Plus size={14} color={isKitchenOpen ? "black" : "#aaa"} />
@@ -440,7 +520,7 @@ const CustomerView = () => {
                                                                 <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.1rem' }}>₹{item.price}</span>
                                                                 <motion.button
                                                                     whileTap={{ scale: 0.8 }}
-                                                                    onClick={() => isKitchenOpen ? addToCart(item) : showAlert('Kitchen Closed', 'Sorry, orders are not being accepted right now.')}
+                                                                    onClick={() => (isKitchenOpen || tableId?.toLowerCase() === 'testing') ? addToCart(item) : showAlert('Kitchen Closed', 'Sorry, orders are not being accepted right now.')}
                                                                     style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', background: isKitchenOpen ? 'var(--primary)' : '#555', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isKitchenOpen ? 'pointer' : 'not-allowed' }}
                                                                 >
                                                                     <Plus size={16} color={isKitchenOpen ? "black" : "#aaa"} />

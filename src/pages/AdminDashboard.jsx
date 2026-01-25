@@ -19,6 +19,9 @@ const AdminDashboard = () => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isKitchenOpen, setIsKitchenOpen] = useState(true);
     const [customAlert, setCustomAlert] = useState({ show: false, title: '', message: '' });
+    const [currentUser, setCurrentUser] = useState(null); // { username, role }
+    const [loginForm, setLoginForm] = useState({ username: 'THEMARWADRASOI', password: '' });
+    const [loginError, setLoginError] = useState('');
 
     const showAlert = (title, message) => {
         setCustomAlert({ show: true, title, message });
@@ -111,6 +114,21 @@ const AdminDashboard = () => {
             setIsKitchenOpen(status);
         });
 
+        socket.on('login-success', (userData) => {
+            setCurrentUser(userData);
+            localStorage.setItem('marwad_user', JSON.stringify(userData));
+        });
+
+        socket.on('login-error', (error) => {
+            setLoginError(error);
+        });
+
+        // Load session if exists
+        const savedUser = localStorage.getItem('marwad_user');
+        if (savedUser) {
+            setCurrentUser(JSON.parse(savedUser));
+        }
+
         return () => {
             socket.off('orders-updated');
             socket.off('menu-updated');
@@ -150,7 +168,21 @@ const AdminDashboard = () => {
     };
 
     const deleteMenuItem = (id) => {
+        if (currentUser?.role !== 'ADMIN') return showAlert("Access Denied", "Managers are not allowed to delete menu items.");
         socket.emit('delete-menu-item', id);
+    };
+
+    const handleLogin = (e) => {
+        e.preventDefault();
+        setLoginError('');
+        socket.emit('login', loginForm);
+    };
+
+    const handleLogout = () => {
+        // Automatically close kitchen on admin logout
+        socket.emit('toggle-kitchen-status', false);
+        setCurrentUser(null);
+        localStorage.removeItem('marwad_user');
     };
 
     const saveSettings = (settings) => {
@@ -196,16 +228,12 @@ const AdminDashboard = () => {
     };
 
     const settleBill = (tableId) => {
-        const tableOrders = orders.filter(o => o.tableId === tableId);
-        const completedOrders = tableOrders.filter(o => o.status === 'completed');
+        const tableOrders = orders.filter(o => o.tableId === tableId && o.status !== 'cancelled');
 
         if (tableOrders.length === 0) return;
-        if (completedOrders.length === 0) {
-            return showAlert("Action Required", "Orders must be marked as 'Served' before they can be settled in a bill.");
-        }
 
-        const total = completedOrders.reduce((acc, o) => acc + o.total, 0);
-        const allItems = completedOrders.flatMap(o => o.items);
+        const total = tableOrders.reduce((acc, o) => acc + o.total, 0);
+        const allItems = tableOrders.flatMap(o => o.items);
 
         const saleRecord = {
             tableId,
@@ -283,6 +311,41 @@ const AdminDashboard = () => {
         });
     };
 
+    if (!currentUser) {
+        return (
+            <div style={{ minHeight: '100vh', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="glass-card" style={{ width: '100%', maxWidth: '400px', padding: '40px 30px' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                        <h2 className="gold-text" style={{ fontSize: '1.8rem', fontWeight: 900 }}>MARWAD ADMIN</h2>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '5px' }}>Authentication Required</p>
+                    </div>
+
+                    <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <div style={{ textAlign: 'center', background: 'rgba(212, 175, 55, 0.05)', padding: '15px', borderRadius: '12px', border: '1px solid rgba(212, 175, 55, 0.1)' }}>
+                            <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '5px' }}>Username</p>
+                            <p className="gold-text" style={{ fontSize: '1.1rem', fontWeight: 800 }}>THEMARWADRASOI</p>
+                        </div>
+
+                        <div>
+                            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Enter Password</label>
+                            <input
+                                type="password"
+                                value={loginForm.password}
+                                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                                style={{ width: '100%', padding: '15px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '12px', color: 'white', fontSize: '1.1rem', textAlign: 'center' }}
+                                placeholder="••••••••"
+                                autoFocus
+                                required
+                            />
+                        </div>
+                        {loginError && <p style={{ color: '#ff3b30', fontSize: '0.8rem', textAlign: 'center' }}>{loginError}</p>}
+                        <button type="submit" className="btn-primary" style={{ padding: '15px', color: 'black', fontWeight: 800 }}>UNLOCK DASHBOARD</button>
+                    </form>
+                </motion.div>
+            </div>
+        );
+    }
+
     return (
         <div style={{ minHeight: '100vh', background: '#0a0a0a', paddingBottom: '90px' }}>
             <div className="admin-container">
@@ -290,7 +353,7 @@ const AdminDashboard = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
                     <div>
                         <h1 className="gold-text" style={{ fontSize: '1.4rem' }}>Marwad Admin</h1>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Automated Kitchen System</p>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{currentUser.role} SESSION • {currentUser.username}</p>
                     </div>
                     <div className="flex gap-4 items-center">
                         <button
@@ -306,6 +369,9 @@ const AdminDashboard = () => {
                         </button>
                         <motion.button whileTap={{ scale: 0.9 }} onClick={fetchData} className="glass-card" style={{ padding: '10px', borderRadius: '12px', border: 'none' }}>
                             <RefreshCcw size={18} className={isRefreshing ? 'spin' : ''} style={{ color: 'var(--primary)' }} />
+                        </motion.button>
+                        <motion.button whileTap={{ scale: 0.9 }} onClick={handleLogout} className="glass-card" style={{ padding: '10px', borderRadius: '12px', border: '1px solid rgba(255,59,48,0.2)', color: '#ff3b30' }}>
+                            <LogOut size={18} />
                         </motion.button>
                     </div>
                 </div>
@@ -458,8 +524,38 @@ const AdminDashboard = () => {
                                         </div>
                                     </div>
                                 ))}
-                                {orders.filter(o => o.status !== 'completed').length === 0 && <div style={{ gridColumn: '1/-1', textAlign: 'center', opacity: 0.3, padding: '100px 0' }}><Clock size={60} style={{ margin: '0 auto 20px' }} /><p style={{ fontSize: '1.2rem' }}>No Active Orders Right Now</p></div>}
+                                {orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled').length === 0 && (
+                                    <div style={{ gridColumn: '1/-1', textAlign: 'center', opacity: 0.3, padding: '60px 0' }}>
+                                        <Clock size={60} style={{ margin: '0 auto 20px' }} />
+                                        <p style={{ fontSize: '1.2rem' }}>No Active Orders Right Now</p>
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Recently Served Section */}
+                            {orders.filter(o => o.status === 'completed').length > 0 && (
+                                <div style={{ marginTop: '50px' }}>
+                                    <h3 className="gold-text" style={{ marginBottom: '20px', fontSize: '1rem', opacity: 0.8, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <CheckCircle size={18} /> Recently Served (Awaiting Bill)
+                                    </h3>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px' }}>
+                                        {orders.filter(o => o.status === 'completed').map((order) => (
+                                            <div key={order._id} className="glass-card" style={{ padding: '15px', borderLeft: '4px solid #4caf50', opacity: 0.8 }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                                    <h4 style={{ fontSize: '1rem' }}>Table #{order.tableId}</h4>
+                                                    <span style={{ fontWeight: 800, color: 'var(--primary)' }}>₹{order.total}</span>
+                                                </div>
+                                                <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                                                    {order.items.map((it, i) => <span key={i}>{it.qty}x {it.name}{i < order.items.length - 1 ? ', ' : ''}</span>)}
+                                                </div>
+                                                <button onClick={() => setActiveTab('billing')} style={{ marginTop: '15px', background: 'none', border: '1px solid var(--primary)', color: 'var(--primary)', padding: '8px', borderRadius: '8px', width: '100%', fontSize: '0.75rem', cursor: 'pointer' }}>
+                                                    Go to Billing
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </motion.div>
                     )}
 
@@ -607,9 +703,11 @@ const AdminDashboard = () => {
                                                         <button onClick={() => startEditing(item)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--primary)', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}>
                                                             <ClipboardList size={16} />
                                                         </button>
-                                                        <button onClick={() => deleteMenuItem(item._id)} style={{ background: 'rgba(255, 77, 77, 0.05)', border: 'none', color: '#ff4d4d', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}>
-                                                            <Trash2 size={16} />
-                                                        </button>
+                                                        {currentUser.role === 'ADMIN' && (
+                                                            <button onClick={() => deleteMenuItem(item._id)} style={{ background: 'rgba(255, 77, 77, 0.05)', border: 'none', color: '#ff4d4d', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}>
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}
@@ -822,9 +920,14 @@ const AdminDashboard = () => {
                     <button onClick={() => setActiveTab('billing')} style={{ background: 'none', border: 'none', color: activeTab === 'billing' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Receipt size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Billing</span></button>
                     <button onClick={() => setActiveTab('menu')} style={{ background: 'none', border: 'none', color: activeTab === 'menu' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Utensils size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Menu</span></button>
                     <button onClick={() => setActiveTab('expenses')} style={{ background: 'none', border: 'none', color: activeTab === 'expenses' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Receipt size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Exp.</span></button>
-                    <button onClick={() => setActiveTab('reports')} style={{ background: 'none', border: 'none', color: activeTab === 'reports' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><BarChart3 size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Reports</span></button>
-                    <button onClick={() => setActiveTab('qr')} style={{ background: 'none', border: 'none', color: activeTab === 'qr' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><QrCode size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>QR</span></button>
-                    <button onClick={() => setActiveTab('settings')} style={{ background: 'none', border: 'none', color: activeTab === 'settings' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><User size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>System</span></button>
+
+                    {currentUser.role === 'ADMIN' && (
+                        <>
+                            <button onClick={() => setActiveTab('reports')} style={{ background: 'none', border: 'none', color: activeTab === 'reports' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><BarChart3 size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Reports</span></button>
+                            <button onClick={() => setActiveTab('qr')} style={{ background: 'none', border: 'none', color: activeTab === 'qr' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><QrCode size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>QR</span></button>
+                            <button onClick={() => setActiveTab('settings')} style={{ background: 'none', border: 'none', color: activeTab === 'settings' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><User size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>System</span></button>
+                        </>
+                    )}
                 </div>
 
                 {/* Add/Edit Item Modal */}

@@ -184,7 +184,7 @@
     "name": "Egg maggie",
     "price": 100,
     "category": "CAFE",
-    "subCategory": "Maggie",
+    "subCategory": "MAGGI",
     "isAvailable": true,
     "image": "https://images.unsplash.com/photo-1626808642820-20059969562a?w=500&q=80",
     "description": "Classic maggie noodles with scrambled eggs."
@@ -194,7 +194,7 @@
     "name": "peri peri maggie",
     "price": 120,
     "category": "CAFE",
-    "subCategory": "Maggie",
+    "subCategory": "MAGGI",
     "isAvailable": true,
     "image": "https://images.unsplash.com/photo-1623245455621-933618de488f?w=500&q=80",
     "description": "Spicy maggie with a peri-peri kick."
@@ -204,7 +204,7 @@
     "name": "Masala maggie",
     "price": 120,
     "category": "CAFE",
-    "subCategory": "Maggie",
+    "subCategory": "MAGGI",
     "isAvailable": true,
     "image": "https://images.unsplash.com/photo-1612927601601-663840275991?w=500&q=80",
     "description": "Extra spicy masala maggie."
@@ -214,7 +214,7 @@
     "name": "vegitable maggie",
     "price": 110,
     "category": "CAFE",
-    "subCategory": "Maggie",
+    "subCategory": "MAGGI",
     "isAvailable": true,
     "image": "https://images.unsplash.com/photo-1526318896980-cf78c088247c?w=500&q=80",
     "description": "Healthy maggie loaded with fresh vegetables."
@@ -224,7 +224,7 @@
     "name": "maggie with cheese",
     "price": 140,
     "category": "CAFE",
-    "subCategory": "Maggie",
+    "subCategory": "MAGGI",
     "isAvailable": true,
     "image": "https://images.unsplash.com/photo-1619531043563-780ba306354a?w=500&q=80",
     "description": "Creamy maggie topped with melted cheese."
@@ -983,7 +983,7 @@
     "id": 99,
     "name": "Grilled chicken",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "NON-VEG STARTER",
     "isAvailable": true,
     "portions": [
       {
@@ -1002,7 +1002,7 @@
     "id": 100,
     "name": "Grilled Fish",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "NON-VEG STARTER",
     "isAvailable": true,
     "portions": [
       {
@@ -1021,7 +1021,7 @@
     "id": 101,
     "name": "Fish Fry",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "NON-VEG STARTER",
     "isAvailable": true,
     "portions": [
       {
@@ -1040,7 +1040,7 @@
     "id": 102,
     "name": "Chicken Fry",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "NON-VEG STARTER",
     "isAvailable": true,
     "portions": [
       {
@@ -1059,7 +1059,7 @@
     "id": 103,
     "name": "Chicken fry boneless",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "NON-VEG STARTER",
     "isAvailable": true,
     "portions": [
       {
@@ -1078,7 +1078,7 @@
     "id": 104,
     "name": "Chicken Curry",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "MAINS CHICKEN",
     "isAvailable": true,
     "portions": [
       {
@@ -1097,7 +1097,7 @@
     "id": 105,
     "name": "chicken masala",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "MAINS CHICKEN",
     "isAvailable": true,
     "portions": [
       {
@@ -1116,7 +1116,7 @@
     "id": 106,
     "name": "kadhai chicken",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "MAINS CHICKEN",
     "isAvailable": true,
     "portions": [
       {
@@ -1135,7 +1135,7 @@
     "id": 107,
     "name": "butter chicken",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "MAINS CHICKEN",
     "isAvailable": true,
     "portions": [
       {
@@ -1154,7 +1154,7 @@
     "id": 108,
     "name": "Handi chicken Special",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "MAINS CHICKEN",
     "isAvailable": true,
     "portions": [
       {
@@ -1173,7 +1173,7 @@
     "id": 109,
     "name": "Mutton Curry",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "MAINS MUTTON",
     "isAvailable": true,
     "portions": [
       {
@@ -1192,7 +1192,7 @@
     "id": 110,
     "name": "Masala mutton",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "MAINS MUTTON",
     "isAvailable": true,
     "portions": [
       {
@@ -1211,7 +1211,7 @@
     "id": 111,
     "name": "Handi mutton Special",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "MAINS MUTTON",
     "isAvailable": true,
     "portions": [
       {
@@ -1230,7 +1230,7 @@
     "id": 112,
     "name": "Fish Curry",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "MAINS FISH & EGG",
     "isAvailable": true,
     "portions": [
       {
@@ -1249,7 +1249,7 @@
     "id": 113,
     "name": "Egg Curry",
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "MAINS FISH & EGG",
     "isAvailable": true,
     "portions": [
       {
@@ -1269,7 +1269,7 @@
     "name": "Boiled Egg",
     "price": 30,
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "MAINS FISH & EGG",
     "isAvailable": true,
     "image": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&q=80",
     "description": "Nutritious plain boiled eggs."
@@ -1279,7 +1279,7 @@
     "name": "Egg bhurji",
     "price": 90,
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "MAINS FISH & EGG",
     "isAvailable": true,
     "image": "https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80",
     "description": "Spicy scrambled eggs with onions."
@@ -1289,7 +1289,7 @@
     "name": "boiled Egg bhurji",
     "price": 90,
     "category": "RESTAURANT",
-    "subCategory": "NON-VEG MAIN COURSE",
+    "subCategory": "MAINS FISH & EGG",
     "isAvailable": true,
     "image": "https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80",
     "description": "Scrambled boiled eggs with masala."
@@ -1453,5 +1453,895 @@
     "isAvailable": true,
     "image": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500&q=80",
     "description": "ROASTED CHICKEN+MASALA PAPAD+1ltr WATER BOTTEL OR CHILLY PANEER+MASALA PAPAD+1ltr WATER BOTTEL. OUTSIDE FOOD NOT ALLOWED"
+  },
+  {
+    "id": 133,
+    "name": "Water",
+    "price": 20,
+    "category": "HUT",
+    "subCategory": "Drinks",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=500&q=80",
+    "description": "Chilled drinking water (1L)."
+  },
+  {
+    "id": 134,
+    "name": "GLASS",
+    "price": 5,
+    "category": "HUT",
+    "subCategory": "Service",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1628172900958-8868ec532911?w=500&q=80",
+    "description": "Drinking glass."
+  },
+  {
+    "id": 135,
+    "name": "PAPAD",
+    "price": 20,
+    "category": "HUT",
+    "subCategory": "Sides",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1610440042657-612c34d95e9f?w=500&q=80",
+    "description": "Crispy roasted papad."
+  },
+  {
+    "id": 136,
+    "name": "MASALA PAPAD",
+    "price": 40,
+    "category": "HUT",
+    "subCategory": "Sides",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1626777551410-60b138692631?w=500&q=80",
+    "description": "Papad topped with onion, tomato and spices."
+  },
+  {
+    "id": 137,
+    "name": "PEANUT MASALA",
+    "price": 70,
+    "category": "HUT",
+    "subCategory": "Masala Specials",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1632734127816-092985396653?w=500&q=80",
+    "description": "Spiced peanut salad."
+  },
+  {
+    "id": 138,
+    "name": "CHANA MASALA",
+    "price": 70,
+    "category": "HUT",
+    "subCategory": "Masala Specials",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500&q=80",
+    "description": "Traditional spiced chana."
+  },
+  {
+    "id": 139,
+    "name": "MATAR MASALA",
+    "price": 70,
+    "category": "HUT",
+    "subCategory": "Masala Specials",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80",
+    "description": "Spiced green peas masala."
+  },
+  {
+    "id": 140,
+    "name": "DAAL MASALA",
+    "price": 70,
+    "category": "HUT",
+    "subCategory": "Masala Specials",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=500&q=80",
+    "description": "Spiced daal masala."
+  },
+  {
+    "id": 141,
+    "name": "NAMKEEN MASALA",
+    "price": 70,
+    "category": "HUT",
+    "subCategory": "Masala Specials",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1601050690597-df056fb04791?w=500&q=80",
+    "description": "Spiced namkeen mix."
+  },
+  {
+    "id": 142,
+    "name": "GREEN SALAD",
+    "price": 60,
+    "category": "HUT",
+    "subCategory": "Sides",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&q=80",
+    "description": "Fresh assorted vegetable salad."
+  },
+  {
+    "id": 143,
+    "name": "BOILED EGG (2 piece Egg)",
+    "price": 30,
+    "category": "HUT",
+    "subCategory": "Egg Specials",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80",
+    "description": "Standard boiled eggs (2pcs)."
+  },
+  {
+    "id": 144,
+    "name": "EGG FRY (2 piece Egg)",
+    "price": 40,
+    "category": "HUT",
+    "subCategory": "Egg Specials",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80",
+    "description": "Fried eggs (2pcs)."
+  },
+  {
+    "id": 145,
+    "name": "EGG BHURJI (2 piece Egg)",
+    "price": 80,
+    "category": "HUT",
+    "subCategory": "Egg Specials",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80",
+    "description": "Scrambled eggs with onions and spices (2pcs)."
+  },
+  {
+    "id": 146,
+    "name": "BOILED EGG BHURJI (2 piece Egg)",
+    "price": 80,
+    "category": "HUT",
+    "subCategory": "Egg Specials",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80",
+    "description": "Bhurji made from diced boiled eggs (2pcs)."
+  },
+  {
+    "id": 147,
+    "name": "OMELLETE (2 piece Egg)",
+    "price": 90,
+    "category": "HUT",
+    "subCategory": "Egg Specials",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1494597564530-859f0920aa88?w=500&q=80",
+    "description": "Classic fluffy omelette (2pcs)."
+  },
+  {
+    "id": 148,
+    "name": "Tea+Toast",
+    "price": 40,
+    "category": "RESTAURANT",
+    "subCategory": "DRINKS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1544787210-2211d7c928c0?w=500&q=80",
+    "description": "Refreshing tea served with crispy toast."
+  },
+  {
+    "id": 149,
+    "name": "Coffee hot",
+    "price": 50,
+    "category": "RESTAURANT",
+    "subCategory": "DRINKS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&q=80",
+    "description": "Hot brewed classic coffee."
+  },
+  {
+    "id": 150,
+    "name": "cold coffee",
+    "price": 80,
+    "category": "RESTAURANT",
+    "subCategory": "DRINKS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1517701550927-30cf4bb1dba5?w=500&q=80",
+    "description": "Chilled coffee with a creamy texture."
+  },
+  {
+    "id": 151,
+    "name": "lemon tea",
+    "price": 30,
+    "category": "RESTAURANT",
+    "subCategory": "DRINKS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=500&q=80",
+    "description": "Light tea with a zing of lemon."
+  },
+  {
+    "id": 152,
+    "name": "ginger honey tea",
+    "price": 50,
+    "category": "RESTAURANT",
+    "subCategory": "DRINKS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1556881286-fc6915169721?w=500&q=80",
+    "description": "Warm tea with ginger and honey notes."
+  },
+  {
+    "id": 153,
+    "name": "coke",
+    "price": 35,
+    "category": "RESTAURANT",
+    "subCategory": "DRINKS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&q=80",
+    "description": "Classic Coca-Cola."
+  },
+  {
+    "id": 154,
+    "name": "thumps up",
+    "price": 35,
+    "category": "RESTAURANT",
+    "subCategory": "DRINKS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1581006852262-e4307cf6283a?w=500&q=80",
+    "description": "Strong thumps up cola."
+  },
+  {
+    "id": 155,
+    "name": "dew",
+    "price": 35,
+    "category": "RESTAURANT",
+    "subCategory": "DRINKS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=500&q=80",
+    "description": "Mountain Dew citrus soda."
+  },
+  {
+    "id": 156,
+    "name": "sprite",
+    "price": 35,
+    "category": "RESTAURANT",
+    "subCategory": "DRINKS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=500&q=80",
+    "description": "Clear lemon-lime soda."
+  },
+  {
+    "id": 157,
+    "name": "fanta",
+    "price": 35,
+    "category": "RESTAURANT",
+    "subCategory": "DRINKS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1624517452488-04869289c4ca?w=500&q=80",
+    "description": "Bubbly orange fanta."
+  },
+  {
+    "id": 158,
+    "name": "Dal Tadka",
+    "price": 100,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&q=80",
+    "description": "Lentils tempered with spices."
+  },
+  {
+    "id": 159,
+    "name": "Dal fry",
+    "price": 80,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1626074353765-517a681e40be?w=500&q=80",
+    "description": "Classic yellow dal fry."
+  },
+  {
+    "id": 160,
+    "name": "mix veg",
+    "price": 120,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1546241072-48010ad28c2c?w=500&q=80",
+    "description": "Assorted seasonal vegetables."
+  },
+  {
+    "id": 161,
+    "name": "chole paneer",
+    "price": 140,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1516714435131-44eb18dec26f?w=500&q=80",
+    "description": "Chickpeas and paneer in gravy."
+  },
+  {
+    "id": 162,
+    "name": "allo chole",
+    "price": 120,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1645177623570-5283899933c7?w=500&q=80",
+    "description": "Potatoes and chickpeas curry."
+  },
+  {
+    "id": 163,
+    "name": "besan gatta",
+    "price": 120,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=500&q=80",
+    "description": "Rajasthani gram flour dumplings."
+  },
+  {
+    "id": 164,
+    "name": "sev tamatar",
+    "price": 100,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://plus.unsplash.com/premium_photo-1694141253457-4187317730e2?w=500&q=80",
+    "description": "Savory sev in tomato gravy."
+  },
+  {
+    "id": 165,
+    "name": "palak paneer",
+    "price": 140,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1618123069176-0ce6774618e7?w=500&q=80",
+    "description": "Spinach and paneer curry."
+  },
+  {
+    "id": 166,
+    "name": "paneer bhurji",
+    "price": 200,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&q=80",
+    "description": "Scrambled paneer with spices."
+  },
+  {
+    "id": 167,
+    "name": "paneer tika masala",
+    "price": 200,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=500&q=80",
+    "description": "Grilled paneer in spicy gravy."
+  },
+  {
+    "id": 168,
+    "name": "Matar paneer",
+    "price": 200,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1589676771954-2e7a3266934c?w=500&q=80",
+    "description": "Peas and paneer curry."
+  },
+  {
+    "id": 169,
+    "name": "Kadhai paneer",
+    "price": 200,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=500&q=80",
+    "description": "Paneer cooked in a wok."
+  },
+  {
+    "id": 170,
+    "name": "Dahi",
+    "price": 40,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1481931098730-119839ec81e7?w=500&q=80",
+    "description": "Fresh plain curd."
+  },
+  {
+    "id": 171,
+    "name": "dahi tadka",
+    "price": 50,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1549413215-6804a80084a4?w=500&q=80",
+    "description": "Tempered curd."
+  },
+  {
+    "id": 172,
+    "name": "veg raita",
+    "price": 60,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1481931098730-119839ec81e7?w=500&q=80",
+    "description": "Curd with mixed vegetables."
+  },
+  {
+    "id": 173,
+    "name": "bondi raita",
+    "price": 40,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1481931098730-119839ec81e7?w=500&q=80",
+    "description": "Curd with crispy boondi."
+  },
+  {
+    "id": 174,
+    "name": "chaach",
+    "price": 20,
+    "category": "RESTAURANT",
+    "subCategory": "VEG-MAIN COURSE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1550507992-eb63ffee0847?w=500&q=80",
+    "description": "Refreshing buttermilk."
+  },
+  {
+    "id": 175,
+    "name": "Tawa roti plain",
+    "price": 10,
+    "category": "RESTAURANT",
+    "subCategory": "ROTI",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1589113103131-70043c748c90?w=500&q=80",
+    "description": "Freshly made plain tawa roti."
+  },
+  {
+    "id": 176,
+    "name": "Tawa roti butter",
+    "price": 12,
+    "category": "RESTAURANT",
+    "subCategory": "ROTI",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1589113103131-70043c748c90?w=500&q=80",
+    "description": "Butter topped tawa roti."
+  },
+  {
+    "id": 177,
+    "name": "Tandoori roti plain",
+    "price": 15,
+    "category": "RESTAURANT",
+    "subCategory": "ROTI",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=500&q=80",
+    "description": "Clay oven baked plain roti."
+  },
+  {
+    "id": 178,
+    "name": "Tandoori roti butter",
+    "price": 18,
+    "category": "RESTAURANT",
+    "subCategory": "ROTI",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=500&q=80",
+    "description": "Clay oven baked butter roti."
+  },
+  {
+    "id": 179,
+    "name": "Baati",
+    "price": 20,
+    "category": "RESTAURANT",
+    "subCategory": "ROTI",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=500&q=80",
+    "description": "Traditional Rajasthani baked baati."
+  },
+  {
+    "id": 180,
+    "name": "Makke ki roti",
+    "price": 40,
+    "category": "RESTAURANT",
+    "subCategory": "ROTI",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1512423175375-a04493ee260c?w=500&q=80",
+    "description": "Corn meal flatbread."
+  },
+  {
+    "id": 181,
+    "name": "Bajre ki roti",
+    "price": 40,
+    "category": "RESTAURANT",
+    "subCategory": "ROTI",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1589113103131-70043c748c90?w=500&q=80",
+    "description": "Millet flatbread."
+  },
+  {
+    "id": 182,
+    "name": "plain rice",
+    "price": 50,
+    "category": "RESTAURANT",
+    "subCategory": "RICE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1516684732162-798a0062be99?w=500&q=80",
+    "description": "Steamed plain basmati rice."
+  },
+  {
+    "id": 183,
+    "name": "schezwan rice",
+    "price": 80,
+    "category": "RESTAURANT",
+    "subCategory": "RICE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80",
+    "description": "Spicy Schezwan fried rice."
+  },
+  {
+    "id": 184,
+    "name": "jeera rice",
+    "price": 70,
+    "category": "RESTAURANT",
+    "subCategory": "RICE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=500&q=80",
+    "description": "Basmati rice tempered with cumin seeds."
+  },
+  {
+    "id": 185,
+    "name": "panner fried rice",
+    "price": 120,
+    "category": "RESTAURANT",
+    "subCategory": "RICE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80",
+    "description": "Fried rice with cottage cheese cubes."
+  },
+  {
+    "id": 186,
+    "name": "fried rice",
+    "price": 100,
+    "category": "RESTAURANT",
+    "subCategory": "RICE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80",
+    "description": "Classic vegetable fried rice."
+  },
+  {
+    "id": 187,
+    "name": "chicken fried rice",
+    "price": 180,
+    "category": "RESTAURANT",
+    "subCategory": "RICE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80",
+    "description": "Fried rice with succulent chicken pieces."
+  },
+  {
+    "id": 188,
+    "name": "egg fried rice",
+    "price": 160,
+    "category": "RESTAURANT",
+    "subCategory": "RICE",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1603133872878-6858488fb3ac?w=500&q=80",
+    "description": "Fried rice with scrambled eggs."
+  },
+  {
+    "id": 189,
+    "name": "Plain maggie",
+    "price": 70,
+    "category": "CAFE",
+    "subCategory": "MAGGI",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1526318896980-cf78c088247c?w=500&q=80",
+    "description": "Classic plain maggie noodles."
+  },
+  {
+    "id": 190,
+    "name": "Red Pasta",
+    "price": 180,
+    "category": "CAFE",
+    "subCategory": "PASTA",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=500&q=80",
+    "description": "Delicious pasta in spicy red tomato sauce."
+  },
+  {
+    "id": 191,
+    "name": "White Pasta",
+    "price": 220,
+    "category": "CAFE",
+    "subCategory": "PASTA",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1645177623570-5283899933c7?w=500&q=80",
+    "description": "Creamy rich white sauce pasta."
+  },
+  {
+    "id": 192,
+    "name": "cheese garlic bread",
+    "price": 150,
+    "category": "CAFE",
+    "subCategory": "SANDWICH",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=500&q=80",
+    "description": "Crispy garlic bread with melted cheese."
+  },
+  {
+    "id": 193,
+    "name": "periperi sandwich",
+    "price": 80,
+    "category": "CAFE",
+    "subCategory": "SANDWICH",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&q=80",
+    "description": "Spicy peri-peri seasoned sandwich."
+  },
+  {
+    "id": 194,
+    "name": "Plain Sandwich",
+    "price": 100,
+    "category": "CAFE",
+    "subCategory": "SANDWICH",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1475090169767-40ed8d18f67d?w=500&q=80",
+    "description": "Simple and fresh vegetable sandwich."
+  },
+  {
+    "id": 195,
+    "name": "Grilled sandwich",
+    "price": 140,
+    "category": "CAFE",
+    "subCategory": "SANDWICH",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&q=80",
+    "description": "Toasted golden brown grilled sandwich."
+  },
+  {
+    "id": 196,
+    "name": "cheese corn sandwich",
+    "price": 140,
+    "category": "CAFE",
+    "subCategory": "SANDWICH",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&q=80",
+    "description": "Sweet corn and cheese filled sandwich."
+  },
+  {
+    "id": 197,
+    "name": "Paneer grilled sandwich",
+    "price": 160,
+    "category": "CAFE",
+    "subCategory": "SANDWICH",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&q=80",
+    "description": "Protein-rich grilled paneer sandwich."
+  },
+  {
+    "id": 198,
+    "name": "egg Sandwich",
+    "price": 120,
+    "category": "CAFE",
+    "subCategory": "SANDWICH",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=500&q=80",
+    "description": "Classic egg salad sandwich."
+  },
+  {
+    "id": 199,
+    "name": "Plain aloo tikki burger",
+    "price": 90,
+    "category": "CAFE",
+    "subCategory": "BURGER",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=500&q=80",
+    "description": "Crispy potato patty burger."
+  },
+  {
+    "id": 200,
+    "name": "cheese burger",
+    "price": 120,
+    "category": "CAFE",
+    "subCategory": "BURGER",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&q=80",
+    "description": "Juicy burger with a thick cheese slice."
+  },
+  {
+    "id": 201,
+    "name": "egg burger",
+    "price": 110,
+    "category": "CAFE",
+    "subCategory": "BURGER",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&q=80",
+    "description": "Burger with a fluffy egg patty."
+  },
+  {
+    "id": 202,
+    "name": "double tiki burger",
+    "price": 140,
+    "category": "CAFE",
+    "subCategory": "BURGER",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&q=80",
+    "description": "Double the crunch with two potato patties."
+  },
+  {
+    "id": 203,
+    "name": "peri peri fries",
+    "price": 130,
+    "category": "CAFE",
+    "subCategory": "FRIES",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1630384066252-1911ca992f16?w=500&q=80",
+    "description": "Crispy fries tossed in spicy peri-peri seasoning."
+  },
+  {
+    "id": 204,
+    "name": "french fries",
+    "price": 100,
+    "category": "CAFE",
+    "subCategory": "FRIES",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500&q=80",
+    "description": "Classic salted golden french fries."
+  },
+  {
+    "id": 205,
+    "name": "cheese fries",
+    "price": 160,
+    "category": "CAFE",
+    "subCategory": "FRIES",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1585109649139-366815a0d331?w=500&q=80",
+    "description": "Fries loaded with warm melted cheese."
+  },
+  {
+    "id": 206,
+    "name": "chicken roll",
+    "price": 100,
+    "category": "CAFE",
+    "subCategory": "ROLLS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1626777551341-1da491959881?w=500&q=80",
+    "description": "Spicy chicken filling wrapped in a soft roll."
+  },
+  {
+    "id": 207,
+    "name": "egg roll",
+    "price": 80,
+    "category": "CAFE",
+    "subCategory": "ROLLS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1566332120401-2092c4535359?w=500&q=80",
+    "description": "Delicious roll with a fluffy egg wrap."
+  },
+  {
+    "id": 208,
+    "name": "veg roll",
+    "price": 60,
+    "category": "CAFE",
+    "subCategory": "ROLLS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1544618779-40813953e5e4?w=500&q=80",
+    "description": "Healthy vegetarian roll with fresh fillings."
+  },
+  {
+    "id": 209,
+    "name": "spring roll",
+    "price": 50,
+    "category": "CAFE",
+    "subCategory": "ROLLS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1502301103665-0b95cc738def?w=500&q=80",
+    "description": "Crispy fried spring rolls with veggie stuffing."
+  },
+  {
+    "id": 210,
+    "name": "crispy corn",
+    "price": 60,
+    "category": "CAFE",
+    "subCategory": "ROLLS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1551761429-078bcfa68cf3?w=500&q=80",
+    "description": "Spicy and crunchy fried corn kernels."
+  },
+  {
+    "id": 211,
+    "name": "veg paneer roll",
+    "price": 120,
+    "category": "CAFE",
+    "subCategory": "ROLLS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1599487488585-79f97607c39b?w=500&q=80",
+    "description": "Soft roll stuffed with paneer and veggies."
+  },
+  {
+    "id": 212,
+    "name": "cheese corn roll",
+    "price": 140,
+    "category": "CAFE",
+    "subCategory": "ROLLS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500&q=80",
+    "description": "Cheese and corn filled delightful roll."
+  },
+  {
+    "id": 213,
+    "name": "egg noodels",
+    "price": 140,
+    "category": "CAFE",
+    "subCategory": "NOODELS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1585032226651-759b368d7246?w=500&q=80",
+    "description": "Stir fry noodles with scrambled eggs and veggies."
+  },
+  {
+    "id": 214,
+    "name": "chicken noodels",
+    "price": 180,
+    "category": "CAFE",
+    "subCategory": "NOODELS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=500&q=80",
+    "description": "Savory stir fry noodles with tender chicken pieces."
+  },
+  {
+    "id": 215,
+    "name": "Tomato Soup",
+    "price": 80,
+    "category": "RESTAURANT",
+    "subCategory": "SOUPS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1547592110-3343360d269d?w=500&q=80",
+    "description": "Creamy tomato soup served with croutons."
+  },
+  {
+    "id": 216,
+    "name": "Sweet Corn Soup",
+    "price": 90,
+    "category": "RESTAURANT",
+    "subCategory": "SOUPS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=500&q=80",
+    "description": "Light and sweet corn soup with assorted veggies."
+  },
+  {
+    "id": 217,
+    "name": "Manchow Soup",
+    "price": 100,
+    "category": "RESTAURANT",
+    "subCategory": "SOUPS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=500&q=80",
+    "description": "Spicy and tangy manchow soup with crispy noodles."
+  },
+  {
+    "id": 218,
+    "name": "Hot & Sour Soup",
+    "price": 100,
+    "category": "RESTAURANT",
+    "subCategory": "SOUPS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=500&q=80",
+    "description": "Classic pungent hot and sour soup."
+  },
+  {
+    "id": 219,
+    "name": "Tomato Soup",
+    "price": 80,
+    "category": "CAFE",
+    "subCategory": "SOUPS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1547592110-3343360d269d?w=500&q=80",
+    "description": "Warm creamy tomato soup."
+  },
+  {
+    "id": 220,
+    "name": "Sweet Corn Soup",
+    "price": 90,
+    "category": "CAFE",
+    "subCategory": "SOUPS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=500&q=80",
+    "description": "Delightful vegetarian sweet corn soup."
+  },
+  {
+    "id": 221,
+    "name": "Veg Manchow Soup",
+    "price": 100,
+    "category": "CAFE",
+    "subCategory": "SOUPS",
+    "isAvailable": true,
+    "image": "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=500&q=80",
+    "description": "Flavorful veg manchow soup."
   }
 ]
