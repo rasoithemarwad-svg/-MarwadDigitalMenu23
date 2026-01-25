@@ -4,63 +4,78 @@ import { Download, Globe, Smartphone } from 'lucide-react';
 
 const QRManager = () => {
     const tables = Array.from({ length: 20 }, (_, i) => i + 1);
-    const [baseUrl, setBaseUrl] = useState(window.location.origin);
+    const [baseUrl, setBaseUrl] = useState('https://digital-marwad-1.onrender.com');
 
     const downloadQR = (tableId) => {
-        const svg = document.getElementById(`qr-table-${tableId}`);
-        if (!svg) {
-            alert("QR Code element not found!");
-            return;
+        try {
+            const svg = document.getElementById(`qr-table-${tableId}`);
+            if (!svg) {
+                alert("QR Code element not found!");
+                return;
+            }
+
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+
+            // Use a more robust way to encode SVG for data URL
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            img.onload = () => {
+                try {
+                    canvas.width = 1200; // Even higher resolution
+                    canvas.height = 1400; // Extra space for branding
+
+                    // White Background
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // Draw QR Code
+                    ctx.drawImage(img, 100, 150, 1000, 1000);
+
+                    // Add Header Branding
+                    ctx.fillStyle = "#8b0000"; // Royal Red
+                    ctx.font = "900 60px sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.fillText("THE MARWAD RASOI", 600, 100);
+
+                    // Add Table Label
+                    ctx.fillStyle = "black";
+                    ctx.font = "bold 80px sans-serif";
+                    ctx.fillText(`TABLE #${tableId.toUpperCase()}`, 600, 1250);
+
+                    // Add decorative border
+                    ctx.lineWidth = 20;
+                    ctx.strokeStyle = "#d4af37"; // Gold
+                    ctx.strokeRect(40, 40, canvas.width - 80, canvas.height - 80);
+
+                    const pngFile = canvas.toDataURL("image/png");
+                    const downloadLink = document.createElement("a");
+                    downloadLink.download = `Marwad-Table-${tableId}.png`;
+                    downloadLink.href = pngFile;
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+
+                    // Clean up
+                    URL.revokeObjectURL(url);
+                } catch (innerErr) {
+                    console.error("Canvas drawing error:", innerErr);
+                    alert("Error generating image from QR. Please try again.");
+                }
+            };
+            img.onerror = (e) => {
+                console.error("Image load error:", e);
+                alert("Failed to load QR image data.");
+            };
+            img.src = url;
+
+        } catch (err) {
+            console.error("QR Download Error:", err);
+            alert("Unexpected error downloading QR: " + err.message);
         }
-
-        const svgData = new XMLSerializer().serializeToString(svg);
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        const img = new Image();
-
-        // Use a more robust way to encode SVG for data URL
-        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(svgBlob);
-
-        img.onload = () => {
-            canvas.width = 1200; // Even higher resolution
-            canvas.height = 1400; // Extra space for branding
-
-            // White Background
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw QR Code
-            ctx.drawImage(img, 100, 150, 1000, 1000);
-
-            // Add Header Branding
-            ctx.fillStyle = "#8b0000"; // Royal Red
-            ctx.font = "900 60px sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText("THE MARWAD RASOI", 600, 100);
-
-            // Add Table Label
-            ctx.fillStyle = "black";
-            ctx.font = "bold 80px sans-serif";
-            ctx.fillText(`TABLE #${tableId.toUpperCase()}`, 600, 1250);
-
-            // Add decorative border
-            ctx.lineWidth = 20;
-            ctx.strokeStyle = "#d4af37"; // Gold
-            ctx.strokeRect(40, 40, canvas.width - 80, canvas.height - 80);
-
-            const pngFile = canvas.toDataURL("image/png");
-            const downloadLink = document.createElement("a");
-            downloadLink.download = `Marwad-Table-${tableId}.png`;
-            downloadLink.href = pngFile;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-
-            // Clean up
-            URL.revokeObjectURL(url);
-        };
-        img.src = url;
     };
 
     return (
