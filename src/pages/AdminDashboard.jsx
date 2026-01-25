@@ -126,13 +126,20 @@ const AdminDashboard = () => {
         // Load session if exists
         const savedUser = localStorage.getItem('marwad_user');
         if (savedUser) {
-            const parsedUser = JSON.parse(savedUser);
-            // Invalidate stale sessions with old roles (ADMIN/MANAGER)
-            if (parsedUser.role === 'ADMIN' || parsedUser.role === 'MANAGER') {
+            try {
+                const parsedUser = JSON.parse(savedUser);
+                // INVALIADTE OLD SESSIONS (ADMIN/MANAGER) OR UNKNOWN ROLES
+                if (!['OWNER', 'STAFF'].includes(parsedUser.role)) {
+                    console.log("Cleaning stale old session...");
+                    localStorage.removeItem('marwad_user');
+                    setCurrentUser(null);
+                } else {
+                    console.log(`Resuming ${parsedUser.role} session`);
+                    setCurrentUser(parsedUser);
+                }
+            } catch (e) {
                 localStorage.removeItem('marwad_user');
                 setCurrentUser(null);
-            } else {
-                setCurrentUser(parsedUser);
             }
         }
 
@@ -175,7 +182,7 @@ const AdminDashboard = () => {
     };
 
     const deleteMenuItem = (id) => {
-        if (currentUser?.role !== 'OWNER') return showAlert("Access Denied", "Only the Owner is allowed to delete menu items.");
+        if (currentUser?.role !== 'OWNER') return showAlert("OWNER ONLY", "Staff members are not allowed to delete menu items. Please ask the Owner.");
         socket.emit('delete-menu-item', id);
     };
 
@@ -353,6 +360,12 @@ const AdminDashboard = () => {
                             </div>
                         )}
                         <button type="submit" className="btn-primary" style={{ padding: '15px', color: 'black', fontWeight: 800 }}>UNLOCK DASHBOARD</button>
+
+                        <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.65rem', fontStyle: 'italic' }}>
+                                Use your unique password to access Owner or Staff controls.
+                            </p>
+                        </div>
                     </form>
                 </motion.div>
             </div>
@@ -364,9 +377,12 @@ const AdminDashboard = () => {
             <div className="admin-container">
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-                    <div>
+                    <div style={{ flex: 1 }}>
                         <h1 className="gold-text" style={{ fontSize: '1.4rem', textTransform: 'uppercase', letterSpacing: '2px' }}>THE MARWAD RASOI</h1>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{currentUser.role} SESSION • {currentUser.username}</p>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: currentUser.role === 'OWNER' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.05)', padding: '4px 12px', borderRadius: '30px', marginTop: '6px', border: `1px solid ${currentUser.role === 'OWNER' ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}` }}>
+                            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: currentUser.role === 'OWNER' ? 'var(--primary)' : '#aaa' }}></div>
+                            <span style={{ color: currentUser.role === 'OWNER' ? 'var(--primary)' : 'white', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase' }}>{currentUser.role} SESSION</span>
+                        </div>
                     </div>
                     <div className="flex gap-4 items-center">
                         <button
@@ -932,7 +948,10 @@ const AdminDashboard = () => {
                     <button onClick={() => setActiveTab('orders')} style={{ background: 'none', border: 'none', color: activeTab === 'orders' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><ClipboardList size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Orders</span></button>
                     <button onClick={() => setActiveTab('billing')} style={{ background: 'none', border: 'none', color: activeTab === 'billing' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Receipt size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Billing</span></button>
                     <button onClick={() => setActiveTab('menu')} style={{ background: 'none', border: 'none', color: activeTab === 'menu' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Utensils size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Menu</span></button>
-                    <button onClick={() => setActiveTab('expenses')} style={{ background: 'none', border: 'none', color: activeTab === 'expenses' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Receipt size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Exp.</span></button>
+
+                    {currentUser.role === 'OWNER' && (
+                        <button onClick={() => setActiveTab('expenses')} style={{ background: 'none', border: 'none', color: activeTab === 'expenses' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Receipt size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Exp.</span></button>
+                    )}
 
                     {currentUser.role === 'OWNER' && (
                         <>
