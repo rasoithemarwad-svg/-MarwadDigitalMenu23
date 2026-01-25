@@ -140,22 +140,16 @@ io.on('connection', async (socket) => {
         console.error('❌ Socket initialization error:', err);
     }
 
-    socket.on('login', async ({ username, password }) => {
-        if (!checkDB()) {
-            return socket.emit('login-error', '❌ Database is still connecting. Please wait 10 seconds and try again.');
-        }
-        try {
-            const user = await User.findOne({ username, password });
-            if (user) {
-                socket.emit('login-success', { username: user.username, role: user.role });
-                console.log(`🔑 User ${username} logged in as ${user.role}`);
-            } else {
-                socket.emit('login-error', 'Invalid username or password');
-            }
-        } catch (err) {
-            console.error('❌ Login error:', err.message);
-            console.error(err.stack);
-            socket.emit('login-error', `Internal server error: ${err.message}`);
+    socket.on('login', async ({ password }) => {
+        // STATIC AUTHENTICATION (Bypasses DB for reliability)
+        if (password === 'THEMARWADRASOI@2026') {
+            socket.emit('login-success', { username: 'ADMIN', role: 'ADMIN' });
+            console.log(`🔑 Admin logged in via password`);
+        } else if (password === '130289') {
+            socket.emit('login-success', { username: 'MANAGER', role: 'MANAGER' });
+            console.log(`🔑 Manager logged in via password`);
+        } else {
+            socket.emit('login-error', 'Invalid password');
         }
     });
 
