@@ -16,6 +16,7 @@ const AdminDashboard = () => {
     const [salesHistory, setSalesHistory] = useState([]);
     const [serviceAlerts, setServiceAlerts] = useState([]);
     const [orderAlerts, setOrderAlerts] = useState([]); // New order popups
+    const [songAlerts, setSongAlerts] = useState([]); // Guests song requests
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isKitchenOpen, setIsKitchenOpen] = useState(true);
     const [customAlert, setCustomAlert] = useState({ show: false, title: '', message: '' });
@@ -108,6 +109,15 @@ const AdminDashboard = () => {
             setOrderAlerts(prev => [orderAlert, ...prev]);
             playNotificationSound(false);
             socket.emit('get-orders');
+        });
+
+        socket.on('new-song-request', (request) => {
+            setSongAlerts(prev => [request, ...prev]);
+            playNotificationSound(false); // Music request isn't a "critical service" sound
+            // Auto hide song request after 30 seconds
+            setTimeout(() => {
+                setSongAlerts(prev => prev.filter(a => a.id !== request.id));
+            }, 30000);
         });
 
         socket.on('kitchen-status-updated', (status) => {
@@ -498,6 +508,37 @@ const AdminDashboard = () => {
                                 </div>
                                 <button onClick={() => clearOrderAlert(alert.id)} style={{ background: 'black', border: 'none', color: 'var(--primary)', borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                                     <X size={18} strokeWidth={3} />
+                                </button>
+                            </motion.div>
+                        ))}
+                        {/* Song Request Alerts */}
+                        {songAlerts.map(alert => (
+                            <motion.div
+                                key={alert.id}
+                                initial={{ opacity: 0, y: -20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                style={{
+                                    background: 'rgba(212, 175, 55, 0.95)',
+                                    color: 'black',
+                                    padding: '12px 20px',
+                                    borderRadius: '16px',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    boxShadow: '0 10px 30px rgba(212, 175, 55, 0.3)',
+                                    border: '1px solid white'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <Utensils size={20} />
+                                    <div>
+                                        <div style={{ fontWeight: 900, fontSize: '0.75rem', letterSpacing: '1px' }}>SONG REQUEST (TABLE #{alert.tableId})</div>
+                                        <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{alert.songName}</div>
+                                    </div>
+                                </div>
+                                <button onClick={() => setSongAlerts(prev => prev.filter(a => a.id !== alert.id))} style={{ background: 'black', border: 'none', color: 'white', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                    <X size={14} />
                                 </button>
                             </motion.div>
                         ))}

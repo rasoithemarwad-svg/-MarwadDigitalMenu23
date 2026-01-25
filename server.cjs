@@ -162,6 +162,15 @@ io.on('connection', async (socket) => {
         });
     });
 
+    socket.on('song-request', (data) => {
+        io.emit('new-song-request', {
+            id: Date.now(),
+            tableId: data.tableId,
+            songName: data.songName,
+            timestamp: new Date().toISOString()
+        });
+    });
+
     socket.on('get-orders', async () => {
         const orders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
         socket.emit('orders-updated', orders);

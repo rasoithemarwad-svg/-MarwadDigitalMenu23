@@ -38,7 +38,9 @@ const CustomerView = () => {
     const [isMusicPlaying, setIsMusicPlaying] = useState(false);
     const [isMusicLoading, setIsMusicLoading] = useState(false);
     const [musicVolume, setMusicVolume] = useState(0.5);
-    const [currentTrackIndex, setCurrentTrackIndex] = useState(Math.floor(Math.random() * 10));
+    const [currentTrackIndex, setCurrentTrackIndex] = useState(Math.floor(Math.random() * 5));
+    const [songRequest, setSongRequest] = useState('');
+    const [isRequesting, setIsRequesting] = useState(false);
     const audioRef = React.useRef(null);
 
     const ROMANTIC_TRACKS = [
@@ -79,6 +81,22 @@ const CustomerView = () => {
     const handleMusicEnd = () => {
         const nextIndex = (currentTrackIndex + 1) % ROMANTIC_TRACKS.length;
         setCurrentTrackIndex(nextIndex);
+    };
+
+    const handleSongRequest = () => {
+        if (!songRequest.trim()) return showAlert("Request Error", "Please enter a song name.");
+
+        setIsRequesting(true);
+        socket.emit('song-request', {
+            tableId,
+            songName: songRequest
+        });
+
+        setTimeout(() => {
+            setIsRequesting(false);
+            setSongRequest('');
+            showAlert("Request Sent", "Your song request has been sent to THE MARWAD RASOI! 🎵");
+        }, 1500);
     };
     // ------------------------------
 
@@ -393,6 +411,53 @@ const CustomerView = () => {
                                                         />
                                                     </div>
                                                 )}
+
+                                                {/* SONG REQUEST SECTION */}
+                                                <div style={{
+                                                    marginTop: '30px',
+                                                    width: '100%',
+                                                    padding: '20px',
+                                                    background: 'rgba(255,255,255,0.03)',
+                                                    borderRadius: '20px',
+                                                    border: '1px solid rgba(255,255,255,0.05)',
+                                                    textAlign: 'center'
+                                                }}>
+                                                    <h4 style={{ fontSize: '0.9rem', marginBottom: '15px', color: 'var(--text-secondary)' }}>WANNA REQUEST A SONG?</h4>
+                                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                                        <input
+                                                            type="text"
+                                                            value={songRequest}
+                                                            onChange={(e) => setSongRequest(e.target.value)}
+                                                            placeholder="Enter Song Name..."
+                                                            style={{
+                                                                flex: 1,
+                                                                padding: '12px',
+                                                                background: 'rgba(0,0,0,0.3)',
+                                                                border: '1px solid var(--glass-border)',
+                                                                borderRadius: '12px',
+                                                                color: 'white',
+                                                                fontSize: '0.85rem'
+                                                            }}
+                                                        />
+                                                        <motion.button
+                                                            whileTap={{ scale: 0.9 }}
+                                                            onClick={handleSongRequest}
+                                                            disabled={isRequesting}
+                                                            style={{
+                                                                padding: '12px 20px',
+                                                                background: 'var(--primary)',
+                                                                color: 'black',
+                                                                border: 'none',
+                                                                borderRadius: '12px',
+                                                                fontWeight: 800,
+                                                                fontSize: '0.8rem',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            {isRequesting ? '...' : 'SEND'}
+                                                        </motion.button>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <style>{`
                                                 @keyframes musicPulse {
