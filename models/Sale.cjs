@@ -8,6 +8,7 @@ const SaleSchema = new mongoose.Schema({
         price: Number
     }],
     total: { type: Number, required: true },
+    paymentMode: { type: String, enum: ['CASH', 'ONLINE'], default: 'CASH' },
     settledAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 

@@ -238,6 +238,24 @@ io.on('connection', async (socket) => {
         io.emit('orders-updated', allOrders);
     });
 
+    socket.on('process-manual-sale', async (saleData) => {
+        try {
+            const newSale = new Sale({
+                tableId: saleData.tableId,
+                items: saleData.items,
+                total: saleData.total,
+                paymentMode: saleData.paymentMode,
+                settledAt: new Date()
+            });
+            await newSale.save();
+            const updatedSales = await Sale.find({}).sort({ settledAt: -1 });
+            io.emit('sales-updated', updatedSales);
+            console.log(`✅ Manual sale recorded: ${saleData.tableId} - ₹${saleData.total} (${saleData.paymentMode})`);
+        } catch (err) {
+            console.error('❌ Error processing manual sale:', err);
+        }
+    });
+
     socket.on('get-sales', async () => {
         const sales = await Sale.find({}).sort({ settledAt: -1 });
         socket.emit('sales-updated', sales);

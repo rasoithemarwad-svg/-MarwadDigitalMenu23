@@ -1171,7 +1171,10 @@ const AdminDashboard = () => {
                                         {reportData.salesList.map(sale => (
                                             <div key={sale._id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', padding: '8px 0', borderBottom: '1px dashed rgba(255,255,255,0.05)' }}>
                                                 <span>Table #{sale.tableId} <span style={{ opacity: 0.5 }}>({new Date(sale.settledAt).toLocaleDateString()})</span></span>
-                                                <span style={{ color: '#4caf50' }}>+₹{sale.total}</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{ fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', background: sale.paymentMode === 'ONLINE' ? 'rgba(0,188,212,0.2)' : 'rgba(76,175,80,0.2)', color: sale.paymentMode === 'ONLINE' ? '#00bcd4' : '#4caf50' }}>{sale.paymentMode || 'CASH'}</span>
+                                                    <span style={{ color: '#4caf50' }}>+₹{sale.total}</span>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -1197,9 +1200,14 @@ const AdminDashboard = () => {
                     {activeTab === 'manual' && (
                         <motion.div key="manual" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div className="glass-card" style={{ padding: '20px', marginBottom: '25px' }}>
-                                <h3 className="gold-text" style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <Receipt size={20} /> Quick Bill (Walk-in)
-                                </h3>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                    <h3 className="gold-text" style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+                                        <Receipt size={20} /> Quick Bill (Walk-in)
+                                    </h3>
+                                    <button onClick={() => setActiveTab('orders')} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                        <X size={16} /> Close
+                                    </button>
+                                </div>
 
                                 {/* Add Item Form */}
                                 <form onSubmit={addToManualCart} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '10px', alignItems: 'end', marginBottom: '20px' }}>
