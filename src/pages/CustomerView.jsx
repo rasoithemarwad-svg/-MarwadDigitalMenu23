@@ -44,10 +44,10 @@ const CustomerView = () => {
     const audioRef = React.useRef(null);
 
     const ROMANTIC_TRACKS = [
-        { title: "Sweet Piano", url: "https://p.nomics.world/romantic/track1.mp3" }, // Fallback to a stable set if chosic fails
-        { title: "Lush Guitar", url: "https://cdn.pixabay.com/audio/2022/02/22/audio_d0c6ff1adb.mp3" },
-        { title: "Evening Waltz", url: "https://cdn.pixabay.com/audio/2022/03/15/audio_c8c8a1e8a1.mp3" },
-        { title: "Moonlit Night", url: "https://cdn.pixabay.com/audio/2022/08/02/audio_8b2c4c4e7a.mp3" }
+        { title: "Sweet Piano", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+        { title: "Lush Guitar", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+        { title: "Evening Waltz", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
+        { title: "Moonlit Night", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" }
     ];
 
     useEffect(() => {
