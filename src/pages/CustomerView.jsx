@@ -639,7 +639,7 @@ const CustomerView = () => {
                                                     <div style={{ height: '120px', overflow: 'hidden', position: 'relative' }}>
                                                         <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                     </div>
-                                                    <div style={{ padding: '12px' }}>
+                                                    <div style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                                         <h3 style={{ fontSize: '1rem', marginBottom: '8px', height: '40px', overflow: 'hidden', fontWeight: 700 }}>{item.name}</h3>
 
                                                         {item.portions && item.portions.length > 0 ? (

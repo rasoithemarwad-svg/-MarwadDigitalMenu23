@@ -50,7 +50,7 @@ body {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
   border-radius: 20px;
-  overflow: hidden;
+  /* overflow: hidden; Removed to fix cut-off buttons */
   transition: var(--transition);
 }
 
