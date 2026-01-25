@@ -136,8 +136,9 @@ io.on('connection', async (socket) => {
                 socket.emit('login-error', 'Invalid username or password');
             }
         } catch (err) {
-            console.error('❌ Login error:', err);
-            socket.emit('login-error', 'Internal server error');
+            console.error('❌ Login error:', err.message);
+            console.error(err.stack);
+            socket.emit('login-error', `Internal server error: ${err.message}`);
         }
     });
 

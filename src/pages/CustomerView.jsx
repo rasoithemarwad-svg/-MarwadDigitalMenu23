@@ -36,7 +36,9 @@ const CustomerView = () => {
 
     // --- BACKGROUND MUSIC STATE ---
     const [isMusicPlaying, setIsMusicPlaying] = useState(false);
-    const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+    const [isMusicLoading, setIsMusicLoading] = useState(false);
+    const [musicVolume, setMusicVolume] = useState(0.5);
+    const [currentTrackIndex, setCurrentTrackIndex] = useState(Math.floor(Math.random() * 10));
     const audioRef = React.useRef(null);
 
     const ROMANTIC_TRACKS = [
@@ -52,17 +54,35 @@ const CustomerView = () => {
         { title: "Heartfelt Moment", url: "https://www.chosic.com/wp-content/uploads/2021/06/Beautiful-Piano.mp3" }
     ];
 
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.volume = musicVolume;
+        }
+    }, [musicVolume]);
+
     const toggleMusic = () => {
+        if (!audioRef.current) return;
+
         if (isMusicPlaying) {
             audioRef.current.pause();
+            setIsMusicPlaying(false);
         } else {
-            audioRef.current.play().catch(e => console.log("Autoplay blocked:", e));
+            setIsMusicLoading(true);
+            audioRef.current.play()
+                .then(() => {
+                    setIsMusicPlaying(true);
+                    setIsMusicLoading(false);
+                })
+                .catch(e => {
+                    console.error("Autoplay/Play blocked:", e);
+                    setIsMusicLoading(false);
+                    showAlert("Music Error", "Unable to start music. Your browser might be blocking it.");
+                });
         }
-        setIsMusicPlaying(!isMusicPlaying);
     };
 
     const handleMusicEnd = () => {
-        const nextIndex = Math.floor(Math.random() * ROMANTIC_TRACKS.length);
+        const nextIndex = (currentTrackIndex + 1) % ROMANTIC_TRACKS.length;
         setCurrentTrackIndex(nextIndex);
     };
     // ------------------------------
@@ -322,11 +342,17 @@ const CustomerView = () => {
                                                 src={ROMANTIC_TRACKS[currentTrackIndex].url}
                                                 onEnded={handleMusicEnd}
                                                 autoPlay={false}
+                                                onError={(e) => {
+                                                    console.error("Audio Load Error:", e);
+                                                    setIsMusicLoading(false);
+                                                    setIsMusicPlaying(false);
+                                                }}
                                             />
-                                            <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                                            <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
                                                 <motion.button
                                                     whileTap={{ scale: 0.9 }}
                                                     onClick={toggleMusic}
+                                                    disabled={isMusicLoading}
                                                     style={{
                                                         display: 'flex',
                                                         alignItems: 'center',
@@ -338,21 +364,40 @@ const CustomerView = () => {
                                                         color: isMusicPlaying ? '#4caf50' : 'var(--primary)',
                                                         fontSize: '0.8rem',
                                                         fontWeight: 800,
-                                                        cursor: 'pointer'
+                                                        cursor: isMusicLoading ? 'wait' : 'pointer',
+                                                        opacity: isMusicLoading ? 0.7 : 1
                                                     }}
                                                 >
-                                                    {isMusicPlaying ? (
+                                                    {isMusicLoading ? (
+                                                        <>
+                                                            <div className="spinner-small"></div>
+                                                            TUNING IN...
+                                                        </>
+                                                    ) : isMusicPlaying ? (
                                                         <>
                                                             <div className="pulse-music" style={{ width: '8px', height: '8px', background: '#4caf50', borderRadius: '50%' }}></div>
                                                             🎶 MUSIC PLAYING (STOP)
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <Utensils size={14} />
-                                                            🎵 START AMBIENT MUSIC
+                                                            <Bell size={14} />
+                                                            🎵 START ROMANTIC MUSIC
                                                         </>
                                                     )}
                                                 </motion.button>
+
+                                                {isMusicPlaying && (
+                                                    <div style={{ width: '150px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>VOL</span>
+                                                        <input
+                                                            type="range"
+                                                            min="0" max="1" step="0.01"
+                                                            value={musicVolume}
+                                                            onChange={(e) => setMusicVolume(parseFloat(e.target.value))}
+                                                            style={{ flex: 1, accentColor: 'var(--primary)', height: '4px' }}
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                             <style>{`
                                                 @keyframes musicPulse {
@@ -361,6 +406,12 @@ const CustomerView = () => {
                                                     100% { transform: scale(1); opacity: 1; }
                                                 }
                                                 .pulse-music { animation: musicPulse 1s infinite; }
+                                                .spinner-small {
+                                                    width: 14px; height: 14px; border: 2px solid rgba(212,175,55,0.3);
+                                                    border-top: 2px solid var(--primary); border-radius: 50%;
+                                                    animation: spin 1s linear infinite;
+                                                }
+                                                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
                                             `}</style>
                                         </div>
 
