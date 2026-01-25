@@ -642,7 +642,7 @@ const CustomerView = () => {
                                                     <div style={{ padding: '12px' }}>
                                                         <h3 style={{ fontSize: '1rem', marginBottom: '8px', height: '40px', overflow: 'hidden', fontWeight: 700 }}>{item.name}</h3>
 
-                                                        {item.portions ? (
+                                                        {item.portions && item.portions.length > 0 ? (
                                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                                                 {item.portions.map(p => (
                                                                     <div key={p.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '8px 10px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
