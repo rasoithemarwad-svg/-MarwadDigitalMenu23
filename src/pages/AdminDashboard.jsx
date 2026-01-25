@@ -16,7 +16,6 @@ const AdminDashboard = () => {
     const [salesHistory, setSalesHistory] = useState([]);
     const [serviceAlerts, setServiceAlerts] = useState([]);
     const [orderAlerts, setOrderAlerts] = useState([]); // New order popups
-    const [songAlerts, setSongAlerts] = useState([]); // Guests song requests
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isKitchenOpen, setIsKitchenOpen] = useState(true);
     const [customAlert, setCustomAlert] = useState({ show: false, title: '', message: '' });
