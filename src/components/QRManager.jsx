@@ -14,67 +14,70 @@ const QRManager = () => {
                 return;
             }
 
-            const svgData = new XMLSerializer().serializeToString(svg);
+            // Get SVG dimensions
+            const svgRect = svg.getBoundingClientRect();
+            const svgWidth = svgRect.width || 100;
+            const svgHeight = svgRect.height || 100;
+
+            // Create canvas with branding space
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
+            const scale = 10; // High resolution multiplier
+            const padding = 100 * scale;
+
+            canvas.width = (svgWidth * scale) + (padding * 2);
+            canvas.height = (svgHeight * scale) + (padding * 3);
+
+            // White background
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw decorative border
+            ctx.lineWidth = 20;
+            ctx.strokeStyle = "#d4af37"; // Gold
+            ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+
+            // Add header branding
+            ctx.fillStyle = "#8b0000"; // Royal Red
+            ctx.font = `900 ${60 * scale}px Arial, sans-serif`;
+            ctx.textAlign = "center";
+            ctx.fillText("THE MARWAD RASOI", canvas.width / 2, padding);
+
+            // Get SVG as data URL using inline XML
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const svgBase64 = btoa(unescape(encodeURIComponent(svgData)));
+            const dataUrl = `data:image/svg+xml;base64,${svgBase64}`;
+
+            // Load and draw QR
             const img = new Image();
-
-            // Use a more robust way to encode SVG for data URL
-            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-            const url = URL.createObjectURL(svgBlob);
-
             img.onload = () => {
-                try {
-                    canvas.width = 1200; // Even higher resolution
-                    canvas.height = 1400; // Extra space for branding
+                // Draw QR code
+                ctx.drawImage(img, padding, padding + (80 * scale), svgWidth * scale, svgHeight * scale);
 
-                    // White Background
-                    ctx.fillStyle = "white";
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                // Add table label
+                ctx.fillStyle = "black";
+                ctx.font = `bold ${80 * scale}px Arial, sans-serif`;
+                ctx.textAlign = "center";
+                ctx.fillText(`TABLE #${tableId.toUpperCase()}`, canvas.width / 2, canvas.height - (padding / 2));
 
-                    // Draw QR Code
-                    ctx.drawImage(img, 100, 150, 1000, 1000);
-
-                    // Add Header Branding
-                    ctx.fillStyle = "#8b0000"; // Royal Red
-                    ctx.font = "900 60px sans-serif";
-                    ctx.textAlign = "center";
-                    ctx.fillText("THE MARWAD RASOI", 600, 100);
-
-                    // Add Table Label
-                    ctx.fillStyle = "black";
-                    ctx.font = "bold 80px sans-serif";
-                    ctx.fillText(`TABLE #${tableId.toUpperCase()}`, 600, 1250);
-
-                    // Add decorative border
-                    ctx.lineWidth = 20;
-                    ctx.strokeStyle = "#d4af37"; // Gold
-                    ctx.strokeRect(40, 40, canvas.width - 80, canvas.height - 80);
-
-                    const pngFile = canvas.toDataURL("image/png");
-                    const downloadLink = document.createElement("a");
-                    downloadLink.download = `Marwad-Table-${tableId}.png`;
-                    downloadLink.href = pngFile;
-                    document.body.appendChild(downloadLink);
-                    downloadLink.click();
-                    document.body.removeChild(downloadLink);
-
-                    // Clean up
+                // Download
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.download = `Marwad-Table-${tableId}.png`;
+                    link.href = url;
+                    link.click();
                     URL.revokeObjectURL(url);
-                } catch (innerErr) {
-                    console.error("Canvas drawing error:", innerErr);
-                    alert("Error generating image from QR. Please try again.");
-                }
+                }, 'image/png');
             };
-            img.onerror = (e) => {
-                console.error("Image load error:", e);
-                alert("Failed to load QR image data.");
+            img.onerror = () => {
+                alert("Error generating image from QR. Please try again.");
             };
-            img.src = url;
+            img.src = dataUrl;
 
         } catch (err) {
             console.error("QR Download Error:", err);
-            alert("Unexpected error downloading QR: " + err.message);
+            alert("Unexpected error: " + err.message);
         }
     };
 
