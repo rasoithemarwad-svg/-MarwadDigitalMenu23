@@ -214,10 +214,11 @@ const AdminDashboard = () => {
     const updateStatus = (id, newStatus) => {
         socket.emit('update-order-status', { id, status: newStatus });
 
-        // If we acknowledge the order (Preparing) or Serve it, dismiss the alert
-        if (newStatus === 'preparing' || newStatus === 'completed') {
+        // Auto-dismiss alert when order is accepted/processed
+        if (newStatus !== 'pending') {
             const order = orders.find(o => o._id === id);
             if (order) {
+                // Remove the specific alert for this table
                 setOrderAlerts(prev => prev.filter(a => a.tableId !== order.tableId));
             }
         }
@@ -461,7 +462,7 @@ const AdminDashboard = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
                     <div style={{ flex: 1 }}>
                         <h1 className="gold-text" style={{ fontSize: '1.4rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
-                            THE MARWAD RASOI <span style={{ fontSize: '0.6rem', color: 'lime', border: '1px solid lime', padding: '2px 6px', borderRadius: '4px', verticalAlign: 'middle' }}>v2.1 MUSIC</span>
+                            THE MARWAD RASOI <span style={{ fontSize: '0.6rem', color: '#ff9800', border: '1px solid #ff9800', padding: '2px 6px', borderRadius: '4px', verticalAlign: 'middle' }}>v2.2 INDIAN</span>
                         </h1>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: currentUser.role === 'OWNER' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.05)', padding: '4px 12px', borderRadius: '30px', marginTop: '6px', border: `1px solid ${currentUser.role === 'OWNER' ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}` }}>
                             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: currentUser.role === 'OWNER' ? 'var(--primary)' : '#aaa' }}></div>
