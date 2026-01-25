@@ -830,7 +830,12 @@ const AdminDashboard = () => {
 
                     {activeTab === 'billing' && (
                         <motion.div key="billing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                            <h3 className="gold-text" style={{ marginBottom: '20px' }}>Active Tables</h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                                <h3 className="gold-text" style={{ margin: 0 }}>Active Tables</h3>
+                                <button onClick={() => setActiveTab('orders')} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                    <X size={16} /> Close
+                                </button>
+                            </div>
                             {Object.entries(tableGroups).map(([tid, torders]) => (
                                 <div key={tid} onClick={() => setSelectedTableBill(tid)} className="glass-card" style={{ padding: '20px', marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div><h4 style={{ fontSize: '1.1rem' }}>Table #{tid}</h4><p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{torders.length} orders total</p></div>
@@ -991,7 +996,12 @@ const AdminDashboard = () => {
                     {activeTab === 'expenses' && (
                         <motion.div key="expenses" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div className="glass-card" style={{ padding: '20px', marginBottom: '25px' }}>
-                                <h3 className="gold-text" style={{ marginBottom: '15px' }}>Daily Expenses</h3>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                    <h3 className="gold-text" style={{ margin: 0 }}>Daily Expenses</h3>
+                                    <button onClick={() => setActiveTab('orders')} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                        <X size={16} /> Close
+                                    </button>
+                                </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                     <div>
                                         <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '5px', display: 'block' }}>Item</label>
@@ -1097,9 +1107,14 @@ const AdminDashboard = () => {
                     {activeTab === 'reports' && (
                         <motion.div key="reports" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                             <div className="glass-card" style={{ padding: '20px', marginBottom: '25px' }}>
-                                <h3 className="gold-text" style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <BarChart3 size={20} /> Financial Reports
-                                </h3>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                    <h3 className="gold-text" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <BarChart3 size={20} /> Financial Reports
+                                    </h3>
+                                    <button onClick={() => setActiveTab('orders')} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                        <X size={16} /> Close
+                                    </button>
+                                </div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
                                     <div>
                                         <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>Start Date</label>
@@ -1210,42 +1225,44 @@ const AdminDashboard = () => {
                                 </div>
 
                                 {/* Add Item Form */}
-                                <form onSubmit={addToManualCart} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '10px', alignItems: 'end', marginBottom: '20px' }}>
+                                <form onSubmit={addToManualCart} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
                                     <div>
-                                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Item Name</label>
+                                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>Item Name</label>
                                         <input
                                             type="text"
                                             value={manualItem.name}
                                             onChange={(e) => setManualItem({ ...manualItem, name: e.target.value })}
                                             placeholder="e.g. Water Bottle"
-                                            className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                                            style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)', color: 'white' }}
                                             required
                                         />
                                     </div>
-                                    <div>
-                                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Price</label>
-                                        <input
-                                            type="number"
-                                            value={manualItem.price}
-                                            onChange={(e) => setManualItem({ ...manualItem, price: e.target.value })}
-                                            placeholder="0"
-                                            className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
-                                            required
-                                        />
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                        <div>
+                                            <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>Price (₹)</label>
+                                            <input
+                                                type="number"
+                                                value={manualItem.price}
+                                                onChange={(e) => setManualItem({ ...manualItem, price: e.target.value })}
+                                                placeholder="0"
+                                                style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)', color: 'white' }}
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '5px' }}>Quantity</label>
+                                            <input
+                                                type="number"
+                                                value={manualItem.qty}
+                                                onChange={(e) => setManualItem({ ...manualItem, qty: e.target.value })}
+                                                style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)', color: 'white' }}
+                                                min="1"
+                                                required
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Qty</label>
-                                        <input
-                                            type="number"
-                                            value={manualItem.qty}
-                                            onChange={(e) => setManualItem({ ...manualItem, qty: e.target.value })}
-                                            className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
-                                            min="1"
-                                            required
-                                        />
-                                    </div>
-                                    <button type="submit" className="btn-primary" style={{ padding: '10px 15px', height: '42px' }}>
-                                        <Plus size={20} />
+                                    <button type="submit" className="btn-primary" style={{ padding: '12px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                        <Plus size={18} /> Add Item
                                     </button>
                                 </form>
 
