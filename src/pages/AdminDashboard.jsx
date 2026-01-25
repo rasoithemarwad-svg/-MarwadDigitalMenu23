@@ -732,7 +732,7 @@ const AdminDashboard = () => {
                                                         <button onClick={() => startEditing(item)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: 'var(--primary)', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}>
                                                             <ClipboardList size={16} />
                                                         </button>
-                                                        {currentUser.role === 'ADMIN' && (
+                                                        {currentUser.role === 'OWNER' && (
                                                             <button onClick={() => deleteMenuItem(item._id)} style={{ background: 'rgba(255, 77, 77, 0.05)', border: 'none', color: '#ff4d4d', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}>
                                                                 <Trash2 size={16} />
                                                             </button>

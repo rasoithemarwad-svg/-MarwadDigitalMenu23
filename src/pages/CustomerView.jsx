@@ -76,7 +76,7 @@ const CustomerView = () => {
                 .catch(e => {
                     console.error("Autoplay/Play blocked:", e);
                     setIsMusicLoading(false);
-                    showAlert("Music Error", "Unable to start music. Your browser might be blocking it.");
+                    showAlert("Music Tip", "Browser is blocking audio. Please click anywhere on the screen first, then try the music button again!");
                 });
         }
     };
