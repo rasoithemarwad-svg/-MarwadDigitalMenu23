@@ -119,6 +119,12 @@ const CustomerView = () => {
             }
         });
 
+        socket.on('song-request-accepted', (data) => {
+            if (data.tableId === tableId) {
+                showAlert("Coming Up! 🎵", `The Chef has accepted your request! Your song "${data.songName}" will play on THE MARWAD speakers soon.`);
+            }
+        });
+
         return () => {
             socket.off('menu-updated');
             socket.off('kitchen-status-updated');

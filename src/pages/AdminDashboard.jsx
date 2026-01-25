@@ -537,9 +537,20 @@ const AdminDashboard = () => {
                                         <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{alert.songName}</div>
                                     </div>
                                 </div>
-                                <button onClick={() => setSongAlerts(prev => prev.filter(a => a.id !== alert.id))} style={{ background: 'black', border: 'none', color: 'white', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                                    <X size={14} />
-                                </button>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <button
+                                        onClick={() => {
+                                            socket.emit('song-accepted', { tableId: alert.tableId, songName: alert.songName });
+                                            setSongAlerts(prev => prev.filter(a => a.id !== alert.id));
+                                        }}
+                                        style={{ background: 'black', border: 'none', color: '#4caf50', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,0.2)' }}
+                                    >
+                                        <CheckCircle size={18} />
+                                    </button>
+                                    <button onClick={() => setSongAlerts(prev => prev.filter(a => a.id !== alert.id))} style={{ background: 'black', border: 'none', color: 'white', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                                        <X size={18} />
+                                    </button>
+                                </div>
                             </motion.div>
                         ))}
                     </AnimatePresence>

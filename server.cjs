@@ -171,6 +171,14 @@ io.on('connection', async (socket) => {
         });
     });
 
+    socket.on('song-accepted', (data) => {
+        // Broadcast to all to notify the specific table
+        io.emit('song-request-accepted', {
+            tableId: data.tableId,
+            songName: data.songName
+        });
+    });
+
     socket.on('get-orders', async () => {
         const orders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
         socket.emit('orders-updated', orders);
