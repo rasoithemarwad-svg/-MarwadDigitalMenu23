@@ -64,16 +64,36 @@ const CustomerView = () => {
             setIsMusicPlaying(false);
         } else {
             setIsMusicLoading(true);
+
+            // ATTEMPT 1: Direct Play
             audioRef.current.play()
                 .then(() => {
-                    audioRef.current.muted = false; // Ensure unmuted after play
+                    audioRef.current.muted = false;
                     setIsMusicPlaying(true);
                     setIsMusicLoading(false);
                 })
                 .catch(e => {
-                    console.error("Autoplay/Play blocked:", e);
-                    setIsMusicLoading(false);
-                    showAlert("Tap & Play", "Your browser is blocking the music. Please click anywhere on the screen first, then hit the button again!");
+                    console.error("Play blocked, trying Muted Play...", e);
+                    // ATTEMPT 2: Muted Play (Always allowed by browsers)
+                    audioRef.current.muted = true;
+                    audioRef.current.play()
+                        .then(() => {
+                            setIsMusicPlaying(true);
+                            setIsMusicLoading(false);
+                            showAlert("Unmute Music", "Tap the volume bar or anywhere on screen to hear the music!");
+
+                            // Try to unmute on the very next click anywhere
+                            const unmute = () => {
+                                if (audioRef.current) audioRef.current.muted = false;
+                                document.removeEventListener('click', unmute);
+                            };
+                            document.addEventListener('click', unmute);
+                        })
+                        .catch(err => {
+                            console.error("Total audio block:", err);
+                            setIsMusicLoading(false);
+                            showAlert("Music Blocked", "Please tap anywhere on the menu first, then hit Start Music again!");
+                        });
                 });
         }
     };
@@ -514,14 +534,19 @@ const CustomerView = () => {
                                             ))}
                                         </div>
 
-                                        <div className="glass-card" style={{ marginTop: '40px', padding: '20px', textAlign: 'center' }}>
+                                        <div className="glass-card" style={{ marginTop: '40px', padding: '25px', textAlign: 'center', border: '1px solid var(--primary)', background: 'rgba(212, 175, 55, 0.05)' }}>
                                             {!isKitchenOpen && tableId?.toLowerCase() !== 'testing' ? (
                                                 <div style={{ color: '#ff3b30', fontWeight: 800, fontSize: '1rem', letterSpacing: '1px' }}>
                                                     ⚠️ KITCHEN IS CURRENTLY CLOSED
                                                     <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '5px', fontWeight: 400 }}>Orders cannot be placed right now.</p>
                                                 </div>
                                             ) : (
-                                                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Welcome to the Royal Taste of Marwad. Select an option to proceed.</p>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                    <p style={{ fontSize: '1.1rem', color: 'white', fontWeight: 800 }}>READY TO ORDER? 🍲</p>
+                                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                                                        Tap any category above to browse our menu and add items to your cart.
+                                                    </p>
+                                                </div>
                                             )}
                                         </div>
                                     </motion.div>
@@ -620,27 +645,31 @@ const CustomerView = () => {
                                                         {item.portions ? (
                                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                                                 {item.portions.map(p => (
-                                                                    <div key={p.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--glass)', padding: '5px 8px', borderRadius: '8px' }}>
-                                                                        <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{p.label} <span style={{ color: 'var(--primary)' }}>₹{p.price}</span></span>
+                                                                    <div key={p.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: '8px 10px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                                                                        <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>{p.label} <span style={{ color: 'var(--primary)' }}>₹{p.price}</span></span>
                                                                         <motion.button
                                                                             whileTap={{ scale: 0.8 }}
                                                                             onClick={() => (isKitchenOpen || tableId?.toLowerCase() === 'testing') ? addToCart(item, p) : showAlert('Kitchen Closed', 'Sorry, orders are not being accepted right now.')}
-                                                                            style={{ width: '24px', height: '24px', borderRadius: '50%', border: 'none', background: isKitchenOpen ? 'var(--primary)' : '#555', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isKitchenOpen ? 'pointer' : 'not-allowed' }}
+                                                                            style={{ padding: '6px 12px', borderRadius: '15px', border: 'none', background: isKitchenOpen ? 'var(--primary)' : '#555', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isKitchenOpen ? 'pointer' : 'not-allowed', gap: '5px' }}
                                                                         >
-                                                                            <Plus size={14} color={isKitchenOpen ? "black" : "#aaa"} />
+                                                                            <Plus size={12} color="black" />
+                                                                            <span style={{ fontSize: '0.7rem', fontWeight: 900, color: 'black' }}>ADD</span>
                                                                         </motion.button>
                                                                     </div>
                                                                 ))}
                                                             </div>
                                                         ) : (
-                                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                                <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.1rem' }}>₹{item.price}</span>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                    <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.2rem' }}>₹{item.price}</span>
+                                                                </div>
                                                                 <motion.button
-                                                                    whileTap={{ scale: 0.8 }}
+                                                                    whileTap={{ scale: 0.95 }}
                                                                     onClick={() => (isKitchenOpen || tableId?.toLowerCase() === 'testing') ? addToCart(item) : showAlert('Kitchen Closed', 'Sorry, orders are not being accepted right now.')}
-                                                                    style={{ width: '28px', height: '28px', borderRadius: '50%', border: 'none', background: isKitchenOpen ? 'var(--primary)' : '#555', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isKitchenOpen ? 'pointer' : 'not-allowed' }}
+                                                                    style={{ width: '100%', padding: '10px', borderRadius: '12px', border: 'none', background: isKitchenOpen ? 'var(--primary)' : '#555', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: isKitchenOpen ? 'pointer' : 'not-allowed', gap: '8px', boxShadow: isKitchenOpen ? '0 4px 15px rgba(212, 175, 55, 0.2)' : 'none' }}
                                                                 >
-                                                                    <Plus size={16} color={isKitchenOpen ? "black" : "#aaa"} />
+                                                                    <Plus size={16} color="black" />
+                                                                    <span style={{ fontSize: '0.9rem', fontWeight: 900, color: 'black' }}>ADD TO ORDER</span>
                                                                 </motion.button>
                                                             </div>
                                                         )}
@@ -736,10 +765,13 @@ const CustomerView = () => {
                                                 {orderPlaced ? (
                                                     <>
                                                         <Check size={20} />
-                                                        <span>Order Sent Successfully!</span>
+                                                        <span>ORDER SENT TO KITCHEN!</span>
                                                     </>
                                                 ) : (
-                                                    <span>Place Order Now</span>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                        <ShoppingCart size={20} />
+                                                        <span style={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>PLACE ORDER NOW (₹{cartTotal})</span>
+                                                    </div>
                                                 )}
                                             </button>
                                         </motion.div>
