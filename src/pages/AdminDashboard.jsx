@@ -31,6 +31,7 @@ const AdminDashboard = () => {
         setCustomAlert({ show: true, title, message });
     };
     const [selectedTableBill, setSelectedTableBill] = useState(null);
+    const [paymentModeModal, setPaymentModeModal] = useState({ show: false, tableId: null, paymentMode: 'CASH' });
     const [expenses, setExpenses] = useState(() => {
         try {
             return JSON.parse(localStorage.getItem('marwad_expenses') || '[]');
@@ -441,6 +442,16 @@ const AdminDashboard = () => {
 
         if (tableOrders.length === 0) return;
 
+        // Show payment mode selection modal
+        setPaymentModeModal({ show: true, tableId, paymentMode: 'CASH' });
+    };
+
+    const confirmSettleBill = () => {
+        const { tableId, paymentMode } = paymentModeModal;
+        const tableOrders = orders.filter(o => o.tableId === tableId && o.status !== 'cancelled');
+
+        if (tableOrders.length === 0) return;
+
         const total = tableOrders.reduce((acc, o) => acc + o.total, 0);
         const allItems = tableOrders.flatMap(o => o.items);
 
@@ -448,11 +459,13 @@ const AdminDashboard = () => {
             tableId,
             items: allItems.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
             total,
+            paymentMode,  // Add payment mode
             settledAt: new Date().toISOString(),
         };
 
         socket.emit('save-sale', saleRecord);
         setSelectedTableBill(null);
+        setPaymentModeModal({ show: false, tableId: null, paymentMode: 'CASH' });
 
         // Auto-dismiss "New Order" alerts for this table
         setOrderAlerts(prev => prev.filter(alert => alert.tableId !== tableId));
@@ -1659,6 +1672,101 @@ const AdminDashboard = () => {
                                     style={{ width: '100%', padding: '15px', borderRadius: '12px', fontWeight: 800, fontSize: '1rem' }}
                                 >
                                     OK
+                                </button>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
+
+                {/* Payment Mode Selection Modal */}
+                <AnimatePresence>
+                    {paymentModeModal.show && (
+                        <div style={{ position: 'fixed', inset: 0, zIndex: 1002, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setPaymentModeModal({ show: false, tableId: null, paymentMode: 'CASH' })}
+                                style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}
+                            />
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                className="glass-card"
+                                style={{
+                                    position: 'relative',
+                                    width: '100%',
+                                    maxWidth: '400px',
+                                    padding: '30px 25px',
+                                    border: '1px solid var(--glass-border)',
+                                    boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                                }}
+                            >
+                                <button
+                                    onClick={() => setPaymentModeModal({ show: false, tableId: null, paymentMode: 'CASH' })}
+                                    style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                                >
+                                    <X size={20} />
+                                </button>
+
+                                <div style={{ marginBottom: '25px', textAlign: 'center' }}>
+                                    <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>💳</div>
+                                    <h3 className="gold-text" style={{ fontSize: '1.4rem', marginBottom: '8px' }}>Select Payment Mode</h3>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                        How did the customer pay?
+                                    </p>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                                    <button
+                                        onClick={() => setPaymentModeModal({ ...paymentModeModal, paymentMode: 'CASH' })}
+                                        style={{
+                                            flex: 1,
+                                            padding: '15px',
+                                            background: paymentModeModal.paymentMode === 'CASH' ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
+                                            color: paymentModeModal.paymentMode === 'CASH' ? 'black' : 'white',
+                                            border: `2px solid ${paymentModeModal.paymentMode === 'CASH' ? 'var(--primary)' : 'var(--glass-border)'}`,
+                                            borderRadius: '12px',
+                                            fontSize: '1rem',
+                                            fontWeight: 800,
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        💵 CASH
+                                    </button>
+                                    <button
+                                        onClick={() => setPaymentModeModal({ ...paymentModeModal, paymentMode: 'ONLINE' })}
+                                        style={{
+                                            flex: 1,
+                                            padding: '15px',
+                                            background: paymentModeModal.paymentMode === 'ONLINE' ? 'var(--primary)' : 'rgba(255,255,255,0.05)',
+                                            color: paymentModeModal.paymentMode === 'ONLINE' ? 'black' : 'white',
+                                            border: `2px solid ${paymentModeModal.paymentMode === 'ONLINE' ? 'var(--primary)' : 'var(--glass-border)'}`,
+                                            borderRadius: '12px',
+                                            fontSize: '1rem',
+                                            fontWeight: 800,
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        📱 ONLINE
+                                    </button>
+                                </div>
+
+                                <button
+                                    onClick={confirmSettleBill}
+                                    className="btn-primary"
+                                    style={{
+                                        width: '100%',
+                                        padding: '15px',
+                                        borderRadius: '12px',
+                                        fontWeight: 800,
+                                        fontSize: '1rem'
+                                    }}
+                                >
+                                    Confirm & Settle Bill
                                 </button>
                             </motion.div>
                         </div>
