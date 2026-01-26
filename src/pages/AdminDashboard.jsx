@@ -284,6 +284,11 @@ const AdminDashboard = () => {
         socket.on('login-success', (userData) => {
             setCurrentUser(userData);
             localStorage.setItem('marwad_user', JSON.stringify(userData));
+
+            // Redirect delivery partners to their dedicated page
+            if (userData.role === 'DELIVERY') {
+                window.location.href = '/delivery-partner';
+            }
         });
 
         socket.on('login-error', (error) => {
@@ -295,11 +300,14 @@ const AdminDashboard = () => {
         if (savedUser) {
             try {
                 const parsedUser = JSON.parse(savedUser);
-                // INVALIADTE OLD SESSIONS (ADMIN/MANAGER) OR UNKNOWN ROLES
-                if (!['OWNER', 'STAFF'].includes(parsedUser.role)) {
+                // INVALIDATE OLD SESSIONS (ADMIN/MANAGER) OR UNKNOWN ROLES
+                if (!['OWNER', 'STAFF', 'DELIVERY'].includes(parsedUser.role)) {
                     console.log("Cleaning stale old session...");
                     localStorage.removeItem('marwad_user');
                     setCurrentUser(null);
+                } else if (parsedUser.role === 'DELIVERY') {
+                    // Redirect delivery partners to their page
+                    window.location.href = '/delivery-partner';
                 } else {
                     console.log(`Resuming ${parsedUser.role} session`);
                     setCurrentUser(parsedUser);
@@ -855,9 +863,68 @@ const AdminDashboard = () => {
                                                     </div>
                                                 ))}
                                             </div>
+
+                                            {/* Delivery Order Details */}
+                                            {order.isDelivery && order.deliveryDetails && (
+                                                <div style={{
+                                                    padding: '15px',
+                                                    background: 'rgba(255, 152, 0, 0.1)',
+                                                    borderRadius: '12px',
+                                                    marginBottom: '15px',
+                                                    border: '1px solid rgba(255, 152, 0, 0.3)'
+                                                }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                                        <span style={{ fontSize: '1.3rem' }}>🚚</span>
+                                                        <strong style={{ color: '#ff9800', fontSize: '0.9rem', letterSpacing: '1px' }}>DELIVERY ORDER</strong>
+                                                    </div>
+
+                                                    <div style={{ fontSize: '0.85rem', lineHeight: 1.8 }}>
+                                                        <p><strong>Customer:</strong> {order.deliveryDetails.customerName}</p>
+                                                        <p>
+                                                            <strong>Phone:</strong>{' '}
+                                                            <a
+                                                                href={`tel:${order.deliveryDetails.customerPhone}`}
+                                                                style={{ color: 'var(--primary)', marginLeft: '5px', textDecoration: 'none' }}
+                                                            >
+                                                                {order.deliveryDetails.customerPhone}
+                                                            </a>
+                                                        </p>
+                                                        <p><strong>Address:</strong> {order.deliveryDetails.deliveryAddress}</p>
+                                                        {order.deliveryDetails.distance && (
+                                                            <p><strong>Distance:</strong> {order.deliveryDetails.distance.toFixed(2)} km</p>
+                                                        )}
+                                                    </div>
+
+                                                    {order.deliveryDetails.location && (
+                                                        <a
+                                                            href={`https://www.google.com/maps/dir/?api=1&destination=${order.deliveryDetails.location.lat},${order.deliveryDetails.location.lng}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '8px',
+                                                                marginTop: '10px',
+                                                                padding: '8px 12px',
+                                                                background: 'var(--primary)',
+                                                                color: 'black',
+                                                                borderRadius: '8px',
+                                                                textDecoration: 'none',
+                                                                fontSize: '0.85rem',
+                                                                fontWeight: 800
+                                                            }}
+                                                        >
+                                                            📍 View on Google Maps
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            )}
+
                                             <div style={{ marginTop: 'auto', display: 'flex', gap: '12px' }}>
                                                 {order.status === 'pending' && <button onClick={() => updateStatus(order._id, 'preparing')} className="btn-primary" style={{ flex: 1, padding: '12px', fontSize: '0.85rem' }}>Start Preparing</button>}
-                                                {order.status === 'preparing' && <button onClick={() => updateStatus(order._id, 'completed')} className="btn-primary" style={{ flex: 1, padding: '12px', fontSize: '0.85rem', background: '#4caf50' }}>Mark as Served</button>}
+                                                {order.status === 'preparing' && !order.isDelivery && <button onClick={() => updateStatus(order._id, 'completed')} className="btn-primary" style={{ flex: 1, padding: '12px', fontSize: '0.85rem', background: '#4caf50' }}>Mark as Served</button>}
+                                                {order.status === 'preparing' && order.isDelivery && <button onClick={() => updateStatus(order._id, 'out_for_delivery')} className="btn-primary" style={{ flex: 1, padding: '12px', fontSize: '0.85rem', background: '#ff9800' }}>🚚 Out for Delivery</button>}
+                                                {order.status === 'out_for_delivery' && <button onClick={() => updateStatus(order._id, 'delivered')} className="btn-primary" style={{ flex: 1, padding: '12px', fontSize: '0.85rem', background: '#4caf50' }}>✅ Mark Delivered</button>}
                                             </div>
                                         </div>
                                     </div>

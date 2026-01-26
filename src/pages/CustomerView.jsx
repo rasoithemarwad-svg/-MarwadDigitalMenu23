@@ -30,6 +30,13 @@ const CustomerView = () => {
     const [orderPlaced, setOrderPlaced] = useState(false);
     const [isKitchenOpen, setIsKitchenOpen] = useState(true);
     const [socketConnected, setSocketConnected] = useState(false);
+    const [deliveryModal, setDeliveryModal] = useState(false);
+    const [deliveryForm, setDeliveryForm] = useState({
+        name: '',
+        phone: '',
+        address: '',
+        location: null
+    });
     const [deliveryRadius, setDeliveryRadius] = useState(5.0); // Default, updated from server
     const [restaurantCoords, setRestaurantCoords] = useState({
         lat: 26.909919, // Fallback
@@ -112,6 +119,28 @@ const CustomerView = () => {
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c; // Distance in km
     };
+
+    // Capture GPS location when delivery modal opens
+    useEffect(() => {
+        if (deliveryModal && tableId === 'delivery') {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setDeliveryForm(prev => ({
+                        ...prev,
+                        location: {
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude
+                        }
+                    }));
+                },
+                (err) => {
+                    console.error('Location error:', err);
+                    showAlert('Location Error', 'Could not get your location. Please enable GPS.');
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+    }, [deliveryModal, tableId]);
 
     const deg2rad = (deg) => {
         return deg * (Math.PI / 180);
@@ -211,6 +240,16 @@ const CustomerView = () => {
     const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
 
     const placeOrder = () => {
+        if (tableId === 'delivery') {
+            // Show delivery modal for delivery orders
+            setDeliveryModal(true);
+        } else {
+            // Regular dine-in order
+            submitOrder();
+        }
+    };
+
+    const submitOrder = () => {
         const order = {
             tableId,
             items: cart.map(i => ({
@@ -223,11 +262,60 @@ const CustomerView = () => {
             total: cartTotal,
         };
 
-        // Emit real-time order to backend
         socket.emit('place-order', order);
-
         setOrderPlaced(true);
         setCart([]);
+        setTimeout(() => {
+            setOrderPlaced(false);
+            setIsCartOpen(false);
+            setView('landing');
+        }, 3000);
+    };
+
+    const submitDeliveryOrder = () => {
+        if (!deliveryForm.name || !deliveryForm.phone || !deliveryForm.address) {
+            showAlert('Missing Info', 'Please fill all delivery details');
+            return;
+        }
+
+        if (!deliveryForm.location) {
+            showAlert('Location Required', 'Please wait for GPS location to be captured');
+            return;
+        }
+
+        // Calculate distance from restaurant
+        const distance = calculateDistance(
+            deliveryForm.location.lat,
+            deliveryForm.location.lng,
+            restaurantCoords.lat,
+            restaurantCoords.lng
+        );
+
+        const order = {
+            tableId: 'delivery',
+            items: cart.map(i => ({
+                name: i.name,
+                price: i.price,
+                qty: i.qty,
+                category: i.category
+            })),
+            total: cartTotal,
+            isDelivery: true,
+            deliveryDetails: {
+                customerName: deliveryForm.name,
+                customerPhone: deliveryForm.phone,
+                deliveryAddress: deliveryForm.address,
+                location: deliveryForm.location,
+                distance: distance
+            }
+        };
+
+        socket.emit('place-order', order);
+        setOrderPlaced(true);
+        setCart([]);
+        setDeliveryModal(false);
+        setDeliveryForm({ name: '', phone: '', address: '', location: null });
+
         setTimeout(() => {
             setOrderPlaced(false);
             setIsCartOpen(false);
@@ -612,6 +700,155 @@ const CustomerView = () => {
                             </AnimatePresence>
                         </>
                     )} {/* End of Location Restricted Content */}
+
+                    {/* Delivery Address Modal */}
+                    <AnimatePresence>
+                        {deliveryModal && (
+                            <div style={{ position: 'fixed', inset: 0, zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    onClick={() => setDeliveryModal(false)}
+                                    style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}
+                                />
+                                <motion.div
+                                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                    className="glass-card"
+                                    style={{
+                                        position: 'relative',
+                                        width: '100%',
+                                        maxWidth: '400px',
+                                        padding: '30px 25px',
+                                        border: '1px solid var(--glass-border)',
+                                        boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                                        maxHeight: '90vh',
+                                        overflowY: 'auto'
+                                    }}
+                                >
+                                    <button
+                                        onClick={() => setDeliveryModal(false)}
+                                        style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                                    >
+                                        <X size={20} />
+                                    </button>
+
+                                    <div style={{ marginBottom: '25px', textAlign: 'center' }}>
+                                        <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>📍</div>
+                                        <h3 className="gold-text" style={{ fontSize: '1.4rem', marginBottom: '8px' }}>Delivery Details</h3>
+                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                            Please provide your delivery information
+                                        </p>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                        <div>
+                                            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                                                Full Name *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Enter your name"
+                                                value={deliveryForm.name}
+                                                onChange={(e) => setDeliveryForm({ ...deliveryForm, name: e.target.value })}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    background: 'rgba(255,255,255,0.05)',
+                                                    border: '1px solid var(--glass-border)',
+                                                    borderRadius: '12px',
+                                                    color: 'white',
+                                                    fontSize: '1rem'
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                                                Contact Number *
+                                            </label>
+                                            <input
+                                                type="tel"
+                                                placeholder="Enter your phone number"
+                                                value={deliveryForm.phone}
+                                                onChange={(e) => setDeliveryForm({ ...deliveryForm, phone: e.target.value })}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    background: 'rgba(255,255,255,0.05)',
+                                                    border: '1px solid var(--glass-border)',
+                                                    borderRadius: '12px',
+                                                    color: 'white',
+                                                    fontSize: '1rem'
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>
+                                                Delivery Address *
+                                            </label>
+                                            <textarea
+                                                placeholder="House No, Street Name, Landmark..."
+                                                value={deliveryForm.address}
+                                                onChange={(e) => setDeliveryForm({ ...deliveryForm, address: e.target.value })}
+                                                rows={3}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    background: 'rgba(255,255,255,0.05)',
+                                                    border: '1px solid var(--glass-border)',
+                                                    borderRadius: '12px',
+                                                    color: 'white',
+                                                    fontSize: '1rem',
+                                                    resize: 'vertical',
+                                                    fontFamily: 'inherit'
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div style={{
+                                            padding: '12px',
+                                            background: deliveryForm.location ? 'rgba(76, 175, 80, 0.1)' : 'rgba(255, 152, 0, 0.1)',
+                                            border: `1px solid ${deliveryForm.location ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 152, 0, 0.3)'}`,
+                                            borderRadius: '12px',
+                                            textAlign: 'center'
+                                        }}>
+                                            <p style={{ fontSize: '0.85rem', color: deliveryForm.location ? '#4caf50' : '#ff9800' }}>
+                                                {deliveryForm.location
+                                                    ? '✅ GPS Location Captured'
+                                                    : '⏳ Capturing your location...'}
+                                            </p>
+                                            {deliveryForm.location && (
+                                                <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                                                    Lat: {deliveryForm.location.lat.toFixed(6)}, Lng: {deliveryForm.location.lng.toFixed(6)}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <button
+                                            onClick={submitDeliveryOrder}
+                                            disabled={!deliveryForm.location}
+                                            className="btn-primary"
+                                            style={{
+                                                width: '100%',
+                                                padding: '15px',
+                                                borderRadius: '12px',
+                                                fontWeight: 800,
+                                                fontSize: '1rem',
+                                                opacity: deliveryForm.location ? 1 : 0.5,
+                                                cursor: deliveryForm.location ? 'pointer' : 'not-allowed'
+                                            }}
+                                        >
+                                            Confirm Delivery Order (₹{cartTotal})
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        )}
+                    </AnimatePresence>
 
                     {/* Custom Alert Modal */}
                     <AnimatePresence>

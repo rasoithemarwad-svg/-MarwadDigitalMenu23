@@ -159,6 +159,9 @@ io.on('connection', async (socket) => {
         } else if (password === '130289') {
             socket.emit('login-success', { username: 'STAFF', role: 'STAFF' });
             console.log(`🔑 Staff logged in via password`);
+        } else if (password === '123123') {
+            socket.emit('login-success', { username: 'DELIVERY PARTNER', role: 'DELIVERY' });
+            console.log(`🔑 Delivery Partner logged in via password`);
         } else {
             socket.emit('login-error', 'Invalid password');
         }

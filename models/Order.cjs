@@ -1,17 +1,31 @@
 const mongoose = require('mongoose');
 
 const OrderSchema = new mongoose.Schema({
-    tableId: { type: String, required: true },
-    items: [{
-        name: String,
-        price: Number,
-        qty: Number,
-        category: String,
-        portion: String
-    }],
-    total: { type: Number, required: true }, // Changed from totalAmount to total
-    status: { type: String, default: 'pending' },
-    timestamp: { type: Date, default: Date.now }
+    tableId: String,
+    items: Array,
+    total: Number,
+    status: {
+        type: String,
+        default: 'pending',
+        enum: ['pending', 'preparing', 'out_for_delivery', 'delivered', 'completed', 'cancelled']
+    },
+    timestamp: { type: Date, default: Date.now },
+    paymentMode: String,
+
+    // Delivery-specific fields
+    isDelivery: { type: Boolean, default: false },
+    deliveryDetails: {
+        customerName: String,
+        customerPhone: String,
+        deliveryAddress: String,
+        location: {
+            lat: Number,
+            lng: Number
+        },
+        distance: Number // Distance from restaurant in km
+    },
+    deliveryPartnerId: String,
+    deliveredAt: Date
 });
 
 module.exports = mongoose.model('Order', OrderSchema);

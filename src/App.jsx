@@ -4,6 +4,7 @@ import AppHome from './pages/AppHome';
 import AdminDashboard from './pages/AdminDashboard';
 import CustomerView from './pages/CustomerView';
 import PrintQRs from './pages/PrintQRs';
+import DeliveryPartner from './pages/DeliveryPartner';
 import './index.css';
 
 function App() {
@@ -24,6 +25,9 @@ function App() {
 
         {/* Print QR Codes View */}
         <Route path="/print-qrs" element={<PrintQRs />} />
+
+        {/* Delivery Partner Interface */}
+        <Route path="/delivery-partner" element={<DeliveryPartner />} />
       </Routes>
     </BrowserRouter>
   );
