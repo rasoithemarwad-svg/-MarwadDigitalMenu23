@@ -32,36 +32,70 @@ const distPath = path.join(__dirname, 'dist');
 // Global States
 let isKitchenOpen = true;
 
-// 2. MongoDB Connection safely
-if (!process.env.MONGODB_URI) {
-    console.error('❌ CRITICAL: MONGODB_URI is not defined in environment variables!');
-} else {
-    mongoose.connect(process.env.MONGODB_URI, {
-        serverApi: {
-            version: '1',
-            strict: true,
-            deprecationErrors: true,
-        },
-        connectTimeoutMS: 30000,
-        socketTimeoutMS: 45000,
-        bufferCommands: true // Re-enable buffering to prevent immediate failure
-    })
-        .then(() => {
-            console.log('✅ Connected to MongoDB');
-            initializeData().catch(err => console.error('❌ Data initialization error:', err));
-        })
-        .catch(err => {
-            console.error('❌ MongoDB Connection Error:', err.message);
+// 2. MongoDB Connection with auto-reconnect (NO MANUAL RESTART NEEDED)
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECT_INTERVAL_BASE = 5000; // 5 seconds
+
+async function connectMongoDB() {
+    if (!process.env.MONGODB_URI) {
+        console.error('❌ CRITICAL: MONGODB_URI is not defined in environment variables!');
+        return;
+    }
+
+    try {
+        await mongoose.connect(process.env.MONGODB_URI, {
+            serverApi: {
+                version: '1',
+                strict: true,
+                deprecationErrors: true,
+            },
+            connectTimeoutMS: 30000,
+            socketTimeoutMS: 45000,
+            bufferCommands: true // Re-enable buffering to prevent immediate failure
         });
 
-    mongoose.connection.on('error', err => {
-        console.error('❌ Mongoose Connection Error Event:', err);
-    });
+        console.log('✅ Connected to MongoDB');
+        reconnectAttempts = 0; // Reset on successful connection
 
-    mongoose.connection.on('disconnected', () => {
-        console.log('⚠️ Mongoose Disconnected');
-    });
+        await initializeData().catch(err => console.error('❌ Data initialization error:', err));
+    } catch (err) {
+        console.error('❌ MongoDB Connection Error:', err.message);
+
+        // Auto-reconnect with exponential backoff
+        if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            reconnectAttempts++;
+            const delay = RECONNECT_INTERVAL_BASE * Math.pow(2, reconnectAttempts - 1);
+            console.log(`⏳ Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay / 1000}s...`);
+            setTimeout(connectMongoDB, delay);
+        } else {
+            console.error('❌ Max reconnection attempts reached. Server will continue without database.');
+        }
+    }
 }
+
+// Event handlers for connection lifecycle
+mongoose.connection.on('error', err => {
+    console.error('❌ Mongoose Connection Error Event:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.log('⚠️ Mongoose Disconnected');
+
+    // Auto-reconnect on disconnect (production reliability)
+    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        console.log('🔄 Attempting automatic reconnection...');
+        connectMongoDB();
+    }
+});
+
+mongoose.connection.on('reconnected', () => {
+    console.log('✅ MongoDB Reconnected successfully');
+    reconnectAttempts = 0;
+});
+
+// Initial connection
+connectMongoDB();
 
 // Global check for database readiness
 const checkDB = () => mongoose.connection.readyState === 1;
@@ -200,13 +234,91 @@ io.on('connection', async (socket) => {
 
     socket.on('place-order', async (orderData) => {
         try {
+            // PRODUCTION VALIDATION (prevents bad data)
+
+            // 1. Validate items exist and not empty
+            if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+                console.error('❌ Invalid order: No items');
+                socket.emit('order-error', 'Order must contain at least one item');
+                return;
+            }
+
+            // 2. Validate each item has required fields
+            for (const item of orderData.items) {
+                if (!item.name || typeof item.price !== 'number' || !item.qty || item.qty < 1) {
+                    console.error('❌ Invalid order: Malformed item data');
+                    socket.emit('order-error', 'Invalid item data');
+                    return;
+                }
+            }
+
+            // 3. Validate order total matches calculated total
+            const calculatedTotal = orderData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            if (Math.abs(calculatedTotal - orderData.total) > 0.01) {
+                console.error('❌ Invalid order: Total mismatch');
+                socket.emit('order-error', 'Order total does not match items');
+                return;
+            }
+
+            // 4. Validate delivery details if delivery order
+            if (orderData.isDelivery && orderData.deliveryDetails) {
+                const dd = orderData.deliveryDetails;
+
+                // Validate customer name
+                if (!dd.customerName || dd.customerName.trim().length < 2) {
+                    socket.emit('order-error', 'Invalid customer name');
+                    return;
+                }
+
+                // Validate phone number (10 digits)
+                const phoneRegex = /^[6-9]\d{9}$/;
+                if (!dd.customerPhone || !phoneRegex.test(dd.customerPhone.trim())) {
+                    socket.emit('order-error', 'Invalid phone number');
+                    return;
+                }
+
+                // Validate address
+                if (!dd.deliveryAddress || dd.deliveryAddress.trim().length < 10) {
+                    socket.emit('order-error', 'Invalid delivery address');
+                    return;
+                }
+
+                // Validate GPS coordinates if provided
+                if (dd.location) {
+                    if (typeof dd.location.lat !== 'number' || typeof dd.location.lng !== 'number') {
+                        socket.emit('order-error', 'Invalid GPS coordinates');
+                        return;
+                    }
+                    // Validate coordinate ranges
+                    if (dd.location.lat < -90 || dd.location.lat > 90 || dd.location.lng < -180 || dd.location.lng > 180) {
+                        socket.emit('order-error', 'GPS coordinates out of range');
+                        return;
+                    }
+                }
+
+                // Sanitize delivery details
+                orderData.deliveryDetails.customerName = dd.customerName.trim().substring(0, 100);
+                orderData.deliveryDetails.customerPhone = dd.customerPhone.trim();
+                orderData.deliveryDetails.deliveryAddress = dd.deliveryAddress.trim().substring(0, 500);
+            }
+
+            // 5. Sanitize table ID
+            if (orderData.tableId) {
+                orderData.tableId = String(orderData.tableId).trim().substring(0, 50);
+            }
+
+            // Save validated order
             const newOrder = new Order(orderData);
             await newOrder.save();
+
+            console.log(`✅ Order saved: ${orderData.isDelivery ? 'DELIVERY' : 'Table ' + orderData.tableId}`);
+
             io.emit('new-order-alert', newOrder);
             const allOrders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
             io.emit('orders-updated', allOrders);
         } catch (err) {
             console.error('❌ Error placing order:', err);
+            socket.emit('order-error', 'Failed to place order. Please try again.');
         }
     });
 

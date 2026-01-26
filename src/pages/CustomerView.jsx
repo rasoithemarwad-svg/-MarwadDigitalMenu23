@@ -42,6 +42,9 @@ const CustomerView = () => {
         lat: 26.909919, // Fallback
         lng: 75.722024
     });
+    const [gpsStatus, setGpsStatus] = useState('idle'); // 'idle', 'capturing', 'success', 'error', 'manual_fallback'
+    const [gpsError, setGpsError] = useState('');
+    const [networkStatus, setNetworkStatus] = useState('online'); // 'online', 'offline', 'slow'
 
 
 
@@ -100,6 +103,23 @@ const CustomerView = () => {
         };
     }, []);
 
+    // Network status monitoring
+    useEffect(() => {
+        const handleOnline = () => setNetworkStatus('online');
+        const handleOffline = () => setNetworkStatus('offline');
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        // Check initial status
+        setNetworkStatus(navigator.onLine ? 'online' : 'offline');
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
     // --- LOCATION RESTRICTION LOGIC ---
     const [locationAccess, setLocationAccess] = useState('pending'); // 'pending', 'granted', 'denied', 'far', 'testing'
 
@@ -120,11 +140,29 @@ const CustomerView = () => {
         return R * c; // Distance in km
     };
 
-    // Capture GPS location when delivery modal opens
+    // Enhanced GPS capture with timeout and manual fallback
     useEffect(() => {
         if (deliveryModal && tableId === 'delivery') {
+            setGpsStatus('capturing');
+            setGpsError('');
+
+            let timeoutId;
+            let captureCompleted = false;
+
+            // Set 10-second timeout for GPS
+            timeoutId = setTimeout(() => {
+                if (!captureCompleted) {
+                    setGpsStatus('error');
+                    setGpsError('GPS timeout. You can still proceed with manual address.');
+                    console.warn('GPS capture timed out after 10 seconds');
+                }
+            }, 10000);
+
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
+                    captureCompleted = true;
+                    clearTimeout(timeoutId);
+                    setGpsStatus('success');
                     setDeliveryForm(prev => ({
                         ...prev,
                         location: {
@@ -134,11 +172,39 @@ const CustomerView = () => {
                     }));
                 },
                 (err) => {
-                    console.error('Location error:', err);
-                    showAlert('Location Error', 'Could not get your location. Please enable GPS.');
+                    captureCompleted = true;
+                    clearTimeout(timeoutId);
+                    setGpsStatus('error');
+
+                    // User-friendly error messages
+                    let errorMsg = 'Could not get your location. ';
+                    switch (err.code) {
+                        case 1: // PERMISSION_DENIED
+                            errorMsg += 'Please enable location permission in your browser settings.';
+                            break;
+                        case 2: // POSITION_UNAVAILABLE
+                            errorMsg += 'Location unavailable. Please try again or enter address manually.';
+                            break;
+                        case 3: // TIMEOUT
+                            errorMsg += 'Location request timed out. Please try again.';
+                            break;
+                        default:
+                            errorMsg += 'Please enter your address manually.';
+                    }
+
+                    setGpsError(errorMsg);
+                    console.error('GPS error:', err);
                 },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                {
+                    enableHighAccuracy: true,
+                    timeout: 9000, // 9 seconds (1 second before our manual timeout)
+                    maximumAge: 0  // Don't use cached location
+                }
             );
+
+            return () => {
+                if (timeoutId) clearTimeout(timeoutId);
+            };
         }
     }, [deliveryModal, tableId]);
 
@@ -250,6 +316,12 @@ const CustomerView = () => {
     };
 
     const submitOrder = () => {
+        // Check network status
+        if (networkStatus === 'offline' || !socketConnected) {
+            showAlert('Connection Error', 'Please check your internet connection and try again');
+            return;
+        }
+
         const order = {
             tableId,
             items: cart.map(i => ({
@@ -273,13 +345,40 @@ const CustomerView = () => {
     };
 
     const submitDeliveryOrder = () => {
+        // Check network status first
+        if (networkStatus === 'offline' || !socketConnected) {
+            showAlert('Connection Error', 'Please check your internet connection and try again');
+            return;
+        }
+
+        // Enhanced validation
         if (!deliveryForm.name || !deliveryForm.phone || !deliveryForm.address) {
             showAlert('Missing Info', 'Please fill all delivery details');
             return;
         }
 
-        if (!deliveryForm.location) {
-            showAlert('Location Required', 'Please wait for GPS location to be captured');
+        // Validate name (min 2 characters)
+        if (deliveryForm.name.trim().length < 2) {
+            showAlert('Invalid Name', 'Please enter a valid name (minimum 2 characters)');
+            return;
+        }
+
+        // Validate phone number (exactly 10 digits)
+        const phoneRegex = /^[6-9]\d{9}$/;
+        if (!phoneRegex.test(deliveryForm.phone)) {
+            showAlert('Invalid Phone', 'Please enter a valid 10-digit mobile number');
+            return;
+        }
+
+        // Validate address (minimum 10 characters)
+        if (deliveryForm.address.trim().length < 10) {
+            showAlert('Invalid Address', 'Please enter a complete address (minimum 10 characters)');
+            return;
+        }
+
+        // Allow submission even if GPS failed (manual address fallback)
+        if (!deliveryForm.location && gpsStatus !== 'error') {
+            showAlert('Location Required', 'Please wait for GPS location to be captured or enter address manually');
             return;
         }
 
@@ -302,11 +401,12 @@ const CustomerView = () => {
             total: cartTotal,
             isDelivery: true,
             deliveryDetails: {
-                customerName: deliveryForm.name,
-                customerPhone: deliveryForm.phone,
-                deliveryAddress: deliveryForm.address,
+                customerName: deliveryForm.name.trim(),
+                customerPhone: deliveryForm.phone.trim(),
+                deliveryAddress: deliveryForm.address.trim(),
                 location: deliveryForm.location,
-                distance: distance
+                distance: distance,
+                gpsAvailable: !!deliveryForm.location
             }
         };
 
@@ -314,7 +414,11 @@ const CustomerView = () => {
         setOrderPlaced(true);
         setCart([]);
         setDeliveryModal(false);
+
+        // Reset delivery form and GPS status
         setDeliveryForm({ name: '', phone: '', address: '', location: null });
+        setGpsStatus('idle');
+        setGpsError('');
 
         setTimeout(() => {
             setOrderPlaced(false);
