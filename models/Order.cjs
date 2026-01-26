@@ -28,4 +28,10 @@ const OrderSchema = new mongoose.Schema({
     deliveredAt: Date
 });
 
+// PRODUCTION PERFORMANCE: Add indexes for frequently queried fields
+OrderSchema.index({ status: 1, timestamp: -1 }); // For order list queries
+OrderSchema.index({ tableId: 1, status: 1 }); // For table-specific queries
+OrderSchema.index({ isDelivery: 1, status: 1 }); // For delivery partner queries
+OrderSchema.index({ timestamp: -1 }); // For recent orders
+
 module.exports = mongoose.model('Order', OrderSchema);

@@ -45,6 +45,7 @@ const CustomerView = () => {
     const [gpsStatus, setGpsStatus] = useState('idle'); // 'idle', 'capturing', 'success', 'error', 'manual_fallback'
     const [gpsError, setGpsError] = useState('');
     const [networkStatus, setNetworkStatus] = useState('online'); // 'online', 'offline', 'slow'
+    const [isSubmittingOrder, setIsSubmittingOrder] = useState(false); // Loading state for order submission
 
 
 
@@ -322,6 +323,8 @@ const CustomerView = () => {
             return;
         }
 
+        setIsSubmittingOrder(true); // Show loading state
+
         const order = {
             tableId,
             items: cart.map(i => ({
@@ -337,6 +340,8 @@ const CustomerView = () => {
         socket.emit('place-order', order);
         setOrderPlaced(true);
         setCart([]);
+        setIsSubmittingOrder(false); // Reset loading state
+
         setTimeout(() => {
             setOrderPlaced(false);
             setIsCartOpen(false);
@@ -351,6 +356,8 @@ const CustomerView = () => {
             return;
         }
 
+        setIsSubmittingOrder(true); // Show loading state
+
         // Enhanced validation
         if (!deliveryForm.name || !deliveryForm.phone || !deliveryForm.address) {
             showAlert('Missing Info', 'Please fill all delivery details');
@@ -359,6 +366,7 @@ const CustomerView = () => {
 
         // Validate name (min 2 characters)
         if (deliveryForm.name.trim().length < 2) {
+            setIsSubmittingOrder(false);
             showAlert('Invalid Name', 'Please enter a valid name (minimum 2 characters)');
             return;
         }
@@ -366,18 +374,21 @@ const CustomerView = () => {
         // Validate phone number (exactly 10 digits)
         const phoneRegex = /^[6-9]\d{9}$/;
         if (!phoneRegex.test(deliveryForm.phone)) {
+            setIsSubmittingOrder(false);
             showAlert('Invalid Phone', 'Please enter a valid 10-digit mobile number');
             return;
         }
 
         // Validate address (minimum 10 characters)
         if (deliveryForm.address.trim().length < 10) {
+            setIsSubmittingOrder(false);
             showAlert('Invalid Address', 'Please enter a complete address (minimum 10 characters)');
             return;
         }
 
         // Allow submission even if GPS failed (manual address fallback)
         if (!deliveryForm.location && gpsStatus !== 'error') {
+            setIsSubmittingOrder(false);
             showAlert('Location Required', 'Please wait for GPS location to be captured or enter address manually');
             return;
         }
@@ -414,6 +425,7 @@ const CustomerView = () => {
         setOrderPlaced(true);
         setCart([]);
         setDeliveryModal(false);
+        setIsSubmittingOrder(false); // Reset loading
 
         // Reset delivery form and GPS status
         setDeliveryForm({ name: '', phone: '', address: '', location: null });
@@ -782,15 +794,20 @@ const CustomerView = () => {
 
                                             <button
                                                 className="btn-primary"
-                                                disabled={orderPlaced}
+                                                disabled={orderPlaced || isSubmittingOrder}
                                                 onClick={placeOrder}
-                                                style={{ width: '100%', padding: '18px', borderRadius: '15px', fontSize: '1rem' }}
+                                                style={{ width: '100%', padding: '18px', borderRadius: '15px', fontSize: '1rem', opacity: isSubmittingOrder ? 0.7 : 1 }}
                                             >
                                                 {orderPlaced ? (
                                                     <>
                                                         <Check size={20} />
                                                         <span>ORDER SENT TO KITCHEN!</span>
                                                     </>
+                                                ) : isSubmittingOrder ? (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center' }}>
+                                                        <div style={{ border: '3px solid black', borderTop: '3px solid transparent', borderRadius: '50%', width: '20px', height: '20px', animation: 'spin 1s linear infinite' }} />
+                                                        <span style={{ fontWeight: 900 }}>SENDING ORDER...</span>
+                                                    </div>
                                                 ) : (
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                         <ShoppingCart size={20} />

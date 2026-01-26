@@ -12,4 +12,8 @@ const SaleSchema = new mongoose.Schema({
     settledAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
+// PRODUCTION PERFORMANCE: Index for sales reports
+SaleSchema.index({ settledAt: -1 }); // For date-range queries
+SaleSchema.index({ paymentMode: 1, settledAt: -1 }); // For payment mode reports
+
 module.exports = mongoose.model('Sale', SaleSchema);
