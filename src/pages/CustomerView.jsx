@@ -335,7 +335,7 @@ const CustomerView = () => {
 
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                             {(tableId === 'delivery'
-                                                ? ACTIONS.filter(a => ['CAFE', 'RESTAURANT', 'RATE'].includes(a.id))
+                                                ? ACTIONS.filter(a => ['CAFE', 'RESTAURANT', 'GYM', 'RATE'].includes(a.id))
                                                 : ACTIONS
                                             ).map(action => (
                                                 <motion.button
