@@ -9,7 +9,15 @@ const SaleSchema = new mongoose.Schema({
     }],
     total: { type: Number, required: true },
     paymentMode: { type: String, enum: ['CASH', 'ONLINE'], default: 'CASH' },
-    settledAt: { type: Date, default: Date.now }
+    settledAt: { type: Date, default: Date.now },
+
+    // Delivery Tracking
+    isDelivery: { type: Boolean, default: false },
+    deliveryDetails: {
+        customerName: String,
+        customerPhone: String,
+        deliveryAddress: String
+    }
 }, { timestamps: true });
 
 // PRODUCTION PERFORMANCE: Index for sales reports

@@ -334,6 +334,24 @@ const AdminDashboard = () => {
     const updateStatus = (id, newStatus) => {
         socket.emit('update-order-status', { id, status: newStatus });
 
+        // AUTO-SAVE SALE FOR DELIVERED ORDERS
+        if (newStatus === 'delivered') {
+            const order = orders.find(o => o._id === id);
+            if (order) {
+                const saleRecord = {
+                    tableId: 'delivery',
+                    items: order.items.map(i => ({ name: i.name, qty: i.qty, price: i.price })),
+                    total: order.total,
+                    paymentMode: 'CASH', // Default to CASH for delivery (can be enhanced later)
+                    settledAt: new Date().toISOString(),
+                    isDelivery: true,
+                    deliveryDetails: order.deliveryDetails
+                };
+                console.log("Auto-saving delivery sale:", saleRecord);
+                socket.emit('save-sale', saleRecord);
+            }
+        }
+
         // Auto-dismiss alert when order is accepted/processed
         if (newStatus !== 'pending') {
             const order = orders.find(o => o._id === id);
