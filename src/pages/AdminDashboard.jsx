@@ -842,7 +842,7 @@ const AdminDashboard = () => {
                                 gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
                                 gap: '20px'
                             }}>
-                                {orders.filter(o => o.status !== 'completed').map((order) => (
+                                {orders.filter(o => o.status !== 'completed' && o.status !== 'delivered' && o.status !== 'cancelled').map((order) => (
                                     <div key={order._id} className="glass-card" style={{ borderLeft: `8px solid ${getStatusColor(order.status)}`, display: 'flex', flexDirection: 'column' }}>
                                         <div style={{ padding: '20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                             <div>
