@@ -29,6 +29,7 @@ const CustomerView = () => {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [orderPlaced, setOrderPlaced] = useState(false);
     const [isKitchenOpen, setIsKitchenOpen] = useState(true);
+    const [socketConnected, setSocketConnected] = useState(false);
     const [deliveryRadius, setDeliveryRadius] = useState(5.0); // Default, updated from server
     const [restaurantCoords, setRestaurantCoords] = useState({
         lat: 26.909919, // Fallback
@@ -47,6 +48,27 @@ const CustomerView = () => {
         setCustomAlert({ show: true, title, message });
     };
     useEffect(() => {
+        // Socket.IO Connection Handlers
+        socket.on('connect', () => {
+            console.log('✅ Customer Socket connected:', socket.id);
+            setSocketConnected(true);
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('❌ Customer Socket connection error:', error);
+            setSocketConnected(false);
+        });
+
+        socket.on('disconnect', (reason) => {
+            console.log('⚠️ Customer Socket disconnected:', reason);
+            setSocketConnected(false);
+        });
+
+        // Check if already connected
+        if (socket.connected) {
+            setSocketConnected(true);
+        }
+
         socket.emit('get-menu'); // existing
         socket.emit('get-settings'); // Fetch settings
 
@@ -65,6 +87,9 @@ const CustomerView = () => {
             socket.off('menu-updated');
             socket.off('kitchen-status-updated');
             socket.off('settings-updated');
+            socket.off('connect');
+            socket.off('connect_error');
+            socket.off('disconnect');
         };
     }, []);
 

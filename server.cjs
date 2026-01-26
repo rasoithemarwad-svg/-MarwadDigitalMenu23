@@ -123,11 +123,22 @@ app.get('*', (req, res) => {
 });
 
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
+const io = new Server(server, {
+    cors: {
+        origin: process.env.RENDER_EXTERNAL_URL || "*",
+        methods: ["GET", "POST"],
+        credentials: true
+    },
+    transports: ['websocket', 'polling'], // Explicitly allow both transports
+    allowEIO3: true, // Backward compatibility
+    pingTimeout: 60000, // 60 seconds
+    pingInterval: 25000 // 25 seconds
+});
 
 // 4. Socket.IO Events
 io.on('connection', async (socket) => {
-    console.log('👤 User connected:', socket.id);
+    console.log('👤 User connected:', socket.id, 'at', new Date().toISOString());
+    console.log('   Transport:', socket.conn.transport.name); // Log connection transport method
 
     socket.emit('kitchen-status-updated', isKitchenOpen);
 

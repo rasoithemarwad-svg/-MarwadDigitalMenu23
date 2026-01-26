@@ -24,6 +24,8 @@ const AdminDashboard = () => {
     const [loginForm, setLoginForm] = useState({ username: 'THEMARWADRASOI', password: '' });
     const [loginError, setLoginError] = useState('');
     const [appSettings, setAppSettings] = useState({ deliveryRadiusKm: 5.0 });
+    const [socketConnected, setSocketConnected] = useState(false);
+    const [connectionError, setConnectionError] = useState('');
 
     const showAlert = (title, message) => {
         setCustomAlert({ show: true, title, message });
@@ -202,6 +204,33 @@ const AdminDashboard = () => {
     };
 
     useEffect(() => {
+        // Socket.IO Connection Handlers
+        socket.on('connect', () => {
+            console.log('✅ Socket connected:', socket.id);
+            setSocketConnected(true);
+            setConnectionError('');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('❌ Socket connection error:', error);
+            setSocketConnected(false);
+            setConnectionError('Unable to connect to server. Please refresh the page.');
+        });
+
+        socket.on('disconnect', (reason) => {
+            console.log('⚠️ Socket disconnected:', reason);
+            setSocketConnected(false);
+            if (reason === 'io server disconnect') {
+                // Server initiated disconnect, try to reconnect
+                socket.connect();
+            }
+        });
+
+        // Check if already connected (in case of hot reload)
+        if (socket.connected) {
+            setSocketConnected(true);
+        }
+
         fetchData();
 
         socket.on('orders-updated', (updatedOrders) => {
@@ -513,6 +542,23 @@ const AdminDashboard = () => {
                                 required
                             />
                         </div>
+
+                        {!socketConnected && (
+                            <div style={{ padding: '10px', borderRadius: '8px', background: 'rgba(255, 152, 0, 0.1)', border: '1px solid rgba(255, 152, 0, 0.3)' }}>
+                                <p style={{ color: '#ff9800', fontSize: '0.75rem', textAlign: 'center', wordBreak: 'break-word' }}>
+                                    ⏳ Connecting to server...
+                                </p>
+                            </div>
+                        )}
+
+                        {connectionError && (
+                            <div style={{ padding: '10px', borderRadius: '8px', background: 'rgba(255, 59, 48, 0.1)', border: '1px solid rgba(255, 59, 48, 0.2)' }}>
+                                <p style={{ color: '#ff3b30', fontSize: '0.75rem', textAlign: 'center', wordBreak: 'break-word' }}>
+                                    🔌 {connectionError}
+                                </p>
+                            </div>
+                        )}
+
                         {loginError && (
                             <div style={{ padding: '10px', borderRadius: '8px', background: 'rgba(255, 59, 48, 0.1)', border: '1px solid rgba(255, 59, 48, 0.2)' }}>
                                 <p style={{ color: '#ff3b30', fontSize: '0.75rem', textAlign: 'center', wordBreak: 'break-word' }}>
@@ -520,7 +566,19 @@ const AdminDashboard = () => {
                                 </p>
                             </div>
                         )}
-                        <button type="submit" className="btn-primary" style={{ padding: '15px', color: 'black', fontWeight: 800 }}>UNLOCK DASHBOARD</button>
+                        <button
+                            type="submit"
+                            className="btn-primary"
+                            disabled={!socketConnected}
+                            style={{
+                                padding: '15px',
+                                color: 'black',
+                                fontWeight: 800,
+                                opacity: socketConnected ? 1 : 0.5,
+                                cursor: socketConnected ? 'pointer' : 'not-allowed'
+                            }}>
+                            {socketConnected ? 'UNLOCK DASHBOARD' : 'CONNECTING...'}
+                        </button>
 
                         <div style={{ marginTop: '10px', textAlign: 'center' }}>
                             <p style={{ color: 'var(--text-secondary)', fontSize: '0.65rem', fontStyle: 'italic' }}>
