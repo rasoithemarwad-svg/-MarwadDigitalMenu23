@@ -12,7 +12,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Admin Dashboard is now the primary landing page */}
-        <Route path="/" element={<AdminDashboard />} />
+        <Route path="/" element={<Navigate to={import.meta.env.VITE_START_PATH || "/admin"} replace />} />
 
         {/* Customer view remains accessible via QR code / URL params */}
         <Route path="/table/:tableId" element={<CustomerView />} />

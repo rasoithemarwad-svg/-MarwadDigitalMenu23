@@ -69,10 +69,11 @@ const DeliveryPartner = () => {
 
         // Track delivery partner location
         const watchId = navigator.geolocation.watchPosition(
-            (pos) => setPartnerLocation({
-                lat: pos.coords.latitude,
-                lng: pos.coords.longitude
-            }),
+            (pos) => {
+                const { latitude, longitude } = pos.coords;
+                setPartnerLocation({ lat: latitude, lng: longitude });
+                socket.emit('update-rider-location', { lat: latitude, lng: longitude });
+            },
             (err) => console.error('Location tracking error:', err),
             { enableHighAccuracy: true }
         );
