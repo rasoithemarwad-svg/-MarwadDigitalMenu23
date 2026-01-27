@@ -185,6 +185,19 @@ io.on('connection', async (socket) => {
         console.error('❌ Socket initialization error:', err);
     }
 
+    socket.on('check-customer-eligibility', async (phone) => {
+        try {
+            // Check if any sales or completed orders exist for this phone number
+            const existingSale = await Sale.findOne({ 'deliveryDetails.customerPhone': phone });
+            // Also check old orders if needed, but Sale is the definitive "finished" collection
+            const isFirstTime = !existingSale;
+            socket.emit('customer-eligibility-result', { isFirstTime });
+            console.log(`🔍 Eligibility check for ${phone}: ${isFirstTime ? 'FIRST TIME' : 'RETURNING'}`);
+        } catch (err) {
+            console.error('❌ Eligibility check error:', err);
+        }
+    });
+
     socket.on('login', async ({ password }) => {
         // STATIC AUTHENTICATION (Bypasses DB for reliability)
         if (password === 'THEMARWADRASOI@2026') {
