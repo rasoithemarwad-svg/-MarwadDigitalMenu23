@@ -1,5 +1,6 @@
 {
   "appId": "com.marwad.app",
   "appName": "Marwad Menu",
-  "webDir": "dist"
+  "webDir": "dist",
+  "bundledWebRuntime": false
 }

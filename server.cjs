@@ -328,6 +328,65 @@ io.on('connection', async (socket) => {
         io.emit('orders-updated', allOrders);
     });
 
+    // Order Approval Workflow
+    socket.on('approve-order', async ({ orderId, tableId }) => {
+        try {
+            const order = await Order.findByIdAndUpdate(
+                orderId,
+                { status: 'pending' },
+                { new: true }
+            );
+
+            if (order) {
+                console.log(`✅ Order ${orderId} approved for table ${tableId}`);
+
+                // Notify the specific customer that their order was approved
+                io.emit('order-approved', {
+                    orderId: orderId,
+                    tableId: tableId,
+                    message: `Your order has been accepted by THE MARWAD RASOI! 🎉`
+                });
+
+                // Update all admins with the new order list
+                const allOrders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
+                io.emit('orders-updated', allOrders);
+            }
+        } catch (err) {
+            console.error('❌ Error approving order:', err);
+            socket.emit('order-error', 'Failed to approve order');
+        }
+    });
+
+    socket.on('reject-order', async ({ orderId, tableId, reason }) => {
+        try {
+            const order = await Order.findByIdAndUpdate(
+                orderId,
+                { status: 'cancelled' },
+                { new: true }
+            );
+
+            if (order) {
+                console.log(`❌ Order ${orderId} rejected for table ${tableId}`);
+
+                // Notify the specific customer that their order was rejected
+                io.emit('order-rejected', {
+                    orderId: orderId,
+                    tableId: tableId,
+                    reason: reason || 'Sorry, we cannot accept your order at this time',
+                    message: `Your order was not accepted. ${reason || 'Please try again later.'}`
+                });
+
+                // Update all admins
+                const allOrders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
+                io.emit('orders-updated', allOrders);
+            }
+        } catch (err) {
+            console.error('❌ Error rejecting order:', err);
+            socket.emit('order-error', 'Failed to reject order');
+        }
+    });
+
+
     socket.on('get-menu', async () => {
         const menu = await MenuItem.find({});
         socket.emit('menu-updated', menu);

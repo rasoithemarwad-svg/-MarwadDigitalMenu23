@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Utensils, Star, Plus, Minus, Check, Clock, Bell, ChevronRight, X } from 'lucide-react';
-import { io } from 'socket.io-client';
+import { socket } from '../socket';
 
-const socket = io(window.location.origin); // Connects to the same host serving the app
+// const socket = io(window.location.origin); // Connects to the same host serving the app
 
 // Menu data will be fetched from the backend via Socket.io
 
@@ -46,6 +46,8 @@ const CustomerView = () => {
     const [gpsError, setGpsError] = useState('');
     const [networkStatus, setNetworkStatus] = useState('online'); // 'online', 'offline', 'slow'
     const [isSubmittingOrder, setIsSubmittingOrder] = useState(false); // Loading state for order submission
+    const [waitingForApproval, setWaitingForApproval] = useState(false); // Waiting for admin approval
+    const [orderStatusMessage, setOrderStatusMessage] = useState(''); // Success or rejection message
 
 
 
@@ -92,12 +94,41 @@ const CustomerView = () => {
             }
         });
 
+        // Order Approval Events
+        socket.on('order-approved', (data) => {
+            if (data.tableId === tableId) {
+                console.log('✅ Order approved:', data);
+                setWaitingForApproval(false);
+                setOrderStatusMessage(data.message);
+                setOrderPlaced(true);
+
+                setTimeout(() => {
+                    setOrderPlaced(false);
+                    setOrderStatusMessage('');
+                    setIsCartOpen(false);
+                    setView('landing');
+                }, 4000);
+            }
+        });
+
+        socket.on('order-rejected', (data) => {
+            if (data.tableId === tableId) {
+                console.log('❌ Order rejected:', data);
+                setWaitingForApproval(false);
+                setOrderStatusMessage('');
+                showAlert('Order Not Accepted', data.message);
+                // Cart is NOT cleared so customer can modify and resubmit
+            }
+        });
+
 
 
         return () => {
             socket.off('menu-updated');
             socket.off('kitchen-status-updated');
             socket.off('settings-updated');
+            socket.off('order-approved');
+            socket.off('order-rejected');
             socket.off('connect');
             socket.off('connect_error');
             socket.off('disconnect');
@@ -335,16 +366,19 @@ const CustomerView = () => {
                 portion: i.cartId.includes('-') ? i.cartId.split('-')[1] : null
             })),
             total: cartTotal,
+            // Table orders don't need approval - instant confirmation
         };
 
         socket.emit('place-order', order);
+
+        // Table orders: Show success immediately (no approval needed)
         setOrderPlaced(true);
         setCart([]);
-        setIsSubmittingOrder(false); // Reset loading state
+        setIsSubmittingOrder(false);
+        setIsCartOpen(false);
 
         setTimeout(() => {
             setOrderPlaced(false);
-            setIsCartOpen(false);
             setView('landing');
         }, 3000);
     };
@@ -410,6 +444,7 @@ const CustomerView = () => {
                 category: i.category
             })),
             total: cartTotal,
+            status: 'pending_approval', // NEW: Delivery orders also need approval
             isDelivery: true,
             deliveryDetails: {
                 customerName: deliveryForm.name.trim(),
@@ -422,21 +457,19 @@ const CustomerView = () => {
         };
 
         socket.emit('place-order', order);
-        setOrderPlaced(true);
+
+        // Don't show success yet - wait for admin approval
         setCart([]);
         setDeliveryModal(false);
-        setIsSubmittingOrder(false); // Reset loading
+        setIsSubmittingOrder(false);
+        setWaitingForApproval(true); // Show waiting message
 
         // Reset delivery form and GPS status
         setDeliveryForm({ name: '', phone: '', address: '', location: null });
         setGpsStatus('idle');
         setGpsError('');
 
-        setTimeout(() => {
-            setOrderPlaced(false);
-            setIsCartOpen(false);
-            setView('landing');
-        }, 3000);
+        // Order confirmation will come from 'order-approved' event
     };
 
     const handleAction = (id) => {
@@ -965,6 +998,102 @@ const CustomerView = () => {
                                         >
                                             Confirm Delivery Order (₹{cartTotal})
                                         </button>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Waiting for Approval Modal */}
+                    <AnimatePresence>
+                        {waitingForApproval && (
+                            <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(5px)' }}
+                                />
+                                <motion.div
+                                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                                    className="glass-card"
+                                    style={{
+                                        position: 'relative',
+                                        width: '100%',
+                                        maxWidth: '350px',
+                                        padding: '40px 30px',
+                                        textAlign: 'center',
+                                        border: '2px solid rgba(255, 152, 0, 0.3)',
+                                        boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                                    }}
+                                >
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <div className="spinner" style={{ width: '50px', height: '50px', margin: '0 auto 20px', border: '4px solid rgba(212, 175, 55, 0.3)', borderTop: '4px solid var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                                    </div>
+
+                                    <h3 className="gold-text" style={{ fontSize: '1.5rem', marginBottom: '15px' }}>⏳ Waiting for Approval</h3>
+                                    <p style={{ color: 'white', lineHeight: 1.6, fontSize: '1rem', marginBottom: '10px' }}>
+                                        Your order has been sent to the admin.
+                                    </p>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                        Please wait while we review your order...
+                                    </p>
+                                </motion.div>
+                            </div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Order Success Modal (After Approval) */}
+                    <AnimatePresence>
+                        {orderPlaced && orderStatusMessage && (
+                            <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(8px)' }}
+                                />
+                                <motion.div
+                                    initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
+                                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                                    exit={{ scale: 0.5, opacity: 0 }}
+                                    transition={{ type: 'spring', damping: 15, stiffness: 200 }}
+                                    className="glass-card"
+                                    style={{
+                                        position: 'relative',
+                                        width: '100%',
+                                        maxWidth: '350px',
+                                        padding: '50px 30px',
+                                        textAlign: 'center',
+                                        border: '2px solid var(--primary)',
+                                        boxShadow: '0 20px 60px rgba(212, 175, 55, 0.4)',
+                                        background: 'rgba(0, 10, 0, 0.95)'
+                                    }}
+                                >
+                                    <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                                        style={{ marginBottom: '25px', display: 'inline-flex', padding: '20px', borderRadius: '50%', background: 'rgba(76, 175, 80, 0.2)', color: '#4caf50' }}
+                                    >
+                                        <Check size={48} strokeWidth={3} />
+                                    </motion.div>
+
+                                    <h2 className="gold-text" style={{ fontSize: '1.8rem', marginBottom: '15px', fontWeight: 900 }}>ORDER CONFIRMED!</h2>
+                                    <p style={{ color: '#4caf50', fontSize: '1.1rem', fontWeight: 700, marginBottom: '15px' }}>
+                                        {orderStatusMessage}
+                                    </p>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                                        Your order is being prepared.<br />
+                                        Please wait at your table.
+                                    </p>
+
+                                    <div style={{ marginTop: '30px', padding: '15px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '12px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+                                        <p style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 800, letterSpacing: '1px' }}>
+                                            - THE MARWAD RASOI -
+                                        </p>
                                     </div>
                                 </motion.div>
                             </div>

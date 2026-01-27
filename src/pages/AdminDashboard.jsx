@@ -2,11 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, CheckCircle, Clock, Timer, User, RefreshCcw, QrCode, ClipboardList, ScanLine, Receipt, BarChart3, Calendar, ChevronRight, BellRing, X, Utensils, Plus, Trash2, LogOut } from 'lucide-react';
-import { io } from 'socket.io-client';
-import QRManager from '../components/QRManager';
-import QRScanner from '../components/QRScanner';
+import { socket } from '../socket';
 
-const socket = io(window.location.origin); // Connects to the host that served this page
+// const socket = io(window.location.origin); // Connects to the host that served this page
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -952,6 +950,45 @@ const AdminDashboard = () => {
                                             )}
 
                                             <div style={{ marginTop: 'auto', display: 'flex', gap: '12px' }}>
+                                                {order.status === 'pending_approval' && (
+                                                    <>
+                                                        <button
+                                                            onClick={() => socket.emit('approve-order', { orderId: order._id, tableId: order.tableId })}
+                                                            className="btn-primary"
+                                                            style={{
+                                                                flex: 1,
+                                                                padding: '12px',
+                                                                fontSize: '0.85rem',
+                                                                background: '#4caf50',
+                                                                border: '2px solid #4caf50',
+                                                                fontWeight: 800
+                                                            }}
+                                                        >
+                                                            ✅ Approve Order
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                const reason = prompt('Enter rejection reason (optional):');
+                                                                socket.emit('reject-order', {
+                                                                    orderId: order._id,
+                                                                    tableId: order.tableId,
+                                                                    reason: reason || 'Order cannot be accepted at this time'
+                                                                });
+                                                            }}
+                                                            className="btn-primary"
+                                                            style={{
+                                                                flex: 1,
+                                                                padding: '12px',
+                                                                fontSize: '0.85rem',
+                                                                background: '#f44336',
+                                                                border: '2px solid #f44336',
+                                                                fontWeight: 800
+                                                            }}
+                                                        >
+                                                            ❌ Reject
+                                                        </button>
+                                                    </>
+                                                )}
                                                 {order.status === 'pending' && <button onClick={() => updateStatus(order._id, 'preparing')} className="btn-primary" style={{ flex: 1, padding: '12px', fontSize: '0.85rem' }}>Start Preparing</button>}
                                                 {order.status === 'preparing' && !order.isDelivery && <button onClick={() => updateStatus(order._id, 'completed')} className="btn-primary" style={{ flex: 1, padding: '12px', fontSize: '0.85rem', background: '#4caf50' }}>Mark as Served</button>}
                                                 {order.status === 'preparing' && order.isDelivery && <button onClick={() => updateStatus(order._id, 'out_for_delivery')} className="btn-primary" style={{ flex: 1, padding: '12px', fontSize: '0.85rem', background: '#ff9800' }}>🚚 Out for Delivery</button>}
