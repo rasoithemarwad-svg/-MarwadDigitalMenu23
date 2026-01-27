@@ -1145,20 +1145,57 @@ const AdminDashboard = () => {
                                 </div>
 
                                 <div style={{ paddingTop: '15px', borderTop: '1px solid var(--glass-border)' }}>
-                                    <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Restaurant Identity</label>
-                                    <p style={{ fontSize: '0.75rem', color: '#aaa', marginBottom: '15px' }}>If QR codes say "Too far away", use this button while standing inside the restaurant to calibrate your location.</p>
+                                    <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>Restaurant Identity (Static Location)</label>
+                                    <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <p style={{ fontSize: '0.75rem', color: '#aaa', marginBottom: '5px' }}>Latitude</p>
+                                            <input
+                                                type="number"
+                                                step="0.000001"
+                                                value={appSettings.restaurantLocation?.lat || 26.909946}
+                                                onChange={(e) => {
+                                                    const newLat = parseFloat(e.target.value);
+                                                    saveSettings({
+                                                        ...appSettings,
+                                                        restaurantLocation: {
+                                                            ...appSettings.restaurantLocation,
+                                                            lat: newLat,
+                                                            lng: appSettings.restaurantLocation?.lng || 75.722026
+                                                        }
+                                                    });
+                                                }}
+                                                style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white' }}
+                                            />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <p style={{ fontSize: '0.75rem', color: '#aaa', marginBottom: '5px' }}>Longitude</p>
+                                            <input
+                                                type="number"
+                                                step="0.000001"
+                                                value={appSettings.restaurantLocation?.lng || 75.722026}
+                                                onChange={(e) => {
+                                                    const newLng = parseFloat(e.target.value);
+                                                    saveSettings({
+                                                        ...appSettings,
+                                                        restaurantLocation: {
+                                                            ...appSettings.restaurantLocation,
+                                                            lat: appSettings.restaurantLocation?.lat || 26.909946,
+                                                            lng: newLng
+                                                        }
+                                                    });
+                                                }}
+                                                style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '8px', color: 'white' }}
+                                            />
+                                        </div>
+                                    </div>
+
                                     <button
-                                        onClick={setRestaurantLocation}
+                                        onClick={() => saveSettings(appSettings)}
                                         className="btn-primary"
                                         style={{ width: '100%', padding: '12px', background: 'var(--primary)', color: 'black', fontWeight: 800 }}
                                     >
-                                        Calibrate Store Location
+                                        Update Location Manually
                                     </button>
-                                    {appSettings.restaurantLocation && (
-                                        <p style={{ fontSize: '0.65rem', color: '#4caf50', marginTop: '8px', textAlign: 'center' }}>
-                                            ✓ Lat: {appSettings.restaurantLocation.lat.toFixed(6)}, Lng: {appSettings.restaurantLocation.lng.toFixed(6)}
-                                        </p>
-                                    )}
                                 </div>
                             </div>
                         </motion.div>
@@ -1828,7 +1865,7 @@ const AdminDashboard = () => {
                     )}
                 </AnimatePresence>
             </div>
-        </div>
+        </div >
     );
 };
 
