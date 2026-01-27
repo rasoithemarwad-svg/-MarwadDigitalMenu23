@@ -2,7 +2,7 @@ const APP_TYPE = process.env.APP_TYPE || 'admin';
 
 export default {
     "expo": {
-        "name": APP_TYPE === 'delivery' ? "Marwad Delivery" : "Marwad Admin",
+        "name": APP_TYPE === 'delivery' ? "Marwad Delivery" : (APP_TYPE === 'staff' ? "Marwad Staff" : "Marwad Admin"),
         "slug": "marwad-native",
         "version": "1.0.0",
         "orientation": "portrait",
@@ -16,14 +16,14 @@ export default {
         },
         "ios": {
             "supportsTablet": true,
-            "bundleIdentifier": APP_TYPE === 'delivery' ? "com.marwad.delivery" : "com.marwad.admin"
+            "bundleIdentifier": `com.marwad.${APP_TYPE}`
         },
         "android": {
             "adaptiveIcon": {
                 "foregroundImage": APP_TYPE === 'delivery' ? "./assets/icon-delivery.png" : "./assets/adaptive-icon.png",
                 "backgroundColor": "#ffffff"
             },
-            "package": APP_TYPE === 'delivery' ? "com.marwad.delivery" : "com.marwad.admin",
+            "package": `com.marwad.${APP_TYPE}`,
             "edgeToEdgeEnabled": true
         },
         "web": {

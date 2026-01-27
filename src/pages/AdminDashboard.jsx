@@ -453,7 +453,7 @@ const AdminDashboard = () => {
     };
 
     const settleBill = (tableId) => {
-        const tableOrders = orders.filter(o => o.tableId === tableId && o.status !== 'cancelled');
+        const tableOrders = orders.filter(o => o.tableId === tableId && o.status !== 'cancelled' && o.status !== 'pending_approval');
 
         if (tableOrders.length === 0) return;
 
@@ -463,7 +463,7 @@ const AdminDashboard = () => {
 
     const confirmSettleBill = () => {
         const { tableId, paymentMode } = paymentModeModal;
-        const tableOrders = orders.filter(o => o.tableId === tableId && o.status !== 'cancelled');
+        const tableOrders = orders.filter(o => o.tableId === tableId && o.status !== 'cancelled' && o.status !== 'pending_approval');
 
         if (tableOrders.length === 0) return;
 
@@ -496,6 +496,7 @@ const AdminDashboard = () => {
     };
 
     const tableGroups = orders.reduce((groups, order) => {
+        if (order.status === 'cancelled' || order.status === 'pending_approval') return groups;
         const tableId = order.tableId;
         if (!groups[tableId]) groups[tableId] = [];
         groups[tableId].push(order);
@@ -856,7 +857,7 @@ const AdminDashboard = () => {
                                 <div className="glass-card" style={{ padding: '15px', position: 'relative', overflow: 'hidden' }}>
                                     <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--primary)' }}></div>
                                     <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>Pending KOT</p>
-                                    <h2 style={{ fontSize: '1.2rem', marginTop: '5px' }}>{orders.filter(o => o.status === 'pending').length}</h2>
+                                    <h2 style={{ fontSize: '1.2rem', marginTop: '5px' }}>{orders.filter(o => o.status === 'pending' || o.status === 'pending_approval').length}</h2>
                                 </div>
                                 <div className="glass-card" style={{ padding: '15px', position: 'relative', overflow: 'hidden' }}>
                                     <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#4caf50' }}></div>

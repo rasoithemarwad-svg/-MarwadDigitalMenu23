@@ -9,7 +9,7 @@ const OrderSchema = new mongoose.Schema({
     status: {
         type: String,
         default: 'pending',
-        enum: ['pending', 'preparing', 'out_for_delivery', 'delivered', 'completed', 'cancelled']
+        enum: ['pending_approval', 'pending', 'preparing', 'out_for_delivery', 'delivered', 'completed', 'cancelled']
     },
     timestamp: { type: Date, default: Date.now },
     paymentMode: String,

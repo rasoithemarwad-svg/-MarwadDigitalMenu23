@@ -479,13 +479,28 @@ const CustomerView = () => {
             return;
         }
 
-        // Calculate distance from restaurant
-        const distance = calculateDistance(
+        if (cart.length === 0) {
+            setIsSubmittingOrder(false);
+            showAlert('Empty Cart', 'Please add items to your cart before ordering');
+            return;
+        }
+
+        const finalTotal = Math.max(0, cartTotal - discount.amount);
+        if (finalTotal === 0 && cartTotal > 0) {
+            // This might happen if discount >= total, which is fine, but good to know
+        } else if (finalTotal <= 0 && cartTotal === 0) {
+            setIsSubmittingOrder(false);
+            showAlert('Invalid Order', 'Order total cannot be zero');
+            return;
+        }
+
+        // Calculate distance from restaurant (Safe check)
+        const distance = deliveryForm.location ? calculateDistance(
             deliveryForm.location.lat,
             deliveryForm.location.lng,
             restaurantCoords.lat,
             restaurantCoords.lng
-        );
+        ) : 0;
 
         const order = {
             tableId: 'delivery',
