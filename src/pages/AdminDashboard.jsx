@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, CheckCircle, Clock, Timer, User, RefreshCcw, QrCode, ClipboardList, ScanLine, Receipt, BarChart3, Calendar, ChevronRight, BellRing, X, Utensils, Plus, Trash2, LogOut } from 'lucide-react';
 import { socket } from '../socket';
+import QRScannerComp from '../components/QRScanner';
+import QRManager from '../components/QRManager';
 
 // const socket = io(window.location.origin); // Connects to the host that served this page
 
@@ -283,11 +285,6 @@ const AdminDashboard = () => {
         socket.on('login-success', (userData) => {
             setCurrentUser(userData);
             localStorage.setItem('marwad_user', JSON.stringify(userData));
-
-            // Redirect delivery partners to their dedicated page
-            if (userData.role === 'DELIVERY') {
-                window.location.href = '/delivery-partner';
-            }
         });
 
         socket.on('login-error', (error) => {
@@ -300,13 +297,15 @@ const AdminDashboard = () => {
             try {
                 const parsedUser = JSON.parse(savedUser);
                 // INVALIDATE OLD SESSIONS (ADMIN/MANAGER) OR UNKNOWN ROLES
-                if (!['OWNER', 'STAFF', 'DELIVERY'].includes(parsedUser.role)) {
+                if (!['OWNER', 'STAFF', 'DELIVERY', 'ADMIN', 'MANAGER'].includes(parsedUser.role)) {
                     console.log("Cleaning stale old session...");
                     localStorage.removeItem('marwad_user');
                     setCurrentUser(null);
                 } else if (parsedUser.role === 'DELIVERY') {
-                    // Redirect delivery partners to their page
-                    window.location.href = '/delivery-partner';
+                    // Don't auto-redirect, just clear if on admin page to allow new login
+                    console.log("Delivery user on admin page - clearing session to allow admin login");
+                    localStorage.removeItem('marwad_user');
+                    setCurrentUser(null);
                 } else {
                     console.log(`Resuming ${parsedUser.role} session`);
                     setCurrentUser(parsedUser);
@@ -1096,7 +1095,7 @@ const AdminDashboard = () => {
                                     </button>
                                 </div>
                                 <section><h3 className="gold-text" style={{ marginBottom: '15px' }}>Scan Any QR</h3>
-                                    <QRScanner onScanSuccess={(txt) => {
+                                    <QRScannerComp onScanSuccess={(txt) => {
                                         // Handle Table Redirect logic
                                         if (txt.includes('/table/')) {
                                             const parts = txt.split('/table/');
@@ -1633,11 +1632,11 @@ const AdminDashboard = () => {
                     <button onClick={() => setActiveTab('manual')} style={{ background: 'none', border: 'none', color: activeTab === 'manual' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Plus size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Quick Bill</span></button>
                     <button onClick={() => setActiveTab('menu')} style={{ background: 'none', border: 'none', color: activeTab === 'menu' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Utensils size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Menu</span></button>
 
-                    {currentUser.role === 'OWNER' && (
+                    {(currentUser?.role === 'OWNER' || currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                         <button onClick={() => setActiveTab('expenses')} style={{ background: 'none', border: 'none', color: activeTab === 'expenses' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><Receipt size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Exp.</span></button>
                     )}
 
-                    {currentUser.role === 'OWNER' && (
+                    {(currentUser?.role === 'OWNER' || currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER') && (
                         <>
                             <button onClick={() => setActiveTab('reports')} style={{ background: 'none', border: 'none', color: activeTab === 'reports' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><BarChart3 size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>Reports</span></button>
                             <button onClick={() => setActiveTab('qr')} style={{ background: 'none', border: 'none', color: activeTab === 'qr' ? 'var(--primary)' : 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', cursor: 'pointer', transition: 'var(--transition)' }}><QrCode size={24} /><span style={{ fontSize: '0.7rem', fontWeight: 600 }}>QR</span></button>

@@ -171,6 +171,8 @@ const CustomerView = () => {
         }
     }, [deliveryForm.phone, socket]);
 
+    const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+
     // Calculate Discount
     useEffect(() => {
         let newDiscount = { amount: 0, reason: '' };
@@ -384,7 +386,6 @@ const CustomerView = () => {
         });
     };
 
-    const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
 
     const placeOrder = () => {
         if (tableId === 'delivery') {
