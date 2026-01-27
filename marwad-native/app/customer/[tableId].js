@@ -254,7 +254,7 @@ export default function CustomerView() {
                     {/* Menu List */}
                     <FlatList
                         data={filteredMenu}
-                        keyExtractor={item => item.id.toString()}
+                        keyExtractor={item => item._id || item.id || Math.random().toString()}
                         contentContainerStyle={{ padding: 10, paddingBottom: 100 }}
                         renderItem={({ item }) => (
                             <StyledView className="flex-row bg-white/5 rounded-xl mb-4 overflow-hidden border border-white/5">
