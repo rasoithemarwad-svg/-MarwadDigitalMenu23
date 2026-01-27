@@ -8,7 +8,7 @@ export default {
         "orientation": "portrait",
         "icon": APP_TYPE === 'delivery' ? "./assets/icon-delivery.png" : "./assets/icon.png",
         "userInterfaceStyle": "light",
-        "newArchEnabled": false,
+        "newArchEnabled": true,
         "splash": {
             "image": "./assets/splash-icon.png",
             "resizeMode": "contain",
