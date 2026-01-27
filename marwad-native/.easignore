@@ -1,0 +1,16 @@
+# Exclude node_modules from EAS upload (it will be installed on the builder)
+node_modules/
+
+# Exclude native build folders
+ios/
+android/
+
+# Exclude cache and logs
+.expo/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Exclude web build
+web-build/
+dist/
