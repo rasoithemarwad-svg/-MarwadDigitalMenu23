@@ -386,6 +386,11 @@ io.on('connection', async (socket) => {
         }
     });
 
+    // Handle rider location updates
+    socket.on('update-rider-location', (location) => {
+        io.emit('rider-moved', location);
+    });
+
 
     socket.on('get-menu', async () => {
         const menu = await MenuItem.find({});

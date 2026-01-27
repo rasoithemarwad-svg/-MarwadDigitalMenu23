@@ -4,6 +4,8 @@ const OrderSchema = new mongoose.Schema({
     tableId: String,
     items: Array,
     total: Number,
+    subtotal: Number,
+    discount: { type: Number, default: 0 },
     status: {
         type: String,
         default: 'pending',

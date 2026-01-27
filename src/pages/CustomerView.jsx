@@ -48,6 +48,8 @@ const CustomerView = () => {
     const [isSubmittingOrder, setIsSubmittingOrder] = useState(false); // Loading state for order submission
     const [waitingForApproval, setWaitingForApproval] = useState(false); // Waiting for admin approval
     const [orderStatusMessage, setOrderStatusMessage] = useState(''); // Success or rejection message
+    const [discount, setDiscount] = useState({ amount: 0, reason: '' });
+    const [isFirstTimeCustomer, setIsFirstTimeCustomer] = useState(false);
 
 
 
@@ -95,6 +97,11 @@ const CustomerView = () => {
         });
 
         // Order Approval Events
+        socket.on('customer-eligibility-result', ({ isFirstTime }) => {
+            console.log("Discount Eligiblity:", isFirstTime);
+            setIsFirstTimeCustomer(isFirstTime);
+        });
+
         socket.on('order-approved', (data) => {
             if (data.tableId === tableId) {
                 console.log('✅ Order approved:', data);
@@ -151,6 +158,48 @@ const CustomerView = () => {
             window.removeEventListener('offline', handleOffline);
         };
     }, []);
+
+    // Check eligibility when phone changes
+    useEffect(() => {
+        if (deliveryForm.phone && deliveryForm.phone.length === 10) {
+            const timer = setTimeout(() => {
+                socket.emit('check-customer-eligibility', deliveryForm.phone);
+            }, 500); // Debounce
+            return () => clearTimeout(timer);
+        } else {
+            setIsFirstTimeCustomer(false);
+        }
+    }, [deliveryForm.phone, socket]);
+
+    // Calculate Discount
+    useEffect(() => {
+        let newDiscount = { amount: 0, reason: '' };
+
+        let volumeDiscount = 0;
+        let volumeReason = '';
+
+        if (cartTotal > 2500) {
+            volumeDiscount = cartTotal * 0.20;
+            volumeReason = 'Volume Discount (20%)';
+        } else if (cartTotal > 1000) {
+            volumeDiscount = cartTotal * 0.15;
+            volumeReason = 'Volume Discount (15%)';
+        }
+
+        let firstTimeDiscount = 0;
+        if (isFirstTimeCustomer) {
+            firstTimeDiscount = cartTotal * 0.10;
+        }
+
+        // Apply best discount
+        if (volumeDiscount >= firstTimeDiscount && volumeDiscount > 0) {
+            newDiscount = { amount: Math.floor(volumeDiscount), reason: volumeReason };
+        } else if (firstTimeDiscount > volumeDiscount) {
+            newDiscount = { amount: Math.floor(firstTimeDiscount), reason: 'First Order Discount (10%)' };
+        }
+
+        setDiscount(newDiscount);
+    }, [cartTotal, isFirstTimeCustomer]);
 
     // --- LOCATION RESTRICTION LOGIC ---
     const [locationAccess, setLocationAccess] = useState('pending'); // 'pending', 'granted', 'denied', 'far', 'testing'
@@ -365,7 +414,9 @@ const CustomerView = () => {
                 category: i.category,
                 portion: i.cartId.includes('-') ? i.cartId.split('-')[1] : null
             })),
-            total: cartTotal,
+            total: Math.max(0, cartTotal - discount.amount),
+            subtotal: cartTotal,
+            discount: discount.amount,
             // Table orders don't need approval - instant confirmation
         };
 
@@ -443,7 +494,9 @@ const CustomerView = () => {
                 qty: i.qty,
                 category: i.category
             })),
-            total: cartTotal,
+            total: Math.max(0, cartTotal - discount.amount),
+            subtotal: cartTotal,
+            discount: discount.amount,
             status: 'pending_approval', // NEW: Delivery orders also need approval
             isDelivery: true,
             deliveryDetails: {
@@ -818,10 +871,18 @@ const CustomerView = () => {
                                                     <span style={{ color: 'var(--text-secondary)' }}>Item Total</span>
                                                     <span>₹{cartTotal}</span>
                                                 </div>
+
+                                                {discount.amount > 0 && (
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '0.9rem', color: '#4caf50' }}>
+                                                        <span>{discount.reason}</span>
+                                                        <span>- ₹{discount.amount}</span>
+                                                    </div>
+                                                )}
+
                                                 <div style={{ height: '1px', background: 'var(--glass-border)', margin: '10px 0' }} />
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '1.1rem' }}>
                                                     <span>Grand Total</span>
-                                                    <span className="gold-text">₹{cartTotal}</span>
+                                                    <span className="gold-text">₹{Math.max(0, cartTotal - discount.amount)}</span>
                                                 </div>
                                             </div>
 
@@ -844,7 +905,7 @@ const CustomerView = () => {
                                                 ) : (
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                         <ShoppingCart size={20} />
-                                                        <span style={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>PLACE ORDER NOW (₹{cartTotal})</span>
+                                                        <span style={{ fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>PLACE ORDER NOW (₹{Math.max(0, cartTotal - discount.amount)})</span>
                                                     </div>
                                                 )}
                                             </button>
