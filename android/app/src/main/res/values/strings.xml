@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Marwad Menu</string>
-    <string name="title_activity_main">Marwad Menu</string>
-    <string name="package_name">com.marwad.app</string>
-    <string name="custom_url_scheme">com.marwad.app</string>
-</resources>

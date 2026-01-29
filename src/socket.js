@@ -1,27 +1,23 @@
-import { io } from 'socket.io-client';
-
-// Automatically detect environment
-// If running in development (localhost), use window.location.origin (which is localhost:3001 via proxy)
-// If running in production (built APK/site), use the Render.com URL
 const MATCH_PROD_URL = 'digital-marwad-1.onrender.com';
 const PROD_URL = 'https://digital-marwad-1.onrender.com';
 
-let socketUrl;
+let socketUrl = window.location.origin;
 
-if (import.meta.env.DEV) {
-    // Development mode
-    socketUrl = window.location.origin;
-} else {
-    // Production mode (APK or deployed site)
-    socketUrl = PROD_URL;
+// Smart Detection for Development/Split Environment
+// If we are running on a dev port (typically 5173 for Vite), point to the backend port (3001)
+// keeping the same hostname (localhost or IP)
+if (window.location.port && window.location.port !== '3001' && !window.location.hostname.includes('onrender.com')) {
+    // If we're on port 8085 (User's case) or 5173 (Dev), target port 3001
+    // This assumes the backend is always running on 3001 locally/LAN
+    const backendPort = '3001';
+    socketUrl = `${window.location.protocol}//${window.location.hostname}:${backendPort}`;
 }
 
-console.log(`🔌 Initializing Socket Mode: ${import.meta.env.DEV ? 'DEV' : 'PROD'}`);
-console.log(`📡 Connecting to: ${socketUrl}`);
+console.log(`🔌 Socket connecting to: ${socketUrl}`);
 
 export const socket = io(socketUrl, {
-    transports: ['websocket', 'polling'], // Allow fallback
+    transports: ['websocket', 'polling'],
     reconnection: true,
-    reconnectionAttempts: 10,
+    reconnectionAttempts: 20,
     reconnectionDelay: 1000,
 });

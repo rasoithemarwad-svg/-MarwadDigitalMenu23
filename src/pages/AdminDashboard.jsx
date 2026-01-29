@@ -1092,7 +1092,7 @@ const AdminDashboard = () => {
                                         className="btn-primary"
                                         style={{ padding: '10px 20px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}
                                     >
-                                        <QrCode size={18} /> Print All QR Codes
+                                        <QrCode size={18} /> Download / Print QRs
                                     </button>
                                 </div>
                                 <section><h3 className="gold-text" style={{ marginBottom: '15px' }}>Scan Any QR</h3>

@@ -32,10 +32,8 @@ const distPath = path.join(__dirname, 'dist');
 // Global States
 let isKitchenOpen = true;
 
-// 2. MongoDB Connection with auto-reconnect (NO MANUAL RESTART NEEDED)
-let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = 5;
-const RECONNECT_INTERVAL_BASE = 5000; // 5 seconds
+// 2. MongoDB Connection with optimized settings
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function connectMongoDB() {
     if (!process.env.MONGODB_URI) {
@@ -52,53 +50,42 @@ async function connectMongoDB() {
             },
             connectTimeoutMS: 30000,
             socketTimeoutMS: 45000,
-            bufferCommands: true // Re-enable buffering to prevent immediate failure
+            maxPoolSize: 10,  // Maintain up to 10 socket connections
+            minPoolSize: 1,   // Keep at least 1 connection open
+            bufferCommands: true,
+            autoIndex: false  // Don't build indexes in production (performance)
         });
 
         console.log('✅ Connected to MongoDB');
-        reconnectAttempts = 0; // Reset on successful connection
 
-        await initializeData().catch(err => console.error('❌ Data initialization error:', err));
     } catch (err) {
-        console.error('❌ MongoDB Connection Error:', err.message);
-
-        // Auto-reconnect with exponential backoff
-        if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-            reconnectAttempts++;
-            const delay = RECONNECT_INTERVAL_BASE * Math.pow(2, reconnectAttempts - 1);
-            console.log(`⏳ Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay / 1000}s...`);
-            setTimeout(connectMongoDB, delay);
-        } else {
-            console.error('❌ Max reconnection attempts reached. Server will continue without database.');
-        }
+        console.error('❌ MongoDB Initial Connection Error:', err.message);
+        console.log('🔄 Retrying in 5 seconds...');
+        await wait(5000);
+        connectMongoDB();
     }
 }
 
 // Event handlers for connection lifecycle
 mongoose.connection.on('error', err => {
-    console.error('❌ Mongoose Connection Error Event:', err);
+    console.error('❌ Mongoose Connection Error:', err.message);
 });
 
 mongoose.connection.on('disconnected', () => {
-    console.log('⚠️ Mongoose Disconnected');
-
-    // Auto-reconnect on disconnect (production reliability)
-    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-        console.log('🔄 Attempting automatic reconnection...');
-        connectMongoDB();
-    }
+    console.warn('⚠️ Mongoose Disconnected - Driver will attempt auto-reconnect...');
+    // Do NOT manually call connect() here; Mongoose/Driver handles this automatically.
+    // Manually calling it can cause race conditions or duplicate connection pools.
 });
 
 mongoose.connection.on('reconnected', () => {
     console.log('✅ MongoDB Reconnected successfully');
-    reconnectAttempts = 0;
 });
 
 // Initial connection
 connectMongoDB();
 
 // Global check for database readiness
-const checkDB = () => mongoose.connection.readyState === 1;
+const checkDB = () => mongoose.users && mongoose.connection.readyState === 1;
 
 // Port Data from JSON to DB if empty
 async function initializeData() {
@@ -159,7 +146,7 @@ app.get('*', (req, res) => {
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: process.env.RENDER_EXTERNAL_URL || "*",
+        origin: true, // Reflects the request origin (allows all with credentials)
         methods: ["GET", "POST"],
         credentials: true
     },
@@ -183,7 +170,21 @@ io.on('connection', async (socket) => {
         socket.emit('settings-updated', settingsObj);
     } catch (err) {
         console.error('❌ Socket initialization error:', err);
+        // Mock Settings Fallback
+        socket.emit('settings-updated', { deliveryRange: '5000', restaurantLat: '26.909919', restaurantLng: '75.722024' });
     }
+
+    socket.on('update-settings', async (newSettings) => {
+        try {
+            await Setting.updateOne({ key: 'deliveryRange' }, { value: newSettings.deliveryRange }, { upsert: true });
+            await Setting.updateOne({ key: 'restaurantLat' }, { value: newSettings.restaurantLat }, { upsert: true });
+            await Setting.updateOne({ key: 'restaurantLng' }, { value: newSettings.restaurantLng }, { upsert: true });
+            io.emit('settings-updated', newSettings); // Broadcast change
+        } catch (err) {
+            console.warn('⚠️ Settings DB Error, using Mock Update');
+            io.emit('settings-updated', newSettings); // Mock Broadcast
+        }
+    });
 
     socket.on('check-customer-eligibility', async (phone) => {
         try {
@@ -241,8 +242,68 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('get-orders', async () => {
-        const orders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
-        socket.emit('orders-updated', orders);
+        try {
+            const orders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
+            socket.emit('orders-updated', orders);
+        } catch (err) {
+            console.warn('⚠️ DB Error, serving MOCK ORDERS');
+            const MOCK_ORDERS = [
+                { _id: '101', tableId: '5', items: [{ name: 'Masala Chai', qty: 2, price: 20 }], total: 40, status: 'pending', timestamp: new Date().toISOString() },
+                { _id: '102', tableId: 'HUT', items: [{ name: 'Veg Burger', qty: 1, price: 99 }], total: 99, status: 'completed', timestamp: new Date(Date.now() - 3600000).toISOString() },
+                { _id: '103', tableId: 'DELIVERY', customerName: 'Raju', isDelivery: true, items: [{ name: 'Paneer Tikka', qty: 1, price: 250 }], total: 250, status: 'pending', deliveryDetails: { customerPhone: '9876543210', deliveryAddress: 'Main St' }, timestamp: new Date().toISOString() }
+            ];
+            socket.emit('orders-updated', MOCK_ORDERS);
+        }
+    });
+
+    socket.on('get-menu', async () => {
+        try {
+            const menu = await Menu.find({});
+            if (!menu || menu.length === 0) throw new Error("Empty DB");
+            socket.emit('menu-updated', menu);
+        } catch (err) {
+            console.warn('⚠️ DB Error/Empty, serving MOCK DATA');
+            const MOCK_MENU = [
+                { _id: '1', name: 'Masala Chai', price: 20, category: 'CAFE', subCategory: 'Hot', image: 'https://via.placeholder.com/150', description: 'Spicy Indian Tea', isAvailable: true },
+                { _id: '2', name: 'Aloo Paratha', price: 80, category: 'RESTAURANT', subCategory: 'Breakfast', image: 'https://via.placeholder.com/150', description: 'Stuffed bread with butter', isAvailable: true },
+                { _id: '3', name: 'Veg Burger', price: 99, category: 'HUT', subCategory: 'Snacks', image: 'https://via.placeholder.com/150', description: 'Crispy patty with cheese', isAvailable: true },
+                { _id: '4', name: 'Paneer Tikka', price: 250, category: 'RESTAURANT', subCategory: 'Starters', image: 'https://via.placeholder.com/150', description: 'Grilled cottage cheese', isAvailable: true },
+            ];
+            socket.emit('menu-updated', MOCK_MENU);
+        }
+    });
+
+    socket.on('update-menu-item', async (item) => {
+        try {
+            await Menu.findByIdAndUpdate(item._id, item, { upsert: true });
+            const menu = await Menu.find({});
+            io.emit('menu-updated', menu);
+        } catch (err) {
+            console.warn('⚠️ Menu Update (Mock Mode)');
+            io.emit('menu-updated', [item]); // In mock mode, just echo back the item to update UI temporarily
+        }
+    });
+
+    socket.on('add-menu-item', async (item) => {
+        try {
+            const newItem = new Menu(item);
+            await newItem.save();
+            const menu = await Menu.find({});
+            io.emit('menu-updated', menu);
+        } catch (err) {
+            console.warn('⚠️ Menu Add (Mock Mode)');
+            // Mock add logic not persistent without DB
+        }
+    });
+
+    socket.on('delete-menu-item', async (id) => {
+        try {
+            await Menu.findByIdAndDelete(id);
+            const menu = await Menu.find({});
+            io.emit('menu-updated', menu);
+        } catch (err) {
+            console.warn('⚠️ Menu Delete (Mock Mode)');
+        }
     });
 
     socket.on('place-order', async (orderData) => {
@@ -494,6 +555,14 @@ io.on('connection', async (socket) => {
         const updatedExpenses = await Expense.find({}).sort({ date: -1 });
         io.emit('expenses-updated', updatedExpenses);
     });
+
+    socket.on('get-settings', async () => {
+        const settings = await Setting.find({});
+        const settingsObj = {};
+        settings.forEach(s => settingsObj[s.key] = s.value);
+        socket.emit('settings-updated', settingsObj);
+    });
+
 
     socket.on('update-settings', async (settings) => {
         for (const [key, value] of Object.entries(settings)) {

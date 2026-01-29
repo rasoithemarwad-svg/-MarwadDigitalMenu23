@@ -8,7 +8,7 @@ export default {
         "orientation": "portrait",
         "icon": APP_TYPE === 'delivery' ? "./assets/icon-delivery.png" : "./assets/icon.png",
         "userInterfaceStyle": "light",
-        "newArchEnabled": true,
+        "newArchEnabled": false,
         "splash": {
             "image": "./assets/splash-icon.png",
             "resizeMode": "contain",
@@ -30,9 +30,32 @@ export default {
             "favicon": "./assets/favicon.png"
         },
         "extra": {
+            "appType": APP_TYPE,
             "eas": {
-                "projectId": "30a6377a-bda8-45c9-b605-0bd282000c3e"
+                "projectId": "b53c5e4a-14e0-45ec-a76d-df87799681fc"
             }
-        }
+        },
+        "plugins": [
+            [
+                "expo-camera",
+                {
+                    "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan QR codes."
+                }
+            ],
+            [
+                "expo-location",
+                {
+                    "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to access your location for delivery tracking."
+                }
+            ],
+            [
+                "expo-build-properties",
+                {
+                    "android": {
+                        "usesCleartextTraffic": true
+                    }
+                }
+            ]
+        ]
     }
 };

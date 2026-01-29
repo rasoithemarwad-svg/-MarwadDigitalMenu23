@@ -6,7 +6,11 @@ import { Shield, Lock, Eye, EyeOff } from 'lucide-react-native';
 import io from 'socket.io-client';
 import { API_URL } from '../../constants/Config';
 
+console.log('🔌 Connecting to API:', API_URL);
 const socket = io(API_URL);
+
+socket.on('connect', () => console.log('✅ Socket Connected:', socket.id));
+socket.on('connect_error', (err) => console.error('❌ Socket Connection Error:', err));
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
@@ -34,9 +38,16 @@ export default function AdminLogin() {
             Alert.alert('Login Failed', error);
         });
 
+        // NEW: Handle connection errors
+        socket.on('connect_error', (err) => {
+            setLoading(false);
+            Alert.alert('Connection Error', 'Cannot reach server.\nCheck Wi-Fi or Firewall.\n' + err.message);
+        });
+
         return () => {
             socket.off('login-success');
             socket.off('login-error');
+            socket.off('connect_error');
         };
     }, []);
 
@@ -87,6 +98,11 @@ export default function AdminLogin() {
                     >
                         <StyledText className="text-black font-bold text-lg">{loading ? 'Verifying...' : 'Unlock Dashboard'}</StyledText>
                     </StyledTouchableOpacity>
+
+                    {/* Debug Connection Status */}
+                    <StyledText className="text-gray-500 text-center text-xs mt-2">
+                        Server: {socket.connected ? '🟢 Connected' : '🔴 Disconnected'} ({API_URL})
+                    </StyledText>
 
                     <StyledTouchableOpacity
                         className="mt-6"

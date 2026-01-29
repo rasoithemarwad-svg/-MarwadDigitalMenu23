@@ -7,6 +7,18 @@
             "android": {
                 "buildType": "apk"
             }
+        },
+        "production-admin": {
+            "extends": "production",
+            "env": {
+                "APP_TYPE": "admin"
+            }
+        },
+        "production-delivery": {
+            "extends": "production",
+            "env": {
+                "APP_TYPE": "delivery"
+            }
         }
     }
 }

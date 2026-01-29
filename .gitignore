@@ -1,4 +1,8 @@
 node_modules
+marwad-native/node_modules
+marwad-native/.expo
+marwad-native/android
+marwad-native/ios
 dist
 .env
 *.log

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput, Modal, SafeAreaView, ScrollView } from 'react-native';
 import { styled } from 'nativewind';
 import { useRouter } from 'expo-router';
 import { Shield, Utensils, ChefHat } from 'lucide-react-native';
+import Constants from 'expo-constants';
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
@@ -13,6 +14,25 @@ export default function AppHome() {
     const router = useRouter();
     const [tableInput, setTableInput] = useState('');
     const [isTableModalOpen, setIsTableModalOpen] = useState(false);
+
+    // Auto-redirect for Delivery APK
+    useEffect(() => {
+        const checkAppType = () => {
+            const appType =
+                Constants.expoConfig?.extra?.appType ||
+                Constants.manifest?.extra?.appType ||
+                process.env.EXPO_PUBLIC_APP_TYPE;
+
+            if (appType === 'delivery') {
+                // Delivery APK should go directly to delivery dashboard
+                router.replace('/delivery/dashboard');
+            }
+        };
+
+        checkAppType();
+        // Retry after small delay to ensure router is ready
+        setTimeout(checkAppType, 500);
+    }, []);
 
     const handleCustomerEnter = () => {
         if (tableInput.trim()) {
@@ -85,7 +105,9 @@ export default function AppHome() {
 
                 </StyledView>
 
-                <StyledText className="absolute bottom-5 text-gray-600 text-xs">Version 1.0.0 (Native)</StyledText>
+                <StyledText className="absolute bottom-5 text-gray-600 text-xs">
+                    v1.0.0 ({Constants.expoConfig?.extra?.appType || Constants.manifest?.extra?.appType || process.env.EXPO_PUBLIC_APP_TYPE || 'unknown'})
+                </StyledText>
 
                 {/* Modal for Table Input */}
                 <Modal

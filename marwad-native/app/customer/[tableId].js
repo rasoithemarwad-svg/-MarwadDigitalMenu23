@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, TouchableOpacity, Image, FlatList, Modal, Alert, ActivityIndicator, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, FlatList, Modal, Alert, ActivityIndicator, SafeAreaView, ScrollView, Linking } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { styled } from 'nativewind';
 import io from 'socket.io-client';
@@ -9,17 +9,23 @@ import { API_URL } from '../../constants/Config';
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
+const StyledTextInput = styled(TextInput);
 const StyledTouchableOpacity = styled(TouchableOpacity);
 
 // Connect to backend
 const socket = io(API_URL);
 
+socket.on('connect', () => console.log('✅ Customer Socket Connected'));
+socket.on('connect_error', (err) => console.error('❌ Customer Socket Error:', err));
+socket.on('menu-updated', (data) => console.log('🍔 Menu Received:', data?.length));
+
 const ACTIONS = [
     { id: 'HUT', label: 'THE HUT', icon: <UtensilsIcon size={28} color="#d4af37" />, color: '#d4af37', desc: 'Private Dining' },
     { id: 'CAFE', label: 'CAFE', icon: <Clock size={28} color="#ff4d4d" />, color: '#ff4d4d', desc: 'Quick Bites' },
     { id: 'RESTAURANT', label: 'RESTAURANT', icon: <Star size={28} color="#8b0000" />, color: '#8b0000', desc: 'Fine Dining' },
+    { id: 'GYM', label: 'GYM DIET', icon: <Star size={28} color="#22c55e" />, color: '#22c55e', desc: 'Fitness Meals' },
     { id: 'SERVICE', label: 'SERVICE BELL', icon: <Bell size={28} color="#ffd700" />, color: '#ffd700', desc: 'Instant Help' },
-    { id: 'RATE', label: 'RATE & WIN', icon: <Star size={28} color="#4caf50" />, color: '#4caf50', desc: 'Get Rewards' },
+    { id: 'RATE', label: 'RATING', icon: <Star size={28} color="#fbbf24" />, color: '#fbbf24', desc: 'Review Us' },
 ];
 
 // Helper Icon Wrapper
@@ -41,9 +47,11 @@ export default function CustomerView() {
     const [locationStatus, setLocationStatus] = useState('pending'); // pending, granted, denied, far
     const [isKitchenOpen, setIsKitchenOpen] = useState(true);
     const [deliveryRadius, setDeliveryRadius] = useState(5.0);
+    const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
+    const [deliveryForm, setDeliveryForm] = useState({ name: '', phone: '', address: '' });
 
     // Restaurant Coords
-    const RESTAURANT_LOC = { lat: 26.909919, lng: 75.722024 };
+    const [restaurantLoc, setRestaurantLoc] = useState({ lat: 26.909919, lng: 75.722024 });
 
     // Calculate Distance
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -65,7 +73,13 @@ export default function CustomerView() {
         socket.on('menu-updated', (newMenu) => setMenuItems(newMenu));
         socket.on('kitchen-status-updated', (status) => setIsKitchenOpen(status));
         socket.on('settings-updated', (settings) => {
-            if (settings?.deliveryRadiusKm) setDeliveryRadius(settings.deliveryRadiusKm);
+            if (settings?.deliveryRange) setDeliveryRadius(parseFloat(settings.deliveryRange)); // Note: settings stores it as String usually, also key might be deliveryRange from AdminDashboard
+            if (settings?.restaurantLat && settings?.restaurantLng) {
+                setRestaurantLoc({
+                    lat: parseFloat(settings.restaurantLat),
+                    lng: parseFloat(settings.restaurantLng)
+                });
+            }
         });
 
         // Location Check
@@ -84,7 +98,7 @@ export default function CustomerView() {
             let location = await Location.getCurrentPositionAsync({});
             const distance = calculateDistance(
                 location.coords.latitude, location.coords.longitude,
-                RESTAURANT_LOC.lat, RESTAURANT_LOC.lng
+                restaurantLoc.lat, restaurantLoc.lng
             );
 
             const allowed = (tableId?.toLowerCase() === 'delivery') ? deliveryRadius : 0.2; // 200m or delivery radius
@@ -105,9 +119,12 @@ export default function CustomerView() {
             const available = item.isAvailable !== false;
             const mainMatch = activeCategory === 'All' || item.category === activeCategory;
             const subMatch = !activeSubCategory || item.subCategory === activeSubCategory;
-            return available && mainMatch && subMatch;
+            // Exclude HUT items for delivery orders
+            const isDelivery = tableId?.toLowerCase() === 'delivery';
+            const notHut = !(isDelivery && item.category === 'HUT');
+            return available && mainMatch && subMatch && notHut;
         });
-    }, [menuItems, activeCategory, activeSubCategory]);
+    }, [menuItems, activeCategory, activeSubCategory, tableId]);
 
     const subCategories = useMemo(() => {
         return [...new Set(menuItems.filter(item => item.category === activeCategory).map(i => i.subCategory).filter(Boolean))];
@@ -148,6 +165,28 @@ export default function CustomerView() {
     const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
 
     const placeOrder = () => {
+        if (tableId === 'delivery') {
+            setIsDeliveryModalOpen(true);
+            setIsCartOpen(false);
+            return;
+        }
+        submitOrder();
+    };
+
+    const submitDeliveryOrder = () => {
+        if (!deliveryForm.name || !deliveryForm.phone || !deliveryForm.address) {
+            Alert.alert("Missing Details", "Please fill all fields.");
+            return;
+        }
+        submitOrder({
+            customerName: deliveryForm.name,
+            customerPhone: deliveryForm.phone,
+            deliveryAddress: deliveryForm.address
+        });
+        setIsDeliveryModalOpen(false);
+    };
+
+    const submitOrder = (deliveryDetails = null) => {
         const order = {
             tableId,
             items: cart.map(i => ({
@@ -158,13 +197,16 @@ export default function CustomerView() {
                 portion: i.cartId.includes('-') ? i.cartId.split('-')[1] : null
             })),
             total: cartTotal,
+            deliveryDetails,
+            isDelivery: tableId === 'delivery'
         };
         socket.emit('place-order', order);
-        Alert.alert("Order Placed!", "Your order has been sent to the kitchen.");
         setCart([]);
         setIsCartOpen(false);
+        Alert.alert("Order Placed", "Your order has been sent to the kitchen!");
         setView('landing');
     };
+
 
     const handleAction = (id) => {
         if (id === 'SERVICE') {
@@ -173,7 +215,11 @@ export default function CustomerView() {
             return;
         }
         if (id === 'RATE') {
-            // Open URL logic
+            // Open Google Review for The Marwad Rasoi
+            const googleReviewUrl = 'https://maps.app.goo.gl/YzdytBUJ11v73N8q8';
+            Linking.openURL(googleReviewUrl).catch(err => {
+                Alert.alert('Error', 'Could not open review page');
+            });
             return;
         }
         setActiveCategory(id);
@@ -190,7 +236,7 @@ export default function CustomerView() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-neutral-900">
+        <StyledView className="flex-1 bg-neutral-900">
             <Stack.Screen options={{ headerShown: false }} />
 
             {view === 'landing' ? (
@@ -201,7 +247,17 @@ export default function CustomerView() {
                     </StyledView>
 
                     <StyledView className="flex-row flex-wrap justify-between">
-                        {ACTIONS.filter(a => a.id !== 'SERVICE' && a.id !== 'RATE').map(action => (
+                        {ACTIONS.filter(a => {
+                            const isDelivery = tableId?.toLowerCase() === 'delivery';
+
+                            // Always filter out SERVICE (shown separately below)
+                            if (a.id === 'SERVICE') return false;
+
+                            // Filter out HUT for delivery orders
+                            if (isDelivery && a.id === 'HUT') return false;
+
+                            return true;
+                        }).map(action => (
                             <StyledTouchableOpacity
                                 key={action.id}
                                 className="w-[48%] bg-white/5 p-4 rounded-xl mb-4 border border-white/10 items-center"
@@ -214,13 +270,16 @@ export default function CustomerView() {
                         ))}
                     </StyledView>
 
-                    <StyledTouchableOpacity
-                        className="w-full bg-yellow-500/20 p-5 rounded-xl border border-yellow-500/50 flex-row items-center justify-center mb-4"
-                        onPress={() => handleAction('SERVICE')}
-                    >
-                        <Bell size={24} color="#ffd700" style={{ marginRight: 10 }} />
-                        <StyledText className="text-yellow-500 font-bold text-lg">DING SERVICE BELL</StyledText>
-                    </StyledTouchableOpacity>
+                    {/* Show Service Bell only for non-delivery orders */}
+                    {tableId?.toLowerCase() !== 'delivery' && (
+                        <StyledTouchableOpacity
+                            className="w-full bg-yellow-500/20 p-5 rounded-xl border border-yellow-500/50 flex-row items-center justify-center mb-4"
+                            onPress={() => handleAction('SERVICE')}
+                        >
+                            <Bell size={24} color="#ffd700" style={{ marginRight: 10 }} />
+                            <StyledText className="text-yellow-500 font-bold text-lg">DING SERVICE BELL</StyledText>
+                        </StyledTouchableOpacity>
+                    )}
 
                 </ScrollView>
             ) : (
@@ -236,26 +295,56 @@ export default function CustomerView() {
                         </View>
                     </StyledView>
 
-                    {/* Sub Categories */}
-                    <View>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="p-2 bg-neutral-900/50">
-                            {subCategories.map(sub => (
+                    {/* Main Category Tabs */}
+                    <View className="bg-neutral-800 border-b border-white/5">
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="p-3">
+                            {ACTIONS.filter(a => {
+                                if (a.id === 'SERVICE' || a.id === 'RATE') return false;
+                                if (tableId?.toLowerCase() === 'delivery' && a.id === 'HUT') return false;
+                                return true;
+                            }).map(cat => (
                                 <StyledTouchableOpacity
-                                    key={sub}
-                                    onPress={() => setActiveSubCategory(sub)}
-                                    className={`px-4 py-2 rounded-full mr-2 ${activeSubCategory === sub ? 'bg-yellow-500' : 'bg-neutral-700'}`}
+                                    key={cat.id}
+                                    onPress={() => { setActiveCategory(cat.id); setActiveSubCategory(''); }}
+                                    className={`mr-4 pb-2 border-b-2 ${activeCategory === cat.id ? 'border-yellow-500' : 'border-transparent'}`}
                                 >
-                                    <StyledText className={`${activeSubCategory === sub ? 'text-black font-bold' : 'text-gray-300'}`}>{sub}</StyledText>
+                                    <StyledText className={`${activeCategory === cat.id ? 'text-yellow-500 font-bold' : 'text-gray-400 font-bold'}`}>
+                                        {cat.label}
+                                    </StyledText>
                                 </StyledTouchableOpacity>
                             ))}
                         </ScrollView>
                     </View>
+
+                    {/* Sub Categories */}
+                    {subCategories.length > 0 && (
+                        <View>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="p-2 bg-neutral-900/50">
+                                {subCategories.map(sub => (
+                                    <StyledTouchableOpacity
+                                        key={sub}
+                                        onPress={() => setActiveSubCategory(sub)}
+                                        className={`px-4 py-2 rounded-full mr-2 ${activeSubCategory === sub ? 'bg-yellow-500' : 'bg-neutral-700'}`}
+                                    >
+                                        <StyledText className={`${activeSubCategory === sub ? 'text-black font-bold' : 'text-gray-300'}`}>{sub}</StyledText>
+                                    </StyledTouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    )}
 
                     {/* Menu List */}
                     <FlatList
                         data={filteredMenu}
                         keyExtractor={item => item._id || item.id || Math.random().toString()}
                         contentContainerStyle={{ padding: 10, paddingBottom: 100 }}
+                        ListEmptyComponent={
+                            <View className="p-10 items-center">
+                                <Text className="text-white text-lg font-bold">No Menu Items Found</Text>
+                                <Text className="text-gray-500 text-sm mt-2">Socket: {socket.connected ? 'Connected' : 'Disconnected'}</Text>
+                                <Text className="text-gray-500 text-xs">{API_URL}</Text>
+                            </View>
+                        }
                         renderItem={({ item }) => (
                             <StyledView className="flex-row bg-white/5 rounded-xl mb-4 overflow-hidden border border-white/5">
                                 <Image source={{ uri: item.image }} style={{ width: 100, height: 100 }} resizeMode="cover" />
@@ -342,8 +431,28 @@ export default function CustomerView() {
                             </StyledView>
                         </StyledView>
                     </Modal>
+
+                    {/* Delivery Modal */}
+                    <Modal visible={isDeliveryModalOpen} animationType="slide" transparent={true}>
+                        <StyledView className="flex-1 justify-end bg-black/80">
+                            <StyledView className="bg-neutral-800 rounded-t-3xl p-5 h-[70%]">
+                                <StyledText className="text-white text-2xl font-bold mb-4">Delivery Details</StyledText>
+                                <StyledTextInput placeholder="Name" placeholderTextColor="#999" value={deliveryForm.name} onChangeText={t => setDeliveryForm({ ...deliveryForm, name: t })} className="bg-white/10 text-white p-4 rounded-xl mb-3" />
+                                <StyledTextInput placeholder="Phone" placeholderTextColor="#999" keyboardType="phone-pad" value={deliveryForm.phone} onChangeText={t => setDeliveryForm({ ...deliveryForm, phone: t })} className="bg-white/10 text-white p-4 rounded-xl mb-3" />
+                                <StyledTextInput placeholder="Address" placeholderTextColor="#999" multiline value={deliveryForm.address} onChangeText={t => setDeliveryForm({ ...deliveryForm, address: t })} className="bg-white/10 text-white p-4 rounded-xl mb-6 h-24" style={{ textAlignVertical: 'top' }} />
+
+                                <StyledTouchableOpacity onPress={submitDeliveryOrder} className="bg-yellow-500 p-4 rounded-xl items-center mb-3">
+                                    <StyledText className="text-black font-bold text-lg">CONFIRM ORDER</StyledText>
+                                </StyledTouchableOpacity>
+
+                                <StyledTouchableOpacity onPress={() => setIsDeliveryModalOpen(false)} className="bg-red-500/20 p-4 rounded-xl items-center">
+                                    <StyledText className="text-red-500 font-bold">CANCEL</StyledText>
+                                </StyledTouchableOpacity>
+                            </StyledView>
+                        </StyledView>
+                    </Modal>
                 </View>
             )}
-        </SafeAreaView>
+        </StyledView >
     );
 }
