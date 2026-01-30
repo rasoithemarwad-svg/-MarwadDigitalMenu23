@@ -1,3 +1,5 @@
+import { io } from 'socket.io-client';
+
 const MATCH_PROD_URL = 'digital-marwad-1.onrender.com';
 const PROD_URL = 'https://digital-marwad-1.onrender.com';
 

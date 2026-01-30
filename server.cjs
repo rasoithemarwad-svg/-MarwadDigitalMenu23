@@ -586,6 +586,24 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error('❌ FATAL UNHANDLED REJECTION at:', promise, 'reason:', reason);
 });
 
+// ---------------------------------------------
+// PREVENT RENDER SLEEP MODE (Keep-Alive)
+// ---------------------------------------------
+const RENDER_URL_PING = process.env.RENDER_EXTERNAL_URL || 'https://digital-marwad-1.onrender.com';
+const PING_INTERVAL = 14 * 60 * 1000; // 14 Minutes (Render sleeps after 15)
+
+if (process.env.NODE_ENV === 'production' || RENDER_URL_PING.includes('onrender')) {
+    console.log(`⏰ Keep-Alive System Active: Pinging ${RENDER_URL_PING} every 14 mins`);
+
+    setInterval(() => {
+        https.get(`${RENDER_URL_PING}/health`, (res) => { // Changed to /health as per existing code
+            console.log(`💓 Keep-Alive Ping: ${res.statusCode}`);
+        }).on('error', (err) => {
+            console.error('⚠️ Keep-Alive Ping Failed:', err.message);
+        });
+    }, PING_INTERVAL);
+}
+
 // 6. Server Start
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 STARTUP CONFIGURATION`);

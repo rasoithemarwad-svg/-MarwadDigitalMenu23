@@ -29,7 +29,8 @@ java -version
 
 # 4. Build Loop for 3 Versions
 $apps = @("admin", "staff", "delivery")
-$projectRoot = "C:\Users\lenovo\Documents\MarwadDigitalMenu\marwad-native"
+# Make portable: Use script execution location
+$projectRoot = "$PSScriptRoot\marwad-native"
 $outputDir = "$projectRoot\android\app\build\outputs\apk\release"
 
 foreach ($type in $apps) {
@@ -46,8 +47,30 @@ foreach ($type in $apps) {
     Write-Host "Running expo prebuild ($type)..."
     cmd /c "npx expo prebuild --clean --platform android --no-install"
     
+    # FIX: Ensure local.properties exists with SDK path
+    $sdkPath = "$env:LOCALAPPDATA\Android\Sdk"
+    if (Test-Path $sdkPath) {
+        $localProps = "$projectRoot\android\local.properties"
+        # Escape backslashes for properties file
+        $sdkPathEscaped = $sdkPath -replace "\\", "\\"
+        "sdk.dir=$sdkPathEscaped" | Out-File -FilePath $localProps -Encoding ascii
+        Write-Host "✅ Created local.properties pointing to SDK at $sdkPath" -ForegroundColor Green
+    }
+    else {
+        Write-Host "⚠️ WARNING: Android SDK not found at default location: $sdkPath" -ForegroundColor Yellow
+        Write-Host "Build may fail if ANDROID_HOME is not set globally." -ForegroundColor Yellow
+    }
+
     # Build APK
     Set-Location "$projectRoot\android"
+    
+    # FIX: Stop previous daemons and clean cache to prevent "Could not move temporary workspace" error
+    Write-Host "Cleaning Gradle Cache..."
+    cmd /c "gradlew --stop"
+    if (Test-Path ".gradle") {
+        Remove-Item ".gradle" -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    
     Write-Host "Compiling APK..."
     ./gradlew assembleRelease
     

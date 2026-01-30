@@ -495,7 +495,7 @@ const AdminDashboard = () => {
         }
     };
 
-    const tableGroups = orders.reduce((groups, order) => {
+    const tableGroups = (orders || []).reduce((groups, order) => {
         if (order.status === 'cancelled' || order.status === 'pending_approval') return groups;
         const tableId = order.tableId;
         if (!groups[tableId]) groups[tableId] = [];
@@ -503,20 +503,20 @@ const AdminDashboard = () => {
         return groups;
     }, {});
 
-    const todaysSales = salesHistory.filter(s => new Date(s.settledAt).toDateString() === new Date().toDateString());
+    const todaysSales = (salesHistory || []).filter(s => new Date(s.settledAt).toDateString() === new Date().toDateString());
     const todaysRevenue = todaysSales.reduce((acc, s) => acc + s.total, 0);
 
-    const thisMonthSales = salesHistory.filter(s => {
+    const thisMonthSales = (salesHistory || []).filter(s => {
         const d = new Date(s.settledAt);
         const now = new Date();
         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     });
     const thisMonthRevenue = thisMonthSales.reduce((acc, s) => acc + s.total, 0);
 
-    const todaysExpenses = expenses.filter(e => new Date(e.date).toDateString() === new Date().toDateString());
+    const todaysExpenses = (expenses || []).filter(e => new Date(e.date).toDateString() === new Date().toDateString());
     const todaysExpensesTotal = todaysExpenses.reduce((acc, e) => acc + e.amount, 0);
 
-    const thisMonthExpenses = expenses.filter(e => {
+    const thisMonthExpenses = (expenses || []).filter(e => {
         const d = new Date(e.date);
         const now = new Date();
         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
@@ -871,7 +871,7 @@ const AdminDashboard = () => {
                                 gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
                                 gap: '20px'
                             }}>
-                                {orders.filter(o => o.status !== 'completed' && o.status !== 'delivered' && o.status !== 'cancelled').map((order) => (
+                                {((orders || []).filter(o => o.status !== 'completed' && o.status !== 'delivered' && o.status !== 'cancelled') || []).map((order) => (
                                     <div key={order._id} className="glass-card" style={{ borderLeft: `8px solid ${getStatusColor(order.status)}`, display: 'flex', flexDirection: 'column' }}>
                                         <div style={{ padding: '20px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                             <div>
@@ -885,7 +885,7 @@ const AdminDashboard = () => {
                                         </div>
                                         <div style={{ padding: '20px', flex: 1 }}>
                                             <div style={{ paddingBottom: '15px' }}>
-                                                {order.items.map((it, i) => (
+                                                {(order.items || []).map((it, i) => (
                                                     <div key={i} style={{ fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between', marginBottom: '8px', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                                         <span style={{ fontWeight: 600 }}>{it.qty}x {it.name}</span>
                                                         <span style={{ opacity: 0.7 }}>₹{it.price * it.qty}</span>
