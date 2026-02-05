@@ -31,7 +31,7 @@ const PrintQRs = () => {
                 <div>
                     <h2 style={{ margin: 0 }}>QR Code Print Layout</h2>
                     <p style={{ margin: '5px 0 0 0', fontSize: '0.9rem', color: '#666' }}>
-                        Optimized for A4 paper. To Download: Click Button -> Select "Save as PDF".
+                        Optimized for A4 paper. To Download: Click Button to Select "Save as PDF".
                     </p>
                 </div>
                 <button
