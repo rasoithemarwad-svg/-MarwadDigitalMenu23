@@ -38,9 +38,10 @@ export default function Scanner({ onScan, onClose }) {
             <CameraView
                 onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
                 barcodeScannerSettings={{
-                    barcodeTypes: ["qr", "pdf417"],
+                    barcodeTypes: ["qr"],
                 }}
-                style={StyleSheet.absoluteFillObject}
+                facing="back"
+                style={{ flex: 1, width: '100%', height: '100%' }}
             />
 
             <View className="absolute top-10 right-4">

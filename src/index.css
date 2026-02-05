@@ -146,7 +146,6 @@ body {
   }
 }
 
-/* Loading Spinner Animation */
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -155,4 +154,13 @@ body {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-left-color: var(--primary);
+  animation: spin 1s linear infinite;
 }

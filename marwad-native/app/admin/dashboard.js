@@ -54,19 +54,38 @@ export default function AdminDashboard() {
     const handleScan = (data) => {
         setIsScannerOpen(false);
         try {
+            // 1. Handle Raw Table Numbers (e.g., "5")
+            const cleanData = data?.trim();
+            if (cleanData && !isNaN(cleanData) && parseInt(cleanData) > 0) {
+                Alert.alert("Scanned", `Table #${cleanData}`, [
+                    { text: "Go", onPress: () => router.push(`/customer/${cleanData}`) }
+                ]);
+                return;
+            }
+
+            // 2. Handle URL-based QRs
             if (data.includes('/customer/')) {
                 const parts = data.split('/customer/');
                 if (parts.length > 1) {
-                    const tableId = parts[1];
+                    let tableId = parts[1];
+                    // Remove query params if any
+                    if (tableId.includes('?')) tableId = tableId.split('?')[0];
+                    // Remove trailing slash if any
+                    if (tableId.endsWith('/')) tableId = tableId.slice(0, -1);
+
+                    tableId = tableId.trim();
+
                     Alert.alert("Scanned", `Redirecting to Table #${tableId}`, [
                         { text: "Go", onPress: () => router.push(`/customer/${tableId}`) }
                     ]);
                     return;
                 }
             }
-            Alert.alert("Scanned", `Code: ${data}`);
+
+            // 3. Fallback
+            Alert.alert("Scanned", `Data: ${data}\n(Not a valid table QR)`);
         } catch (e) {
-            Alert.alert("Error", "Invalid QR Code");
+            Alert.alert("Error", "Invalid QR Code format");
         }
     };
 

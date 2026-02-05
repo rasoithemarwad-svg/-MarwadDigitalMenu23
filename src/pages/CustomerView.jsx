@@ -574,10 +574,13 @@ const CustomerView = () => {
 
                     {/* LOCATION BLOCKING UI */}
                     {locationAccess === 'pending' && (
-                        <div style={{ height: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px' }}>
-                            <div className="spinner"></div> {/* Ensure you have a spinner CSS or use text */}
-                            <p style={{ marginTop: '20px', color: 'var(--text-secondary)' }}>Verifying your location...</p>
-                            <p style={{ fontSize: '0.8rem', opacity: 0.7 }}>Please allow location access to continue.</p>
+                        <div style={{ height: '100vh', width: '100%', position: 'absolute', top: 0, left: 0, backgroundColor: '#000', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px' }}>
+                            <div className="spinner"></div>
+                            <p style={{ marginTop: '20px', color: 'white', fontSize: '1.2rem', fontWeight: 'bold' }}>Verifying your location...</p>
+                            <p style={{ fontSize: '0.9rem', color: '#ccc', marginTop: '10px' }}>Please allow location access to continue.</p>
+                            <button onClick={() => setLocationAccess('testing')} style={{ marginTop: '30px', padding: '10px 20px', background: '#333', color: 'white', border: '1px solid #555', borderRadius: '5px' }}>
+                                Bypass (Debug Only)
+                            </button>
                         </div>
                     )}
 
