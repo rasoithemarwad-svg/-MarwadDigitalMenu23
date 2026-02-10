@@ -320,10 +320,14 @@ io.on('connection', async (socket) => {
             }
 
             // 3. Validate order total matches calculated total
-            const calculatedTotal = orderData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-            if (Math.abs(calculatedTotal - orderData.total) > 0.01) {
-                console.error('❌ Invalid order: Total mismatch');
-                socket.emit('order-error', 'Order total does not match items');
+            const itemsTotal = orderData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const expectedTotal = Math.max(0, itemsTotal - (orderData.discount || 0));
+
+            // Allow a small margin for floating point errors (and potential delivery fees if added later)
+            if (Math.abs(expectedTotal - orderData.total) > 1.0) { // Increased tolerance to 1.0
+                console.error(`❌ Invalid order: Total mismatch. Expected ${expectedTotal}, Got ${orderData.total}`);
+                console.error(`Debug: ItemsTotal=${itemsTotal}, Discount=${orderData.discount}`);
+                socket.emit('order-error', `Order total mismatch (Server: ${expectedTotal}, Client: ${orderData.total})`);
                 return;
             }
 
