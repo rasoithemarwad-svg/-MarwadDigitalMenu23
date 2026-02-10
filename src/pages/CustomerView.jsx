@@ -148,24 +148,29 @@ const CustomerView = () => {
         socket.on('order-placed-confirmation', (order) => {
             console.log("✅ Order placed successfully (Confirmation). ID:", order._id);
             localStorage.setItem('lastOrderId', order._id);
-            // Force update of debug info (could be done via state, but this is quick debug)
-            const debugDiv = document.getElementById('debug-info');
-            if (debugDiv) debugDiv.innerHTML = debugDiv.innerHTML.replace('None', order._id);
+            // Force update of debug info
+            const debugDiv = document.querySelector('#debug-info-overlay');
+            if (debugDiv) debugDiv.innerHTML = debugDiv.innerHTML.replace('OrderId: None', `OrderId: ${order._id}`);
         });
 
-        // BACKUP: Capture ID from broadcast if we are waiting and don't have an ID yet
+        // BACKUP: Capture ID from broadcast
         socket.on('new-order-alert', (order) => {
-            if (localStorage.getItem('lastOrderId')) return; // Already have it
+            const currentLastId = localStorage.getItem('lastOrderId');
+            if (currentLastId) return;
 
-            // If we are waiting for this table's order
-            if (order.tableId === tableId || (tableId === 'delivery' && order.isDelivery)) {
-                // Simple heuristic: If we pressed "Place Order" recently (waitingForApproval is true), assume this new order is ours.
-                // In a busy system with multiple delivery orders at exact same time, this has a tiny race condition risk, 
-                // but better than being stuck.
-                if (waitingForApproval) {
-                    console.log("⚠️ Capturing Order ID from broadcast (Backup):", order._id);
-                    localStorage.setItem('lastOrderId', order._id);
-                }
+            // Check if this order matches our table/type
+            const isMyTable = order.tableId === tableId;
+            const isMyDelivery = tableId === 'delivery' && order.isDelivery;
+
+            if (isMyTable || isMyDelivery) {
+                // We can't easily access 'waitingForApproval' state here because of closure staleness if not in dependency array.
+                // But we can check if the "Waiting" overlay is present in DOM as a hack, or just rely on localStorage being empty implies we might need it.
+                // Better: Check if we recently placed an order (timestamp in localStorage?).
+                // For now, let's just save it. If we aren't waiting, it doesn't hurt to have lastOrderId set.
+                console.log("⚠️ Capturing Order ID from broadcast (Backup):", order._id);
+                localStorage.setItem('lastOrderId', order._id);
+                const debugDiv = document.querySelector('#debug-info-overlay');
+                if (debugDiv) debugDiv.innerHTML = debugDiv.innerHTML.replace('OrderId: None', `OrderId: ${order._id}`);
             }
         });
 
@@ -1168,7 +1173,7 @@ const CustomerView = () => {
                                     />
 
                                     {/* DEBUG IN OVERLAY */}
-                                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '10px', fontSize: '10px', color: '#0f0', marginBottom: '10px', border: '1px solid #0f0', textAlign: 'center' }}>
+                                    <div id="debug-info-overlay" style={{ background: 'rgba(255,255,255,0.1)', padding: '10px', fontSize: '10px', color: '#0f0', marginBottom: '10px', border: '1px solid #0f0', textAlign: 'center' }}>
                                         Socket: {socketConnected ? '🟢 Connected' : '🔴 Disconnected'} <br />
                                         Table: {tableId} <br />
                                         OrderID: {localStorage.getItem('lastOrderId') || 'None'}
