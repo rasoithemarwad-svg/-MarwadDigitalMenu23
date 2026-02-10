@@ -1071,6 +1071,10 @@ const AdminDashboard = () => {
                                     <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '5px' }}>DAILY SALE</p>
                                     <h2 className="gold-text" style={{ fontSize: '1.4rem' }}>₹{todaysRevenue}</h2>
                                 </div>
+                                <div style={{ flex: 1 }}>
+                                    <h1 className="gold-text" style={{ fontSize: '1.5rem', marginBottom: '5px' }}>THE MARWAD RASOI</h1>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', letterSpacing: '2px' }}>ADMIN DASHBOARD v1.3</p>
+                                </div>
                                 <div className="glass-card" style={{ padding: '20px', textAlign: 'center' }}>
                                     <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '5px' }}>MONTHLY SALE</p>
                                     <h2 className="gold-text" style={{ fontSize: '1.4rem' }}>₹{thisMonthRevenue}</h2>
