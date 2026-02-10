@@ -12,7 +12,7 @@ function App() {
     <BrowserRouter>
       {/* GLOBAL DEBUG HEADER - TEMPORARY */}
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', background: 'red', color: 'white', zIndex: 99999, textAlign: 'center', fontSize: '10px', padding: '2px', pointerEvents: 'none', opacity: 0.5 }}>
-        DEBUG: v1.4 | Path: {window.location.pathname}
+        DEBUG: v1.5 | Path: {window.location.pathname}
       </div>
       <Routes>
         {/* Admin Dashboard is now the primary landing page */}
