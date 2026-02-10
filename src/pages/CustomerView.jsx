@@ -146,8 +146,27 @@ const CustomerView = () => {
 
 
         socket.on('order-placed-confirmation', (order) => {
-            console.log("✅ Order placed successfully. ID:", order._id);
+            console.log("✅ Order placed successfully (Confirmation). ID:", order._id);
             localStorage.setItem('lastOrderId', order._id);
+            // Force update of debug info (could be done via state, but this is quick debug)
+            const debugDiv = document.getElementById('debug-info');
+            if (debugDiv) debugDiv.innerHTML = debugDiv.innerHTML.replace('None', order._id);
+        });
+
+        // BACKUP: Capture ID from broadcast if we are waiting and don't have an ID yet
+        socket.on('new-order-alert', (order) => {
+            if (localStorage.getItem('lastOrderId')) return; // Already have it
+
+            // If we are waiting for this table's order
+            if (order.tableId === tableId || (tableId === 'delivery' && order.isDelivery)) {
+                // Simple heuristic: If we pressed "Place Order" recently (waitingForApproval is true), assume this new order is ours.
+                // In a busy system with multiple delivery orders at exact same time, this has a tiny race condition risk, 
+                // but better than being stuck.
+                if (waitingForApproval) {
+                    console.log("⚠️ Capturing Order ID from broadcast (Backup):", order._id);
+                    localStorage.setItem('lastOrderId', order._id);
+                }
+            }
         });
 
         return () => {
