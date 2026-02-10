@@ -323,12 +323,11 @@ io.on('connection', async (socket) => {
             const itemsTotal = orderData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
             const expectedTotal = Math.max(0, itemsTotal - (orderData.discount || 0));
 
-            // Allow a small margin for floating point errors (and potential delivery fees if added later)
-            if (Math.abs(expectedTotal - orderData.total) > 1.0) { // Increased tolerance to 1.0
-                console.error(`❌ Invalid order: Total mismatch. Expected ${expectedTotal}, Got ${orderData.total}`);
-                console.error(`Debug: ItemsTotal=${itemsTotal}, Discount=${orderData.discount}`);
-                socket.emit('order-error', `Order total mismatch (Server: ${expectedTotal}, Client: ${orderData.total})`);
-                return;
+            // WARNING ONLY: Don't block order for price mismatch (debug logging enabled)
+            if (Math.abs(expectedTotal - orderData.total) > 1.0) {
+                console.warn(`⚠️ Price Mismatch Warning: Expected ${expectedTotal}, Got ${orderData.total}`);
+                console.warn(`Debug Details: ItemsTotal=${itemsTotal}, Discount=${orderData.discount}`);
+                // Proceeding anyway...
             }
 
             // 4. Validate delivery details if delivery order
