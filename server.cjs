@@ -379,12 +379,16 @@ io.on('connection', async (socket) => {
             await newOrder.save();
 
             console.log(`✅ Order saved: ${orderData.isDelivery ? 'DELIVERY' : 'Table ' + orderData.tableId}`);
+            console.log(`🔹 Order ID: ${newOrder._id}`);
 
             // Send confirmation back to the placing socket
             socket.emit('order-placed-confirmation', newOrder);
 
             io.emit('new-order-alert', newOrder);
+            console.log('🔹 Emitted new-order-alert');
+
             const allOrders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
+            console.log(`🔹 Emitted orders-updated with ${allOrders.length} orders`);
             io.emit('orders-updated', allOrders);
         } catch (err) {
             console.error('❌ Error placing order:', err);

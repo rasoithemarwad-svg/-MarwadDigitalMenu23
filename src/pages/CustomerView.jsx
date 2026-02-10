@@ -1137,7 +1137,23 @@ const CustomerView = () => {
                                         boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
                                     }}
                                 >
-                                    <div style={{ marginBottom: '20px' }}>
+                                    <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                                        style={{
+                                            width: '60px', height: '60px',
+                                            border: '4px solid rgba(255,215,0,0.3)',
+                                            borderTop: '4px solid #ffd700',
+                                            borderRadius: '50%', marginBottom: '20px'
+                                        }}
+                                    />
+
+                                    {/* DEBUG IN OVERLAY */}
+                                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '10px', fontSize: '10px', color: '#0f0', marginBottom: '10px', border: '1px solid #0f0', textAlign: 'center' }}>
+                                        Socket: {socketConnected ? '🟢 Connected' : '🔴 Disconnected'} <br />
+                                        Table: {tableId} <br />
+                                        OrderID: {localStorage.getItem('lastOrderId') || 'None'}
+                                    </div>        <div style={{ marginBottom: '20px' }}>
                                         <div className="spinner" style={{ width: '50px', height: '50px', margin: '0 auto 20px', border: '4px solid rgba(212, 175, 55, 0.3)', borderTop: '4px solid var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
                                     </div>
 
