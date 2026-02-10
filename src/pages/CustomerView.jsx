@@ -174,10 +174,19 @@ const CustomerView = () => {
             }
         });
 
+        socket.on('order-error', (msg) => {
+            console.error("❌ Order Error from Server:", msg);
+            alert(`Order Failed: ${msg}`);
+            setWaitingForApproval(false);
+            const debugDiv = document.querySelector('#debug-info-overlay');
+            if (debugDiv) debugDiv.innerHTML = debugDiv.innerHTML + `<br/><span style="color:red">Error: ${msg}</span>`;
+        });
+
         return () => {
             socket.off('menu-updated');
             socket.off('kitchen-status-updated');
             socket.off('settings-updated');
+            socket.off('order-error'); // Clean up
             socket.off('order-approved');
             socket.off('order-rejected');
             socket.off('order-placed-confirmation'); // Clean up
