@@ -406,6 +406,22 @@ export default function AdminDashboard() {
                                     <StyledText key={i} className="text-gray-300 ml-2">• {f.qty} x {f.name}</StyledText>
                                 ))}
                                 <View className="flex-row justify-end mt-3 gap-2">
+                                    {item.status === 'pending_approval' && (
+                                        <>
+                                            <StyledTouchableOpacity
+                                                onPress={() => socket.emit('reject-order', { orderId: item._id, tableId: item.tableId, reason: 'Restaurant is busy' })}
+                                                className="bg-red-600 px-3 py-2 rounded-lg mr-2"
+                                            >
+                                                <StyledText className="text-white font-bold">REJECT</StyledText>
+                                            </StyledTouchableOpacity>
+                                            <StyledTouchableOpacity
+                                                onPress={() => socket.emit('approve-order', { orderId: item._id, tableId: item.tableId })}
+                                                className="bg-green-600 px-3 py-2 rounded-lg"
+                                            >
+                                                <StyledText className="text-white font-bold">ACCEPT</StyledText>
+                                            </StyledTouchableOpacity>
+                                        </>
+                                    )}
                                     {item.status === 'pending' && (
                                         <StyledTouchableOpacity onPress={() => updateOrderStatus(item._id, 'preparing')} className="bg-blue-600 px-3 py-2 rounded-lg">
                                             <StyledText className="text-white font-bold">Prepare</StyledText>

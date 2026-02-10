@@ -637,6 +637,13 @@ const CustomerView = () => {
 
 
                                         <div style={{ textAlign: 'center', marginBottom: '40px', marginTop: '30px' }}>
+                                            {/* DEBUG INFO */}
+                                            <div style={{ background: 'rgba(0,0,0,0.5)', padding: '5px', fontSize: '10px', color: '#aaa', marginBottom: '10px' }}>
+                                                Socket: {socketConnected ? '🟢 Connected' : '🔴 Disconnected'} |
+                                                Table: {tableId} |
+                                                Wait: {waitingForApproval ? 'YES' : 'NO'} |
+                                                LastOrder: {localStorage.getItem('lastOrderId') || 'None'}
+                                            </div>
                                             <div style={{ fontSize: '2.4rem', fontWeight: 900, lineHeight: 1.1 }}>
                                                 <span style={{ color: 'white', display: 'block' }}>THE MARWAD</span>
                                                 <span style={{ color: '#ff4d4d', fontFamily: "'Hind', sans-serif" }}>रसोई</span>
