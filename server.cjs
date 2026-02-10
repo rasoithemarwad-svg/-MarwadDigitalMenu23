@@ -380,6 +380,9 @@ io.on('connection', async (socket) => {
 
             console.log(`✅ Order saved: ${orderData.isDelivery ? 'DELIVERY' : 'Table ' + orderData.tableId}`);
 
+            // Send confirmation back to the placing socket
+            socket.emit('order-placed-confirmation', newOrder);
+
             io.emit('new-order-alert', newOrder);
             const allOrders = await Order.find({ status: { $ne: 'cancelled' } }).sort({ timestamp: -1 });
             io.emit('orders-updated', allOrders);
@@ -435,9 +438,9 @@ io.on('connection', async (socket) => {
             if (order) {
                 console.log(`❌ Order ${orderId} rejected for table ${tableId}`);
 
-                // Notify the specific customer that their order was rejected
+                // Notify the specific customer (and others for safety)
                 io.emit('order-rejected', {
-                    orderId: orderId,
+                    orderId: orderId, // Critical for matching
                     tableId: tableId,
                     reason: reason || 'Sorry, we cannot accept your order at this time',
                     message: `Your order was not accepted. ${reason || 'Please try again later.'}`

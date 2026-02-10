@@ -112,11 +112,16 @@ const CustomerView = () => {
         });
 
         socket.on('order-approved', (data) => {
-            if (data.tableId === tableId) {
+            // Check if this approval corresponds to the last placed order
+            const lastOrderId = localStorage.getItem('lastOrderId');
+            if (data.orderId === lastOrderId || data.tableId === tableId) {
                 console.log('✅ Order approved:', data);
                 setWaitingForApproval(false);
                 setOrderStatusMessage(data.message);
                 setOrderPlaced(true);
+
+                // Clear the ID
+                localStorage.removeItem('lastOrderId');
 
                 setTimeout(() => {
                     setOrderPlaced(false);
@@ -128,7 +133,8 @@ const CustomerView = () => {
         });
 
         socket.on('order-rejected', (data) => {
-            if (data.tableId === tableId) {
+            const lastOrderId = localStorage.getItem('lastOrderId');
+            if (data.orderId === lastOrderId || data.tableId === tableId) {
                 console.log('❌ Order rejected:', data);
                 setWaitingForApproval(false);
                 setOrderStatusMessage('');
@@ -139,12 +145,18 @@ const CustomerView = () => {
 
 
 
+        socket.on('order-placed-confirmation', (order) => {
+            console.log("✅ Order placed successfully. ID:", order._id);
+            localStorage.setItem('lastOrderId', order._id);
+        });
+
         return () => {
             socket.off('menu-updated');
             socket.off('kitchen-status-updated');
             socket.off('settings-updated');
             socket.off('order-approved');
             socket.off('order-rejected');
+            socket.off('order-placed-confirmation'); // Clean up
             socket.off('connect');
             socket.off('connect_error');
             socket.off('disconnect');
