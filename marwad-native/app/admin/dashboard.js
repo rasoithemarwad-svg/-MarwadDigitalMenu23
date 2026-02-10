@@ -31,7 +31,7 @@ export default function AdminDashboard() {
     const [menuItems, setMenuItems] = useState([]);
     const [salesHistory, setSalesHistory] = useState([]);
     const [expenses, setExpenses] = useState([]);
-    const [settings, setSettings] = useState({ deliveryRange: '5000' });
+    const [settings, setSettings] = useState({ deliveryRadiusKm: '5.0' });
     const [isKitchenOpen, setIsKitchenOpen] = useState(true);
     const [serviceAlerts, setServiceAlerts] = useState([]);
 
@@ -645,13 +645,13 @@ export default function AdminDashboard() {
                                 <StyledText className="text-gray-400 text-xs mb-2 uppercase font-bold">Delivery Settings</StyledText>
 
                                 <View className="mb-3">
-                                    <StyledText className="text-gray-500 text-[10px] mb-1">Delivery Radius (Meters)</StyledText>
+                                    <StyledText className="text-gray-500 text-[10px] mb-1">Delivery Radius (Km)</StyledText>
                                     <StyledTextInput
-                                        value={String(settings.deliveryRange || 5000)}
-                                        onChangeText={t => setSettings({ ...settings, deliveryRange: t })}
+                                        value={String(settings.deliveryRadiusKm || 5.0)}
+                                        onChangeText={t => setSettings({ ...settings, deliveryRadiusKm: t })}
                                         keyboardType="numeric"
                                         className="bg-black/50 text-white p-3 rounded-lg border border-white/10"
-                                        placeholder="5000"
+                                        placeholder="5.0"
                                     />
                                 </View>
 

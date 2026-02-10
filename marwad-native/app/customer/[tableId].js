@@ -38,12 +38,12 @@ export default function CustomerView() {
     const [cart, setCart] = useState([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     // SAFEFGUARD: Default to 'granted' after a timeout if location fails, but start as 'pending'
-    const [locationStatus, setLocationStatus] = useState('pending'); 
+    const [locationStatus, setLocationStatus] = useState('pending');
     const [isKitchenOpen, setIsKitchenOpen] = useState(true);
     const [deliveryRadius, setDeliveryRadius] = useState(5.0);
     const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
     const [deliveryForm, setDeliveryForm] = useState({ name: '', phone: '', address: '' });
-    
+
     // Restaurant Coords
     const [restaurantLoc, setRestaurantLoc] = useState({ lat: 26.909919, lng: 75.722024 });
 
@@ -73,7 +73,9 @@ export default function CustomerView() {
         const handleMenuUpdate = (newMenu) => setMenuItems(newMenu || []);
         const handleKitchenUpdate = (status) => setIsKitchenOpen(status);
         const handleSettingsUpdate = (settings) => {
-            if (settings?.deliveryRange) setDeliveryRadius(parseFloat(settings.deliveryRange));
+            if (settings?.deliveryRadiusKm) setDeliveryRadius(parseFloat(settings.deliveryRadiusKm));
+            else if (settings?.deliveryRange) setDeliveryRadius(parseFloat(settings.deliveryRange));
+
             if (settings?.restaurantLat && settings?.restaurantLng) {
                 setRestaurantLoc({
                     lat: parseFloat(settings.restaurantLat),
@@ -99,7 +101,7 @@ export default function CustomerView() {
                     // Alert.alert("Location Required", "Please enable location to order from tables.");
                     // On deny, we might still want to show the menu but maybe block ordering? 
                     // For now, let's allow it to prevent getting stuck.
-                    setLocationStatus('granted'); 
+                    setLocationStatus('granted');
                     return;
                 }
 
@@ -112,7 +114,7 @@ export default function CustomerView() {
                 // const allowed = (tableId?.toLowerCase() === 'delivery') ? deliveryRadius : 0.2; // 200m or delivery radius
                 // If checking distance:
                 // if (distance > allowed) { setLocationStatus('far'); } else { setLocationStatus('granted'); }
-                
+
                 // Forcing granted to ensure UI loads for now
                 setLocationStatus('granted');
             } catch (error) {
@@ -253,19 +255,19 @@ export default function CustomerView() {
     }
 
     if (locationStatus === 'denied' || locationStatus === 'far') {
-         return (
-             <View style={{ flex: 1, backgroundColor: '#1a1a1a', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-                 <Text style={{ color: 'red', fontSize: 20, fontWeight: 'bold', marginBottom: 10 }}>Location Check Failed</Text>
-                 <Text style={{ color: 'white', textAlign: 'center' }}>
-                     {locationStatus === 'denied' ? 'Please enable location services.' : 'You are too far from the restaurant.'}
-                 </Text>
-             </View>
-         );
+        return (
+            <View style={{ flex: 1, backgroundColor: '#1a1a1a', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+                <Text style={{ color: 'red', fontSize: 20, fontWeight: 'bold', marginBottom: 10 }}>Location Check Failed</Text>
+                <Text style={{ color: 'white', textAlign: 'center' }}>
+                    {locationStatus === 'denied' ? 'Please enable location services.' : 'You are too far from the restaurant.'}
+                </Text>
+            </View>
+        );
     }
 
     return (
         <StyledView className="flex-1 bg-neutral-900">
-             <Stack.Screen options={{ headerShown: false }} />
+            <Stack.Screen options={{ headerShown: false }} />
 
             {view === 'landing' ? (
                 <ScrollView contentContainerStyle={{ padding: 20 }}>

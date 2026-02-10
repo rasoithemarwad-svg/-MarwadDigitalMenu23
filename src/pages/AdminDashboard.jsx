@@ -265,7 +265,7 @@ const AdminDashboard = () => {
         socket.on('new-order-alert', (newOrder) => {
             const orderAlert = { id: Date.now(), tableId: newOrder.tableId, total: newOrder.total };
             setOrderAlerts(prev => [orderAlert, ...prev]);
-            playNotificationSound(false);
+            playNotificationSound(true); // Loop sound for visibility
             socket.emit('get-orders');
         });
 
@@ -385,6 +385,20 @@ const AdminDashboard = () => {
         setEditingItem(null);
     };
 
+    const acceptOrder = (orderId, tableId) => {
+        socket.emit('approve-order', { orderId, tableId });
+        // Optimistically update or wait for socket update
+        setOrderAlerts(prev => prev.filter(a => a.tableId !== tableId));
+    };
+
+    const rejectOrder = (orderId, tableId) => {
+        const reason = prompt("Enter reason for rejection:", "Restaurant is busy");
+        if (reason) {
+            socket.emit('reject-order', { orderId, tableId, reason });
+            setOrderAlerts(prev => prev.filter(a => a.tableId !== tableId));
+        }
+    };
+
     const deleteMenuItem = (id) => {
         if (currentUser?.role !== 'OWNER') return showAlert("OWNER ONLY", "Staff members are not allowed to delete menu items. Please ask the Owner.");
         socket.emit('delete-menu-item', id);
@@ -488,6 +502,7 @@ const AdminDashboard = () => {
 
     const getStatusColor = (status) => {
         switch (status) {
+            case 'pending_approval': return '#ff5722'; // Orange-Red for approval needed
             case 'pending': return '#ff9800';
             case 'preparing': return '#2196f3';
             case 'completed': return '#4caf50';

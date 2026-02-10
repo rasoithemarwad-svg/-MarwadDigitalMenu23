@@ -33,6 +33,7 @@ function App() {
 
         {/* Delivery Partner Interface */}
         <Route path="/delivery-partner" element={<DeliveryPartner />} />
+        <Route path="/delivery/dashboard" element={<DeliveryPartner />} />
 
         {/* Catch-all for 404 */}
         <Route path="*" element={

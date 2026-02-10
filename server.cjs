@@ -171,20 +171,10 @@ io.on('connection', async (socket) => {
     } catch (err) {
         console.error('❌ Socket initialization error:', err);
         // Mock Settings Fallback
-        socket.emit('settings-updated', { deliveryRange: '5000', restaurantLat: '26.909919', restaurantLng: '75.722024' });
+        socket.emit('settings-updated', { deliveryRadiusKm: '5000', restaurantLat: '26.909919', restaurantLng: '75.722024' });
     }
 
-    socket.on('update-settings', async (newSettings) => {
-        try {
-            await Setting.updateOne({ key: 'deliveryRange' }, { value: newSettings.deliveryRange }, { upsert: true });
-            await Setting.updateOne({ key: 'restaurantLat' }, { value: newSettings.restaurantLat }, { upsert: true });
-            await Setting.updateOne({ key: 'restaurantLng' }, { value: newSettings.restaurantLng }, { upsert: true });
-            io.emit('settings-updated', newSettings); // Broadcast change
-        } catch (err) {
-            console.warn('⚠️ Settings DB Error, using Mock Update');
-            io.emit('settings-updated', newSettings); // Mock Broadcast
-        }
-    });
+    // REMOVED DUPLICATE 'update-settings' HANDLER HERE (It was conflicting with the generic handler below)
 
     socket.on('check-customer-eligibility', async (phone) => {
         try {

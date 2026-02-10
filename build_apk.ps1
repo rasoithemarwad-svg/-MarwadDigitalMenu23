@@ -1,6 +1,11 @@
 $ErrorActionPreference = "Stop"
 
-Write-Host "STARTING AUTOMATED BUILD SETUP (ALL VERSIONS)..." -ForegroundColor Green
+Write-Host "STARTING NUCLEAR BUILD (ALL VERSIONS)..." -ForegroundColor Green
+
+# 0. KILL EVERYTHING (Force kill to release locks)
+Write-Host "Killing processes..." -ForegroundColor Yellow
+Get-Process -Name "java", "openjdk", "gradle", "adb", "node" -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Sleep -Seconds 2
 
 # 1. Setup Directories
 $toolsDir = "C:\Users\lenovo\tools"
@@ -12,81 +17,102 @@ $zipFile = "$toolsDir\jdk17.zip"
 $zipUrl = "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jdk_x64_windows_hotspot_17.0.10_7.zip"
 
 if (-not (Test-Path "$javaDir\jdk-17.0.10+7")) {
-    Write-Host "Downloading Portable Java (JDK 17)..." -ForegroundColor Yellow
+    Write-Host "Downloading JDK 17..."
     Import-Module BitsTransfer
     Start-BitsTransfer -Source $zipUrl -Destination $zipFile
-    Write-Host "Extracting Java..." -ForegroundColor Yellow
     Expand-Archive -LiteralPath $zipFile -DestinationPath $javaDir -Force
     Remove-Item $zipFile
 }
 
-# 3. Configure Java Environment
+# 3. Configure Java
 $jdkRoot = Get-ChildItem -Path $javaDir -Directory | Where-Object { $_.Name -like "jdk-*" } | Select-Object -First 1
 $env:JAVA_HOME = $jdkRoot.FullName
 $env:PATH = $jdkRoot.FullName + "\bin;" + $env:PATH
-Write-Host "Environment Configured:" -ForegroundColor Green
 java -version
 
-# 4. Build Loop for 3 Versions
-$apps = @("admin", "staff", "delivery")
-# Make portable: Use script execution location
+# 4. NUCLEAR CLEAN & INSTALL (Once)
 $projectRoot = "$PSScriptRoot\marwad-native"
+Set-Location $projectRoot
+
+Write-Host "Skipping aggressive delete (likely locked). Overwriting..." -ForegroundColor Yellow
+# cmd /c "if exist node_modules rmdir /s /q node_modules"
+cmd /c "if exist android rmdir /s /q android"
+if (Test-Path "package-lock.json") { Remove-Item "package-lock.json" -Force -ErrorAction SilentlyContinue }
+
+Write-Host "Installing Dependencies..." -ForegroundColor Cyan
+npm install
+
+# 5. Build Loop
+$apps = @("admin", "staff", "delivery")
+$distDir = "$projectRoot\dist"
+if (Test-Path $distDir) { Remove-Item $distDir -Recurse -Force -ErrorAction SilentlyContinue }
+New-Item -ItemType Directory -Force -Path $distDir | Out-Null
 $outputDir = "$projectRoot\android\app\build\outputs\apk\release"
 
 foreach ($type in $apps) {
     Write-Host "`n----------------------------------------" -ForegroundColor Cyan
-    Write-Host "BUILDING: MARWAD $trype" -ForegroundColor Cyan
+    Write-Host "BUILDING: MARWAD $type" -ForegroundColor Cyan
     Write-Host "----------------------------------------"
     
-    # Set Environment Variable for app.config.js
     $env:APP_TYPE = $type
-    
     Set-Location $projectRoot
     
-    # Prebuild (Generates Android Code)
+    # FIX: Increase Node memory to prevent OOM during bundling
+    $env:NODE_OPTIONS = "--max-old-space-size=4096"
+
+    # Prebuild
+    if (Test-Path "android") { cmd /c "rmdir /s /q android" }
+    if (Test-Path "ios") { cmd /c "rmdir /s /q ios" }
     Write-Host "Running expo prebuild ($type)..."
-    cmd /c "npx expo prebuild --clean --platform android --no-install"
+    # We pipe 'y' to handle any prompts, though fresh install shouldn't have many
+    cmd /c "echo y | npx expo prebuild --platform android --no-install"
     
-    # FIX: Ensure local.properties exists with SDK path
+    # Fix SDK Path
     $sdkPath = "$env:LOCALAPPDATA\Android\Sdk"
     if (Test-Path $sdkPath) {
         $localProps = "$projectRoot\android\local.properties"
-        # Escape backslashes for properties file
         $sdkPathEscaped = $sdkPath -replace "\\", "\\"
         "sdk.dir=$sdkPathEscaped" | Out-File -FilePath $localProps -Encoding ascii
-        Write-Host "✅ Created local.properties pointing to SDK at $sdkPath" -ForegroundColor Green
-    }
-    else {
-        Write-Host "⚠️ WARNING: Android SDK not found at default location: $sdkPath" -ForegroundColor Yellow
-        Write-Host "Build may fail if ANDROID_HOME is not set globally." -ForegroundColor Yellow
     }
 
-    # Build APK
-    Set-Location "$projectRoot\android"
-    
-    # FIX: Stop previous daemons and clean cache to prevent "Could not move temporary workspace" error
-    Write-Host "Cleaning Gradle Cache..."
-    cmd /c "gradlew --stop"
-    if (Test-Path ".gradle") {
-        Remove-Item ".gradle" -Recurse -Force -ErrorAction SilentlyContinue
+    # FIX: Increase Gradle Memory (Persistent across prebuilds)
+    $gradleProps = "$projectRoot\android\gradle.properties"
+    if (Test-Path $gradleProps) {
+        $content = Get-Content $gradleProps
+        $content = $content -replace "org.gradle.jvmargs=-Xmx2048m", "org.gradle.jvmargs=-Xmx4096m"
+        $content | Set-Content $gradleProps
+        Write-Host "Updated Gradle heap to 4GB" -ForegroundColor Yellow
     }
     
-    Write-Host "Compiling APK..."
-    ./gradlew assembleRelease
+    # Build APK
+    if (Test-Path "Z:") { cmd /c "subst Z: /d" }
+    subst Z: $projectRoot
+    Set-Location "Z:\android"
     
-    # Rename and Move
+    Write-Host "Cleaning Gradle..."
+    cmd /c "gradlew --stop"
+    if (Test-Path ".gradle") { Remove-Item ".gradle" -Recurse -Force -ErrorAction SilentlyContinue }
+    
+    Write-Host "Compiling ($type)..."
+    # Build (with info for debugging)
+    $env:GRADLE_OPTS = "-Dorg.gradle.daemon=true -Dorg.gradle.vfs.watch=false"
+    ./gradlew assembleRelease --info
+    cmd /c "gradlew --stop"
+    
+    Set-Location $projectRoot
+    cmd /c "subst Z: /d"
+    
+    # Move APK
     if (Test-Path "$outputDir\app-release.apk") {
         $finalName = "Marwad-$type.apk"
-        Move-Item -Path "$outputDir\app-release.apk" -Destination "$outputDir\$finalName" -Force
-        Write-Host "✅ SUCCESS: $finalName created!" -ForegroundColor Green
+        Move-Item -Path "$outputDir\app-release.apk" -Destination "$distDir\$finalName" -Force
+        Write-Host "SUCCESS: $finalName moved to dist" -ForegroundColor Green
     }
     else {
-        Write-Host "❌ ERROR: Build failed for $type" -ForegroundColor Red
+        Write-Host "ERROR: Build failed for $type" -ForegroundColor Red
         exit 1
     }
 }
 
-Write-Host "`n----------------------------------------" -ForegroundColor Green
-Write-Host "ALL BUILDS COMPLETE!" -ForegroundColor Green
-Write-Host "Find your APKs here: $outputDir" -ForegroundColor White
+Write-Host "`nALL DONE!" -ForegroundColor Green
 Invoke-Item $outputDir

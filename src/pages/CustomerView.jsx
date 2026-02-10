@@ -91,8 +91,8 @@ const CustomerView = () => {
         socket.on('kitchen-status-updated', (status) => setIsKitchenOpen(status));
         socket.on('settings-updated', (settings) => {
             if (settings) {
-                if (settings.deliveryRange) setDeliveryRadius(parseFloat(settings.deliveryRange));
-                else if (settings.deliveryRadiusKm) setDeliveryRadius(parseFloat(settings.deliveryRadiusKm));
+                if (settings.deliveryRadiusKm) setDeliveryRadius(parseFloat(settings.deliveryRadiusKm));
+                else if (settings.deliveryRange) setDeliveryRadius(parseFloat(settings.deliveryRange));
 
                 if (settings.restaurantLat && settings.restaurantLng) {
                     setRestaurantCoords({

@@ -1,0 +1,13 @@
+[90m[1mdebug[22m[39m [0mUsing @react-naive-community/cli-tools' logger[0m
+[90m[1mdebug[22m[39m [0mReading Metro config from C:\Users\lenovo\Documents\MarwadDigitalMenu\marwad-native\metro.config.js[0m
+[33m[1mwarn[22m[39m [0m=================================================================================================[0m
+[33m[1mwarn[22m[39m [0mFrom React Native 0.73, your project's Metro config should extend '@react-native/metro-config'[0m
+[33m[1mwarn[22m[39m [0mor it will fail to build. Please copy the template at:[0m
+[33m[1mwarn[22m[39m [0mhttps://github.com/react-native-community/template/blob/main/template/metro.config.js[0m
+[33m[1mwarn[22m[39m [0mThis warning will be removed in future (https://github.com/facebook/metro/issues/1018).[0m
+[33m[1mwarn[22m[39m [0m=================================================================================================[0m
+                Welcome to Metro v0.81.5
+              Fast - Scalable - Integrated
+
+
+Terminate batch job (Y/N)? 
