@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, FlatList, Alert, SafeAreaView, Linking } from 'react-native';
 import { styled } from 'nativewind';
 import { useRouter, Stack } from 'expo-router';
@@ -39,6 +39,25 @@ export default function DeliveryDashboard() {
             socket.off('orders-updated');
         };
     }, []);
+
+    // Auto-launch Navigation for new orders
+    const prevOrdersRef = React.useRef([]);
+    useEffect(() => {
+        if (deliveryOrders.length > prevOrdersRef.current.length) {
+            // Find the new order (difference between arrays)
+            const newOrder = deliveryOrders.find(o => !prevOrdersRef.current.some(po => po._id === o._id));
+
+            // Only auto-launch if we found a new order and it has location data
+            if (newOrder && newOrder.deliveryDetails) {
+                console.log("New Delivery Order! Launching Navigation...", newOrder._id);
+                // Small delay to ensure UI updates first
+                setTimeout(() => {
+                    openMap(newOrder.deliveryDetails);
+                }, 1000);
+            }
+        }
+        prevOrdersRef.current = deliveryOrders;
+    }, [deliveryOrders]);
 
     const markAsDelivered = (orderId) => {
         Alert.alert("Confirm Delivery", "Mark this order as delivered?", [

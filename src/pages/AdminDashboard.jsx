@@ -194,6 +194,14 @@ const AdminDashboard = () => {
         }
     };
 
+    // Auto-stop sound when alerts are cleared
+    useEffect(() => {
+        if (orderAlerts.length === 0 && serviceAlerts.length === 0 && audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+        }
+    }, [orderAlerts, serviceAlerts]);
+
     const fetchData = () => {
         setIsRefreshing(true);
         socket.emit('get-orders');
