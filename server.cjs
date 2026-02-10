@@ -332,20 +332,21 @@ io.on('connection', async (socket) => {
                 const dd = orderData.deliveryDetails;
 
                 // Validate customer name
-                if (!dd.customerName || dd.customerName.trim().length < 2) {
+                if (!dd.customerName || dd.customerName.trim().length < 1) { // Changed to 1
                     socket.emit('order-error', 'Invalid customer name');
                     return;
                 }
 
-                // Validate phone number (10 digits)
-                const phoneRegex = /^[6-9]\d{9}$/;
-                if (!dd.customerPhone || !phoneRegex.test(dd.customerPhone.trim())) {
-                    socket.emit('order-error', 'Invalid phone number');
+                // Validate phone number (Relaxed)
+                // Remove all non-numeric characters
+                const cleanPhone = dd.customerPhone.replace(/\D/g, '');
+                if (cleanPhone.length < 10 || cleanPhone.length > 15) {
+                    socket.emit('order-error', `Invalid phone number: ${dd.customerPhone}`);
                     return;
                 }
 
                 // Validate address
-                if (!dd.deliveryAddress || dd.deliveryAddress.trim().length < 10) {
+                if (!dd.deliveryAddress || dd.deliveryAddress.trim().length < 3) { // Changed to 3
                     socket.emit('order-error', 'Invalid delivery address');
                     return;
                 }
