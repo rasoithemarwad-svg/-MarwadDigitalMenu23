@@ -2,16 +2,25 @@ import React, { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 // Global Error Handling for Mobile Debugging
+// Global Error Handling for Mobile Debugging
+const showErrorOverlay = (msg) => {
+  const errorDiv = document.createElement('div');
+  errorDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#8b0000;color:white;z-index:999999;padding:20px;overflow:auto;font-family:monospace;font-size:14px;';
+  errorDiv.innerHTML = `<h1>Application Error</h1><pre>${msg}</pre><button onclick="window.location.reload()" style="padding:10px;margin-top:20px;color:black;">Reload</button>`;
+  document.body.appendChild(errorDiv);
+};
+
 window.onerror = function (message, source, lineno, colno, error) {
-  const errorMsg = `Error: ${message} at ${source}:${lineno}:${colno}`;
+  const errorMsg = `Global Error: ${message}\nAt: ${source}:${lineno}:${colno}\nStack: ${error?.stack || 'No stack'}`;
   console.error(errorMsg);
-  if (navigator.userAgent.includes('Mobile')) alert(errorMsg); // Show on mobile for easier debugging
+  showErrorOverlay(errorMsg);
   return false;
 };
 
 window.onunhandledrejection = function (event) {
-  console.error('Unhandled rejection:', event.reason);
-  // alert('Promise Rejection: ' + event.reason);
+  const errorMsg = `Unhandled Promise Rejection: ${event.reason?.stack || event.reason}`;
+  console.error(errorMsg);
+  showErrorOverlay(errorMsg);
 };
 
 console.log('App starting at:', new Date().toISOString());

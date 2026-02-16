@@ -49,15 +49,13 @@ finally {
 }
 
 # 4. Check Output
-$outputDir = "app\build\outputs\apk\release"
-# Fix: Look for recursive APK/JSON file to confirm success more reliably if name changes
-if (Test-Path "$outputDir\*.apk") {
-    $dest = "..\..\Marwad-Admin-Manual.apk"
-    # Move the app-release.apk to destination
-    $builtApk = Get-ChildItem "$outputDir\*.apk" | Select-Object -First 1
-    Copy-Item $builtApk.FullName -Destination $dest -Force
+    # Updated path to match where Gradle actually outputs it
+    $builtApk = "android\app\build\outputs\apk\release\app-release.apk"
+    if (Test-Path $builtApk) {
+        Copy-Item $builtApk -Destination $dest -Force
+
     Write-Host "SUCCESS! APK created at: $dest" -ForegroundColor Green
-    Invoke-Item $dest
+    # Invoke-Item $dest
 }
 else {
     Write-Error "APK not found. Build failed."

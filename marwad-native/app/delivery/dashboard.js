@@ -67,8 +67,11 @@ export default function DeliveryDashboard() {
     };
 
     const openMap = (details) => {
-        if (details?.location?.latitude && details?.location?.longitude) {
-            const url = `https://www.google.com/maps/dir/?api=1&destination=${details.location.latitude},${details.location.longitude}`;
+        const lat = details?.location?.lat || details?.location?.latitude;
+        const lng = details?.location?.lng || details?.location?.longitude;
+
+        if (lat && lng) {
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
             Linking.openURL(url);
         } else if (details?.address) {
             const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(details.address)}`;

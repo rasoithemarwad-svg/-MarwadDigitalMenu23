@@ -12,7 +12,7 @@ const ACTIONS = [
     { id: 'HUT', label: 'THE HUT', icon: <Utensils size={32} />, color: '#d4af37', desc: 'Private Dining' },
     { id: 'CAFE', label: 'CAFE', icon: <Clock size={32} />, color: '#ff4d4d', desc: 'Quick Bites' },
     { id: 'RESTAURANT', label: 'RESTAURANT', icon: <Star size={32} />, color: '#8b0000', desc: 'Fine Dining' },
-    { id: 'GYM', label: 'GYM DIET', icon: <Star size={32} />, color: '#4caf50', desc: 'Fitness Meals' },
+    { id: 'GYM DIET', label: 'GYM DIET', icon: <Star size={32} />, color: '#4caf50', desc: 'Fitness Meals' },
     { id: 'SERVICE', label: 'SERVICE BELL', icon: <Bell size={32} />, color: '#ffd700', desc: 'Instant Help' },
     { id: 'RATE', label: 'RATE & WIN', icon: <Star size={32} />, color: '#4caf50', desc: 'Get Rewards' },
 ];
@@ -623,9 +623,7 @@ const CustomerView = () => {
                             <div className="spinner"></div>
                             <p style={{ marginTop: '20px', color: 'white', fontSize: '1.2rem', fontWeight: 'bold' }}>Verifying your location...</p>
                             <p style={{ fontSize: '0.9rem', color: '#ccc', marginTop: '10px' }}>Please allow location access to continue.</p>
-                            <button onClick={() => setLocationAccess('testing')} style={{ marginTop: '30px', padding: '10px 20px', background: '#333', color: 'white', border: '1px solid #555', borderRadius: '5px' }}>
-                                Bypass (Debug Only)
-                            </button>
+
                         </div>
                     )}
 
@@ -671,12 +669,7 @@ const CustomerView = () => {
 
                                         <div style={{ textAlign: 'center', marginBottom: '40px', marginTop: '30px' }}>
                                             {/* DEBUG INFO */}
-                                            <div style={{ background: 'rgba(0,0,0,0.5)', padding: '5px', fontSize: '10px', color: '#aaa', marginBottom: '10px' }}>
-                                                Socket: {socketConnected ? '🟢 Connected' : '🔴 Disconnected'} |
-                                                Table: {tableId} |
-                                                Wait: {waitingForApproval ? 'YES' : 'NO'} |
-                                                LastOrder: {localStorage.getItem('lastOrderId') || 'None'}
-                                            </div>
+
                                             <div style={{ fontSize: '2.4rem', fontWeight: 900, lineHeight: 1.1 }}>
                                                 <span style={{ color: 'white', display: 'block' }}>THE MARWAD</span>
                                                 <span style={{ color: '#ff4d4d', fontFamily: "'Hind', sans-serif" }}>रसोई</span>
@@ -705,7 +698,7 @@ const CustomerView = () => {
 
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                             {(tableId === 'delivery'
-                                                ? ACTIONS.filter(a => ['CAFE', 'RESTAURANT', 'GYM', 'RATE'].includes(a.id))
+                                                ? ACTIONS.filter(a => ['CAFE', 'RESTAURANT', 'GYM DIET', 'RATE'].includes(a.id))
                                                 : ACTIONS
                                             ).map(action => (
                                                 <motion.button

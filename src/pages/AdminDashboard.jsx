@@ -668,9 +668,7 @@ const AdminDashboard = () => {
                         <h1 className="gold-text" style={{ fontSize: '1.4rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
                             THE MARWAD RASOI
                         </h1>
-                        <div style={{ fontSize: '0.8rem', color: '#ff3b30', marginTop: '5px' }}>
-                            Debug Raw: {orders.length} orders
-                        </div>
+                        {/* Debug info removed */}
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: currentUser.role === 'OWNER' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(255, 255, 255, 0.05)', padding: '4px 12px', borderRadius: '30px', marginTop: '6px', border: `1px solid ${currentUser.role === 'OWNER' ? 'var(--primary)' : 'rgba(255,255,255,0.1)'}` }}>
                             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: currentUser.role === 'OWNER' ? 'var(--primary)' : '#aaa' }}></div>
                             <span style={{ color: currentUser.role === 'OWNER' ? 'var(--primary)' : 'white', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase' }}>{currentUser.role} SESSION</span>
@@ -1239,7 +1237,7 @@ const AdminDashboard = () => {
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-                                {['HUT', 'RESTAURANT', 'CAFE'].map(cat => (
+                                {['HUT', 'RESTAURANT', 'CAFE', 'GYM DIET'].map(cat => (
                                     <div key={cat} style={{ gridColumn: '1 / -1' }}>
                                         <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--glass-border)', paddingBottom: '5px', marginBottom: '15px', fontSize: '1rem' }}>{cat} CATEGORY</h4>
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '15px' }}>

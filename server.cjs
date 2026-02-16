@@ -593,20 +593,7 @@ process.on('unhandledRejection', (reason, promise) => {
 // ---------------------------------------------
 // PREVENT RENDER SLEEP MODE (Keep-Alive)
 // ---------------------------------------------
-const RENDER_URL_PING = process.env.RENDER_EXTERNAL_URL || 'https://digital-marwad-1.onrender.com';
-const PING_INTERVAL = 14 * 60 * 1000; // 14 Minutes (Render sleeps after 15)
-
-if (process.env.NODE_ENV === 'production' || RENDER_URL_PING.includes('onrender')) {
-    console.log(`⏰ Keep-Alive System Active: Pinging ${RENDER_URL_PING} every 14 mins`);
-
-    setInterval(() => {
-        https.get(`${RENDER_URL_PING}/health`, (res) => { // Changed to /health as per existing code
-            console.log(`💓 Keep-Alive Ping: ${res.statusCode}`);
-        }).on('error', (err) => {
-            console.error('⚠️ Keep-Alive Ping Failed:', err.message);
-        });
-    }, PING_INTERVAL);
-}
+// (Keep-Alive handled in server.listen)
 
 // 6. Server Start
 server.listen(PORT, '0.0.0.0', () => {
@@ -617,36 +604,49 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log(`📂 DIR: ${__dirname}`);
     console.log(`🌍 URL: ${process.env.RENDER_EXTERNAL_URL || 'Not Set'}`);
 
-    const RENDER_URL = process.env.RENDER_EXTERNAL_URL;
+    // Unified Keep-Alive System (Smart Mode: 08:00 AM - 01:00 AM IST)
+    const KEEPALIVE_URL = process.env.RENDER_EXTERNAL_URL || 'https://digital-marwad-1.onrender.com';
+    const PING_INTERVAL = 5 * 60 * 1000; // Ping every 5 minutes
 
-    if (RENDER_URL) {
-        console.log(`🔄 Keep-alive heartbeat enabled for: ${RENDER_URL}`);
+    if (process.env.NODE_ENV === 'production' || KEEPALIVE_URL.includes('onrender')) {
+        console.log(`🔄 Smart Keep-Alive Active: Resting 01:00 AM - 08:00 AM IST`);
 
-        setInterval(() => {
-            try {
-                const url = `${RENDER_URL}/health`;
-                https.get(url, (res) => {
-                    res.resume();
-                    if (res.statusCode === 200) {
-                        console.log(`💓 Heartbeat OK (${new Date().toLocaleTimeString()})`);
-                    } else {
-                        console.log(`💔 Heartbeat Status: ${res.statusCode}`);
-                    }
-                }).on('error', (err) => {
-                    console.log(`💔 Heartbeat Network Error: ${err.message}`);
-                });
-            } catch (error) {
-                console.log(`💔 Heartbeat Timer Error: ${error.message}`);
-            }
-        }, 5 * 60 * 1000);
+        // Initial ping
+        setTimeout(pingSelf, 10000);
 
-        setTimeout(() => {
-            https.get(`${RENDER_URL}/health`, (res) => {
-                res.resume();
-                console.log('🏁 Startup self-check ping sent');
-            }).on('error', () => { });
-        }, 30000);
+        // Regular interval
+        setInterval(pingSelf, PING_INTERVAL);
     } else {
         console.log('ℹ️ Local server (No self-ping)');
+    }
+
+    function pingSelf() {
+        // Get current time in India (IST)
+        const now = new Date();
+        const options = { timeZone: 'Asia/Kolkata', hour12: false, hour: 'numeric', minute: 'numeric' };
+        const formatter = new Intl.DateTimeFormat([], options);
+        const parts = formatter.formatToParts(now);
+        const hour = parseInt(parts.find(p => p.type === 'hour').value, 10);
+
+        // Sleep Logic:
+        // Sleep from 01:00 (1 AM) to 07:59 (8 AM)
+        // Active from 08:00 (8 AM) to 00:59 (1 AM)
+
+        const isSleepTime = hour >= 1 && hour < 8; // 1, 2, 3, 4, 5, 6, 7
+
+        if (!isSleepTime) {
+            const url = `${KEEPALIVE_URL}/health`;
+            https.get(url, (res) => {
+                if (res.statusCode === 200) {
+                    console.log(`💓 Heartbeat OK (${hour}:00 IST)`);
+                } else {
+                    console.warn(`💔 Heartbeat Status: ${res.statusCode}`);
+                }
+            }).on('error', (err) => {
+                console.error(`💔 Heartbeat Network Error: ${err.message}`);
+            });
+        } else {
+            console.log(`💤 Sleeping (Night Mode: ${hour}:00 IST)`);
+        }
     }
 });

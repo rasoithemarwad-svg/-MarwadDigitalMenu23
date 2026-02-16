@@ -51,12 +51,16 @@ finally {
 }
 
 # 4. Check Output
-$outputDir = "app\build\outputs\apk\release"
-if (Test-Path "$outputDir\app-release.apk") {
-    $dest = "..\..\Marwad-Delivery-Manual.apk"
-    Copy-Item "$outputDir\app-release.apk" -Destination $dest -Force
+    $builtApk = "android\app\build\outputs\apk\release\app-release.apk"
+    if (Test-Path $builtApk) {
+    # Ensure APKs directory exists
+    if (-not (Test-Path "..\APKs")) { New-Item -ItemType Directory -Path "..\APKs" -Force | Out-Null }
+
+    $dest = "..\APKs\Marwad-Delivery.apk"
+    Copy-Item $builtApk -Destination $dest -Force
+
     Write-Host "SUCCESS! APK created at: $dest" -ForegroundColor Green
-    Invoke-Item $dest
+    # Invoke-Item $dest
 }
 else {
     Write-Error "APK not found. Build failed."
