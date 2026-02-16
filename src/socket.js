@@ -1,21 +1,9 @@
 import { io } from 'socket.io-client';
 
-const MATCH_PROD_URL = 'digital-marwad-1.onrender.com';
-const PROD_URL = 'https://digital-marwad-1.onrender.com';
-
-let socketUrl = window.location.origin;
-
-// Smart Detection for Development/Split Environment
-// If we are running on a dev port (typically 5173 for Vite), point to the backend port (3001)
-// keeping the same hostname (localhost or IP)
-
-const hostname = window.location.hostname;
-const port = window.location.port;
-const protocol = window.location.protocol;
-
 // 1. Production / Render Deploy
 if (hostname.includes('onrender.com')) {
-    socketUrl = PROD_URL;
+    // Dynamically use the current Render URL (e.g. marwaddigitalmenu23.onrender.com)
+    socketUrl = window.location.origin;
 }
 // 2. Local Development (Vite on 5173 -> Backend on 3001)
 else if (port === '5173' || (port && port !== '3001')) {

@@ -605,7 +605,7 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log(`🌍 URL: ${process.env.RENDER_EXTERNAL_URL || 'Not Set'}`);
 
     // Unified Keep-Alive System (Smart Mode: 08:00 AM - 01:00 AM IST)
-    const KEEPALIVE_URL = process.env.RENDER_EXTERNAL_URL || 'https://digital-marwad-1.onrender.com';
+    const KEEPALIVE_URL = process.env.RENDER_EXTERNAL_URL || 'https://marwaddigitalmenu23.onrender.com';
     const PING_INTERVAL = 5 * 60 * 1000; // Ping every 5 minutes
 
     if (process.env.NODE_ENV === 'production' || KEEPALIVE_URL.includes('onrender')) {
