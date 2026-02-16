@@ -1,8 +1,14 @@
 import { io } from 'socket.io-client';
 
+// Define variables FIRST to avoid ReferenceError
+const hostname = window.location.hostname;
+const port = window.location.port;
+const protocol = window.location.protocol;
+let socketUrl = window.location.origin; // Default to current origin
+
 // 1. Production / Render Deploy
 if (hostname.includes('onrender.com')) {
-    // Dynamically use the current Render URL (e.g. marwaddigitalmenu23.onrender.com)
+    // Dynamically use the current Render URL (e.g. marwaddigitalmenu23-1.onrender.com)
     socketUrl = window.location.origin;
 }
 // 2. Local Development (Vite on 5173 -> Backend on 3001)
